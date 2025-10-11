@@ -3,15 +3,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    // Await the params first
+    const { id } = await params;
+
     const bar = await prisma.bar.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         city: true,
         vipPasses: {
@@ -40,7 +43,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       vipEnabled: bar.vipEnabled,
       vipPrice: bar.vipPrice,
       city: bar.city,
-      // Add other fields from your schema that you want to use
       phone: bar.phone,
       website: bar.website,
       imageUrl: bar.imageUrl,
