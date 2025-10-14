@@ -13,13 +13,15 @@ export async function GET() {
     };
 
     // Test database connection
-    let dbTest = { success: false, error: null };
+    let dbTest = { success: false, error: null as string | null };
     try {
       await prisma.$connect();
       const result = await prisma.$queryRaw`SELECT 1 as test`;
       dbTest = { success: true, error: null };
-    } catch (dbError: any) {
-      dbTest = { success: false, error: dbError.message };
+    } catch (dbError: unknown) {
+      const errorMessage =
+        dbError instanceof Error ? dbError.message : "Unknown database error";
+      dbTest = { success: false, error: errorMessage };
     }
 
     return NextResponse.json({
@@ -30,11 +32,14 @@ export async function GET() {
         isConnected: dbTest.success,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
     return NextResponse.json(
       {
         error: "Debug endpoint failed",
-        message: error.message,
+        message: errorMessage,
       },
       { status: 500 }
     );
