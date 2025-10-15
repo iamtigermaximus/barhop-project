@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { CrawlStatus } from "@prisma/client";
+import { CrawlStatus, Prisma } from "@prisma/client";
 
 // Proper type for update data
 interface CrawlUpdateData {
@@ -14,6 +14,13 @@ interface CrawlUpdateData {
   maxParticipants?: number;
   isPublic?: boolean;
   status?: CrawlStatus;
+}
+
+// Type for selected bars coming from frontend
+interface SelectedBarInput {
+  barId: string;
+  orderIndex: number;
+  duration?: number; // optional from frontend
 }
 
 // GET /api/crawls/[id] - Get a specific crawl by ID
@@ -92,14 +99,13 @@ export async function GET(
   }
 }
 
-// PUT /api/crawls/[id] - Update a specific crawl
+// PUT /api/crawls/[id] - Update a specific crawl with selectedBars
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -116,14 +122,22 @@ export async function PUT(
       maxParticipants,
       isPublic,
       status,
+      selectedBars,
+    }: {
+      name?: string;
+      description?: string;
+      cityId?: string;
+      date?: string;
+      startTime?: string;
+      maxParticipants?: number;
+      isPublic?: boolean;
+      status?: CrawlStatus;
+      selectedBars?: SelectedBarInput[];
     } = body;
 
     // Verify user owns this crawl
     const existingCrawl = await prisma.crawl.findFirst({
-      where: {
-        id: id,
-        creatorId: session.user.id,
-      },
+      where: { id, creatorId: session.user.id },
     });
 
     if (!existingCrawl) {
@@ -133,7 +147,7 @@ export async function PUT(
       );
     }
 
-    // Build update data with proper typing
+    // Build update data for the crawl fields
     const updateData: CrawlUpdateData = {};
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;
@@ -143,47 +157,56 @@ export async function PUT(
     if (maxParticipants !== undefined)
       updateData.maxParticipants = maxParticipants;
     if (isPublic !== undefined) updateData.isPublic = isPublic;
-    if (status !== undefined) updateData.status = status as CrawlStatus;
+    if (status !== undefined) updateData.status = status;
 
-    const updatedCrawl = await prisma.crawl.update({
-      where: { id: id },
-      data: updateData,
-      include: {
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
+    // Transaction to update crawl and crawlBars atomically
+    const updatedCrawl = await prisma.$transaction(async (tx) => {
+      // 1️⃣ Update crawl fields
+      const crawl = await tx.crawl.update({
+        where: { id },
+        data: updateData,
+      });
+
+      // 2️⃣ Update crawlBars if provided
+      if (selectedBars && selectedBars.length > 0) {
+        // Delete old crawlBars
+        await tx.crawlBar.deleteMany({ where: { crawlId: id } });
+
+        // Create new crawlBars with proper typing
+        const newCrawlBars: Prisma.CrawlBarCreateManyInput[] = selectedBars.map(
+          (sb) => ({
+            crawlId: id,
+            barId: sb.barId,
+            orderIndex: sb.orderIndex,
+            duration: sb.duration ?? 60, // default 60 minutes if not provided
+          })
+        );
+
+        await tx.crawlBar.createMany({ data: newCrawlBars });
+      }
+
+      // 3️⃣ Return crawl with updated relations
+      return tx.crawl.findUnique({
+        where: { id },
+        include: {
+          creator: {
+            select: { id: true, name: true, email: true, image: true },
           },
-        },
-        city: true,
-        participants: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                image: true,
+          city: true,
+          participants: {
+            include: {
+              user: {
+                select: { id: true, name: true, email: true, image: true },
               },
             },
           },
-        },
-        crawlBars: {
-          include: {
-            bar: true,
+          crawlBars: {
+            include: { bar: true },
+            orderBy: { orderIndex: "asc" },
           },
-          orderBy: {
-            orderIndex: "asc",
-          },
+          _count: { select: { participants: true } },
         },
-        _count: {
-          select: {
-            participants: true,
-          },
-        },
-      },
+      });
     });
 
     return NextResponse.json(
