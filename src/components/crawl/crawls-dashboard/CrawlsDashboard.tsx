@@ -3,6 +3,7 @@ import styled from "styled-components";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { HopprLoader } from "@/components/ui/Loader/HopprLoader";
 
 const Page = styled.div`
   padding: 2rem 1rem;
@@ -309,6 +310,7 @@ const CrawlsGrid = styled.div`
   gap: 2rem;
   margin-top: 2rem;
   padding: 0 1rem;
+  background-color: transparent !important;
 
   /* Tablet */
   @media (max-width: 1024px) {
@@ -737,11 +739,14 @@ const EmptyState = styled.div`
   }
 `;
 
-const LoadingState = styled.div`
-  text-align: center;
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
   padding: 4rem 2rem;
-  color: #e2e8f0;
+  width: 100%;
   grid-column: 1 / -1;
+  background-color: transparent !important;
 
   /* Mobile */
   @media (max-width: 768px) {
@@ -783,7 +788,6 @@ const PastCrawlCard = styled(CrawlCard)`
   }
 `;
 
-// ... rest of your interfaces and component logic remain the same ...
 interface CrawlUser {
   id: string;
   name: string | null;
@@ -1061,9 +1065,9 @@ export default function CrawlsDashboard() {
         <Title>Bar Crawls</Title>
         <Description>Discover amazing bar crawls in your city</Description>
         <CrawlsGrid>
-          <LoadingState>
-            <p>Loading...</p>
-          </LoadingState>
+          <LoadingContainer>
+            <HopprLoader />
+          </LoadingContainer>
         </CrawlsGrid>
       </Page>
     );
@@ -1111,186 +1115,188 @@ export default function CrawlsDashboard() {
       </TabContainer>
 
       <CrawlsGrid>
-        {/* Create Crawl Card - Only show for non-past tabs */}
-        {!isPastTab &&
-          (isAuthenticated ? (
-            <CreateCrawlCard href="/crawl-planner">
-              <CreateIcon>🎯</CreateIcon>
-              <CreateText>Create New Crawl</CreateText>
-              <CreateSubtext>Plan your own bar adventure</CreateSubtext>
-            </CreateCrawlCard>
-          ) : (
-            <CreateCrawlCard href="/auth/signup">
-              <CreateIcon>🔐</CreateIcon>
-              <CreateText>Sign Up to Create Crawls</CreateText>
-              <CreateSubtext>Join to start planning crawls</CreateSubtext>
-            </CreateCrawlCard>
-          ))}
+        {/* Show loading state OR content, not both */}
+        {isLoading ? (
+          <LoadingContainer>
+            <HopprLoader />
+          </LoadingContainer>
+        ) : (
+          <>
+            {/* Create Crawl Card - Only show for non-past tabs */}
+            {!isPastTab &&
+              (isAuthenticated ? (
+                <CreateCrawlCard href="/crawl-planner">
+                  <CreateIcon>🎯</CreateIcon>
+                  <CreateText>Create New Crawl</CreateText>
+                  <CreateSubtext>Plan your own bar adventure</CreateSubtext>
+                </CreateCrawlCard>
+              ) : (
+                <CreateCrawlCard href="/auth/signup">
+                  <CreateIcon>🔐</CreateIcon>
+                  <CreateText>Sign Up to Create Crawls</CreateText>
+                  <CreateSubtext>Join to start planning crawls</CreateSubtext>
+                </CreateCrawlCard>
+              ))}
 
-        {/* Display crawls */}
-        {!isLoading &&
-          displayCrawls.map((crawl) => {
-            const userInCrawl = isUserInCrawl(crawl);
-            const crawlFull = isCrawlFull(crawl);
-            const canJoin = canJoinCrawl(crawl);
-            const isPastCrawl = isCrawlPast(crawl);
-            const CardComponent = isPastCrawl ? PastCrawlCard : CrawlCard;
+            {/* Display crawls */}
+            {displayCrawls.map((crawl) => {
+              const userInCrawl = isUserInCrawl(crawl);
+              const crawlFull = isCrawlFull(crawl);
+              const canJoin = canJoinCrawl(crawl);
+              const isPastCrawl = isCrawlPast(crawl);
+              const CardComponent = isPastCrawl ? PastCrawlCard : CrawlCard;
 
-            return (
-              <CardComponent key={crawl.id}>
-                <CrawlHeader>
-                  <CrawlName>
-                    {crawl.name}
-                    {isPastCrawl && (
-                      <PastEventIndicator>(Past Event)</PastEventIndicator>
-                    )}
-                  </CrawlName>
-                  <CrawlStatus $status={crawl.status}>
-                    {isPastCrawl
-                      ? "Past"
-                      : crawl.status === "PLANNING"
-                      ? "Joinable"
-                      : crawl.status.toLowerCase()}
-                  </CrawlStatus>
-                </CrawlHeader>
-
-                <CrawlMeta>
-                  <MetaItem>
-                    <MetaLabel>Date & Time</MetaLabel>
-                    <MetaValue>{formatDate(crawl.date)}</MetaValue>
-                  </MetaItem>
-                  <MetaItem>
-                    <MetaLabel>City</MetaLabel>
-                    <MetaValue>{crawl.city.name}</MetaValue>
-                  </MetaItem>
-                  <MetaItem>
-                    <MetaLabel>Participants</MetaLabel>
-                    <MetaValue>
-                      {crawl._count.participants}/{crawl.maxParticipants}
-                    </MetaValue>
-                  </MetaItem>
-                  <MetaItem>
-                    <MetaLabel>Bars</MetaLabel>
-                    <MetaValue>{crawl.crawlBars.length} stops</MetaValue>
-                  </MetaItem>
-                </CrawlMeta>
-
-                <BarPreview>
-                  <BarCount>
-                    {Math.floor(
-                      (crawl._count.participants / crawl.maxParticipants) * 100
-                    )}
-                    % full • {crawl.isPublic ? "Public" : "Private"}
-                    {isPastCrawl && " • Past Event"}
-                  </BarCount>
-                </BarPreview>
-
-                <ActionButtons>
-                  <ViewButton href={`/crawls/${crawl.id}`}>
-                    {isPastCrawl ? "View Details" : "View Details"}
-                  </ViewButton>
-
-                  {!isPastCrawl && (
-                    <JoinButtonWrapper>
-                      <JoinButton
-                        onClick={() => handleJoinCrawl(crawl.id)}
-                        $requiresAuth={!isAuthenticated || !canJoin}
-                        disabled={!canJoin || isJoining === crawl.id}
-                      >
-                        {isJoining === crawl.id
-                          ? "Joining..."
-                          : userInCrawl
-                          ? "Joined"
-                          : crawlFull
-                          ? "Full"
-                          : !isAuthenticated
-                          ? "Sign Up to Join"
-                          : !canJoin
-                          ? "Cannot Join"
-                          : "Join Crawl"}
-                      </JoinButton>
-
-                      {crawlFull && <Tooltip>This crawl is full</Tooltip>}
-                      {!isAuthenticated && !crawlFull && (
-                        <Tooltip>Sign up to join this crawl</Tooltip>
+              return (
+                <CardComponent key={crawl.id}>
+                  <CrawlHeader>
+                    <CrawlName>
+                      {crawl.name}
+                      {isPastCrawl && (
+                        <PastEventIndicator>(Past Event)</PastEventIndicator>
                       )}
-                      {isAuthenticated && userInCrawl && (
-                        <Tooltip>You&apos;re already in this crawl</Tooltip>
-                      )}
-                      {isAuthenticated &&
-                        !userInCrawl &&
-                        !crawlFull &&
-                        !canJoin && (
-                          <Tooltip>This crawl is no longer joinable</Tooltip>
-                        )}
-                    </JoinButtonWrapper>
-                  )}
+                    </CrawlName>
+                    <CrawlStatus $status={crawl.status}>
+                      {isPastCrawl
+                        ? "Past"
+                        : crawl.status === "PLANNING"
+                        ? "Joinable"
+                        : crawl.status.toLowerCase()}
+                    </CrawlStatus>
+                  </CrawlHeader>
 
-                  {isPastCrawl && (
-                    <ViewButton
-                      href={`/crawls/${crawl.id}`}
-                      style={{ flex: 1 }}
-                    >
-                      View Memories
+                  <CrawlMeta>
+                    <MetaItem>
+                      <MetaLabel>Date & Time</MetaLabel>
+                      <MetaValue>{formatDate(crawl.date)}</MetaValue>
+                    </MetaItem>
+                    <MetaItem>
+                      <MetaLabel>City</MetaLabel>
+                      <MetaValue>{crawl.city.name}</MetaValue>
+                    </MetaItem>
+                    <MetaItem>
+                      <MetaLabel>Participants</MetaLabel>
+                      <MetaValue>
+                        {crawl._count.participants}/{crawl.maxParticipants}
+                      </MetaValue>
+                    </MetaItem>
+                    <MetaItem>
+                      <MetaLabel>Bars</MetaLabel>
+                      <MetaValue>{crawl.crawlBars.length} stops</MetaValue>
+                    </MetaItem>
+                  </CrawlMeta>
+
+                  <BarPreview>
+                    <BarCount>
+                      {Math.floor(
+                        (crawl._count.participants / crawl.maxParticipants) *
+                          100
+                      )}
+                      % full • {crawl.isPublic ? "Public" : "Private"}
+                      {isPastCrawl && " • Past Event"}
+                    </BarCount>
+                  </BarPreview>
+
+                  <ActionButtons>
+                    <ViewButton href={`/crawls/${crawl.id}`}>
+                      {isPastCrawl ? "View Details" : "View Details"}
                     </ViewButton>
-                  )}
-                </ActionButtons>
-              </CardComponent>
-            );
-          })}
 
-        {/* Loading State */}
-        {isLoading && (
-          <LoadingState>
-            <p>Loading crawls...</p>
-          </LoadingState>
-        )}
+                    {!isPastCrawl && (
+                      <JoinButtonWrapper>
+                        <JoinButton
+                          onClick={() => handleJoinCrawl(crawl.id)}
+                          $requiresAuth={!isAuthenticated || !canJoin}
+                          disabled={!canJoin || isJoining === crawl.id}
+                        >
+                          {isJoining === crawl.id
+                            ? "Joining..."
+                            : userInCrawl
+                            ? "Joined"
+                            : crawlFull
+                            ? "Full"
+                            : !isAuthenticated
+                            ? "Sign Up to Join"
+                            : !canJoin
+                            ? "Cannot Join"
+                            : "Join Crawl"}
+                        </JoinButton>
 
-        {/* Empty State */}
-        {!isLoading && displayCrawls.length === 0 && (
-          <EmptyState>
-            <div className="icon">
-              {activeTab === "discover"
-                ? "🔍"
-                : activeTab === "my-crawls"
-                ? "📅"
-                : activeTab === "past-events"
-                ? "🏁"
-                : "📖"}
-            </div>
-            <h3 style={{ color: "#e2e8f0", marginBottom: "0.5rem" }}>
-              {activeTab === "discover" && "No upcoming crawls available"}
-              {activeTab === "my-crawls" && "No upcoming crawls"}
-              {activeTab === "past-events" && "No past events found"}
-              {activeTab === "my-past-events" && "No past events joined"}
-            </h3>
-            <p>
-              {activeTab === "discover" &&
-                "Check back later for new crawl opportunities!"}
-              {activeTab === "my-crawls" &&
-                "Join a crawl from the Discover tab to get started!"}
-              {activeTab === "past-events" &&
-                "Past public events will appear here"}
-              {activeTab === "my-past-events" &&
-                "Your past crawl history will appear here"}
-            </p>
-            {!isPastTab && (
-              <CreateCrawlCard
-                href={isAuthenticated ? "/crawl-planner" : "/auth/signup"}
-                style={{
-                  marginTop: "1rem",
-                  minHeight: "auto",
-                  padding: "1.5rem",
-                }}
-              >
-                <CreateText>
-                  {isAuthenticated
-                    ? "Create Your First Crawl"
-                    : "Be the first to create one!"}
-                </CreateText>
-              </CreateCrawlCard>
+                        {crawlFull && <Tooltip>This crawl is full</Tooltip>}
+                        {!isAuthenticated && !crawlFull && (
+                          <Tooltip>Sign up to join this crawl</Tooltip>
+                        )}
+                        {isAuthenticated && userInCrawl && (
+                          <Tooltip>You&apos;re already in this crawl</Tooltip>
+                        )}
+                        {isAuthenticated &&
+                          !userInCrawl &&
+                          !crawlFull &&
+                          !canJoin && (
+                            <Tooltip>This crawl is no longer joinable</Tooltip>
+                          )}
+                      </JoinButtonWrapper>
+                    )}
+
+                    {isPastCrawl && (
+                      <ViewButton
+                        href={`/crawls/${crawl.id}`}
+                        style={{ flex: 1 }}
+                      >
+                        View Memories
+                      </ViewButton>
+                    )}
+                  </ActionButtons>
+                </CardComponent>
+              );
+            })}
+
+            {/* Empty State */}
+            {displayCrawls.length === 0 && (
+              <EmptyState>
+                <div className="icon">
+                  {activeTab === "discover"
+                    ? "🔍"
+                    : activeTab === "my-crawls"
+                    ? "📅"
+                    : activeTab === "past-events"
+                    ? "🏁"
+                    : "📖"}
+                </div>
+                <h3 style={{ color: "#e2e8f0", marginBottom: "0.5rem" }}>
+                  {activeTab === "discover" && "No upcoming crawls available"}
+                  {activeTab === "my-crawls" && "No upcoming crawls"}
+                  {activeTab === "past-events" && "No past events found"}
+                  {activeTab === "my-past-events" && "No past events joined"}
+                </h3>
+                <p>
+                  {activeTab === "discover" &&
+                    "Check back later for new crawl opportunities!"}
+                  {activeTab === "my-crawls" &&
+                    "Join a crawl from the Discover tab to get started!"}
+                  {activeTab === "past-events" &&
+                    "Past public events will appear here"}
+                  {activeTab === "my-past-events" &&
+                    "Your past crawl history will appear here"}
+                </p>
+                {!isPastTab && (
+                  <CreateCrawlCard
+                    href={isAuthenticated ? "/crawl-planner" : "/auth/signup"}
+                    style={{
+                      marginTop: "1rem",
+                      minHeight: "auto",
+                      padding: "1.5rem",
+                    }}
+                  >
+                    <CreateText>
+                      {isAuthenticated
+                        ? "Create Your First Crawl"
+                        : "Be the first to create one!"}
+                    </CreateText>
+                  </CreateCrawlCard>
+                )}
+              </EmptyState>
             )}
-          </EmptyState>
+          </>
         )}
       </CrawlsGrid>
     </Page>

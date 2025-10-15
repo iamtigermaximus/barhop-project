@@ -2,6 +2,7 @@
 import styled from "styled-components";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { HopprLoader } from "../ui/Loader/HopprLoader";
 
 const Page = styled.div`
   padding: 2rem 1rem;
@@ -254,7 +255,8 @@ export default function Bars() {
     return (
       <Page>
         <Title>Explore All Bars</Title>
-        <LoadingState>Loading bars...</LoadingState>
+        {/* <LoadingState>Loading bars...</LoadingState> */}
+        <HopprLoader />
       </Page>
     );
   }

@@ -1,8 +1,9 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import styled from "styled-components";
 import Link from "next/link";
+import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { HopprLoader } from "@/components/ui/Loader/HopprLoader";
 
 const Page = styled.div`
   padding: 2rem 1rem;
@@ -56,7 +57,6 @@ const Title = styled.h1`
   background-clip: text;
   animation: gradientShift 8s ease infinite;
   line-height: 1.2;
-  padding: 0 1rem;
 
   /* Tablet */
   @media (max-width: 1024px) {
@@ -74,6 +74,18 @@ const Title = styled.h1`
   @media (max-width: 480px) {
     font-size: 1.75rem;
     margin-bottom: 0.5rem;
+  }
+
+  @keyframes gradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
   }
 `;
 
@@ -109,11 +121,13 @@ const Description = styled.p`
   }
 `;
 
-const TabsContainer = styled.div`
+const TabContainer = styled.div`
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
+  padding-bottom: 1rem;
   justify-content: center;
+  background-color: transparent !important;
   flex-wrap: wrap;
   padding: 0 1rem;
 
@@ -183,34 +197,6 @@ const Tab = styled.button<{ $active: boolean }>`
     &:hover {
       transform: none;
     }
-  }
-`;
-
-const CrawlsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
-  padding: 0 1rem;
-
-  /* Tablet */
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.5rem;
-  }
-
-  /* Mobile */
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    padding: 0 0.5rem;
-    margin-top: 1.5rem;
-  }
-
-  /* Small mobile */
-  @media (max-width: 480px) {
-    padding: 0 0.25rem;
-    gap: 0.75rem;
   }
 `;
 
@@ -315,6 +301,35 @@ const CreateSubtext = styled.div`
   /* Small mobile */
   @media (max-width: 480px) {
     font-size: 0.8rem;
+  }
+`;
+
+const CrawlsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+  padding: 0 1rem;
+  background-color: transparent !important;
+
+  /* Tablet */
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 0.5rem;
+    margin-top: 1.5rem;
+  }
+
+  /* Small mobile */
+  @media (max-width: 480px) {
+    padding: 0 0.25rem;
+    gap: 0.75rem;
   }
 `;
 
@@ -585,22 +600,27 @@ const ViewButton = styled(Link)`
   }
 `;
 
-const ManageButton = styled(Link)`
-  background: linear-gradient(45deg, #8b5cf6, #3b82f6);
-  border: 1px solid rgba(139, 92, 246, 0.3);
+const JoinButton = styled.button<{ $requiresAuth?: boolean }>`
+  background: ${(props) =>
+    props.$requiresAuth
+      ? "linear-gradient(45deg, #6b7280, #4b5563)"
+      : "linear-gradient(45deg, #10b981, #059669)"};
+  border: 1px solid
+    ${(props) =>
+      props.$requiresAuth
+        ? "rgba(107, 114, 128, 0.3)"
+        : "rgba(16, 185, 129, 0.3)"};
   color: white;
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;
+  cursor: ${(props) => (props.$requiresAuth ? "not-allowed" : "pointer")};
   transition: all 0.3s ease;
   flex: 1;
-  text-align: center;
+  opacity: ${(props) => (props.$requiresAuth ? 0.6 : 1)};
   min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: none;
 
   /* Mobile */
   @media (max-width: 768px) {
@@ -616,17 +636,71 @@ const ManageButton = styled(Link)`
     min-height: 38px;
   }
 
-  &:hover {
-    background: linear-gradient(45deg, #7c3aed, #2563eb);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  &:hover:not(:disabled) {
+    background: ${(props) =>
+      props.$requiresAuth
+        ? "linear-gradient(45deg, #6b7280, #4b5563)"
+        : "linear-gradient(45deg, #059669, #047857)"};
+    transform: ${(props) =>
+      props.$requiresAuth ? "none" : "translateY(-1px)"};
+    box-shadow: ${(props) =>
+      props.$requiresAuth ? "none" : "0 4px 12px rgba(16, 185, 129, 0.3)"};
   }
 
   /* Reduce hover on mobile */
   @media (max-width: 768px) {
-    &:hover {
+    &:hover:not(:disabled) {
       transform: none;
     }
+  }
+`;
+
+const Tooltip = styled.div`
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: #f8fafc;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  margin-bottom: 0.5rem;
+  border: 1px solid #374151;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+
+  &:before {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: #1f2937;
+  }
+
+  /* Hide tooltips on mobile */
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const JoinButtonWrapper = styled.div`
+  position: relative;
+  flex: 1;
+
+  &:hover ${Tooltip} {
+    opacity: 1;
+  }
+
+  /* Full width on mobile */
+  @media (max-width: 480px) {
+    width: 100%;
   }
 `;
 
@@ -665,11 +739,14 @@ const EmptyState = styled.div`
   }
 `;
 
-const LoadingState = styled.div`
-  text-align: center;
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
   padding: 4rem 2rem;
-  color: #e2e8f0;
+  width: 100%;
   grid-column: 1 / -1;
+  background-color: transparent !important;
 
   /* Mobile */
   @media (max-width: 768px) {
@@ -677,37 +754,40 @@ const LoadingState = styled.div`
   }
 `;
 
-const RoleBadge = styled.span<{ $isCreator: boolean }>`
-  background: ${(props) =>
-    props.$isCreator
-      ? "linear-gradient(45deg, #f59e0b, #d97706)"
-      : "linear-gradient(45deg, #6b7280, #4b5563)"};
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 8px;
+const PastEventIndicator = styled.span`
   font-size: 0.7rem;
-  font-weight: 600;
+  color: #94a3b8;
   margin-left: 0.5rem;
-  white-space: nowrap;
+  font-style: italic;
+  display: block;
+  margin-top: 0.25rem;
 
   /* Mobile */
   @media (max-width: 768px) {
     font-size: 0.65rem;
-    padding: 0.2rem 0.4rem;
-    margin-left: 0.25rem;
-  }
-
-  /* Small mobile */
-  @media (max-width: 480px) {
-    font-size: 0.6rem;
-    padding: 0.15rem 0.3rem;
     margin-left: 0;
-    margin-top: 0.25rem;
-    display: inline-block;
+    margin-top: 0.2rem;
   }
 `;
 
-// ... rest of your interfaces remain the same ...
+const PastCrawlCard = styled(CrawlCard)`
+  opacity: 0.7;
+  border-color: rgba(107, 114, 128, 0.3);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(107, 114, 128, 0.2);
+    border-color: rgba(107, 114, 128, 0.5);
+  }
+
+  /* Reduce hover on mobile */
+  @media (max-width: 768px) {
+    &:hover {
+      transform: translateY(-1px);
+    }
+  }
+`;
+
 interface CrawlUser {
   id: string;
   name: string | null;
@@ -744,81 +824,169 @@ interface Crawl {
   };
 }
 
-type CrawlTab = "created" | "participating" | "upcoming" | "past";
+type CrawlTab = "discover" | "my-crawls" | "past-events" | "my-past-events";
 
-const MyCrawls = () => {
+export default function CrawlsDashboard() {
   const { data: session, status } = useSession();
-  const [activeTab, setActiveTab] = useState<CrawlTab>("upcoming");
-  const [allCrawls, setAllCrawls] = useState<Crawl[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<CrawlTab>("discover");
 
-  // Fetch all user's crawls (created + joined)
-  const fetchMyCrawls = async () => {
-    if (!session) return;
+  // Separate states for each tab to prevent conflicts
+  const [discoverCrawls, setDiscoverCrawls] = useState<Crawl[]>([]);
+  const [myUpcomingCrawls, setMyUpcomingCrawls] = useState<Crawl[]>([]);
+  const [pastPublicCrawls, setPastPublicCrawls] = useState<Crawl[]>([]);
+  const [myPastCrawls, setMyPastCrawls] = useState<Crawl[]>([]);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isJoining, setIsJoining] = useState<string | null>(null);
+
+  const isAuthenticated = !!session;
+
+  // Fetch data for ALL tabs when component mounts or auth changes
+  const fetchAllTabData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+
+      // Fetch data for all tabs in parallel
+      const promises = [];
+
+      // Always fetch discover crawls
+      promises.push(
+        fetch("/api/crawls?public=true")
+          .then((res) => (res.ok ? res.json() : []))
+          .then((data) => setDiscoverCrawls(data))
+          .catch(() => setDiscoverCrawls([]))
+      );
+
+      if (isAuthenticated) {
+        // Fetch user's upcoming crawls
+        promises.push(
+          fetch("/api/crawls/my-crawls")
+            .then((res) => (res.ok ? res.json() : []))
+            .then((data) => {
+              const upcomingCrawls = data.filter(
+                (crawl: Crawl) => !isCrawlPast(crawl)
+              );
+              setMyUpcomingCrawls(upcomingCrawls);
+            })
+            .catch(() => setMyUpcomingCrawls([]))
+        );
+
+        // Fetch past public events
+        promises.push(
+          fetch("/api/crawls/past-events?public=true")
+            .then((res) => (res.ok ? res.json() : []))
+            .then((data) => setPastPublicCrawls(data))
+            .catch(() => setPastPublicCrawls([]))
+        );
+
+        // Fetch user's past events
+        promises.push(
+          fetch("/api/crawls/past-events")
+            .then((res) => (res.ok ? res.json() : []))
+            .then((data) => setMyPastCrawls(data))
+            .catch(() => setMyPastCrawls([]))
+        );
+      } else {
+        // If not authenticated, clear user-specific data
+        setMyUpcomingCrawls([]);
+        setPastPublicCrawls([]);
+        setMyPastCrawls([]);
+      }
+
+      await Promise.all(promises);
+    } catch (error) {
+      console.error("Error fetching crawls:", error);
+      // Reset all states on error
+      setDiscoverCrawls([]);
+      setMyUpcomingCrawls([]);
+      setPastPublicCrawls([]);
+      setMyPastCrawls([]);
+    } finally {
+      setIsLoading(false);
+      setIsInitialLoad(false);
+    }
+  }, [isAuthenticated]);
+
+  // Also keep the individual tab fetch for when switching tabs (to refresh data)
+  const fetchActiveTabData = useCallback(async () => {
+    if (isInitialLoad) return; // Don't fetch if we're in initial load
 
     try {
       setIsLoading(true);
-      console.log("Fetching user crawls...");
 
-      const response = await fetch("/api/crawls"); // No query params = get user's crawls
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Fetched user crawls:", data);
-        setAllCrawls(data);
-      } else {
-        console.error("Failed to fetch user crawls");
-        setAllCrawls([]);
+      if (activeTab === "discover") {
+        const response = await fetch("/api/crawls?public=true");
+        if (response.ok) {
+          const data = await response.json();
+          setDiscoverCrawls(data);
+        }
+      } else if (activeTab === "my-crawls" && isAuthenticated) {
+        const response = await fetch("/api/crawls/my-crawls");
+        if (response.ok) {
+          const data = await response.json();
+          const upcomingCrawls = data.filter(
+            (crawl: Crawl) => !isCrawlPast(crawl)
+          );
+          setMyUpcomingCrawls(upcomingCrawls);
+        }
+      } else if (activeTab === "past-events" && isAuthenticated) {
+        const response = await fetch("/api/crawls/past-events?public=true");
+        if (response.ok) {
+          const data = await response.json();
+          setPastPublicCrawls(data);
+        }
+      } else if (activeTab === "my-past-events" && isAuthenticated) {
+        const response = await fetch("/api/crawls/past-events");
+        if (response.ok) {
+          const data = await response.json();
+          setMyPastCrawls(data);
+        }
       }
     } catch (error) {
-      console.error("Error fetching user crawls:", error);
-      setAllCrawls([]);
+      console.error("Error fetching active tab data:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeTab, isAuthenticated, isInitialLoad]);
 
-  // Fetch when session changes
+  // Fetch all data when component mounts or auth changes
   useEffect(() => {
-    if (session) {
-      fetchMyCrawls();
+    fetchAllTabData();
+  }, [fetchAllTabData]);
+
+  // Refresh only active tab data when tab changes (after initial load)
+  useEffect(() => {
+    if (!isInitialLoad) {
+      fetchActiveTabData();
     }
-  }, [session]);
+  }, [activeTab, fetchActiveTabData, isInitialLoad]);
 
-  // Filter crawls based on active tab
-  const getFilteredCrawls = () => {
-    const now = new Date();
+  const handleJoinCrawl = async (crawlId: string) => {
+    if (!isAuthenticated) {
+      window.location.href = `/auth/signup?redirect=/crawls&crawl=${crawlId}`;
+      return;
+    }
 
-    switch (activeTab) {
-      case "created":
-        // Crawls where user is the creator
-        return allCrawls.filter((crawl) => isUserCreator(crawl));
+    try {
+      setIsJoining(crawlId);
+      const response = await fetch(`/api/crawls/${crawlId}/join`, {
+        method: "POST",
+      });
 
-      case "participating":
-        // Crawls where user is participating (including ones they created)
-        return allCrawls.filter((crawl) => isUserParticipant(crawl));
-
-      case "upcoming":
-        // All crawls that are upcoming (both created and joined)
-        return allCrawls.filter(
-          (crawl) =>
-            isUserParticipant(crawl) &&
-            new Date(crawl.date) >= now &&
-            crawl.status !== "COMPLETED" &&
-            crawl.status !== "CANCELLED"
-        );
-
-      case "past":
-        // All past crawls (both created and joined)
-        return allCrawls.filter(
-          (crawl) =>
-            isUserParticipant(crawl) &&
-            (new Date(crawl.date) < now ||
-              crawl.status === "COMPLETED" ||
-              crawl.status === "CANCELLED")
-        );
-
-      default:
-        return allCrawls;
+      if (response.ok) {
+        // Refresh all data after joining
+        await fetchAllTabData();
+        alert("Successfully joined the crawl!");
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || "Failed to join crawl. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error joining crawl:", error);
+      alert("Failed to join crawl. Please try again.");
+    } finally {
+      setIsJoining(null);
     }
   };
 
@@ -827,275 +995,308 @@ const MyCrawls = () => {
       weekday: "short",
       month: "short",
       day: "numeric",
+      year: "numeric",
       hour: "numeric",
       minute: "2-digit",
     });
   };
 
-  const isUserCreator = (crawl: Crawl) => {
-    return session?.user?.id === crawl.creator.id;
-  };
-
-  const isUserParticipant = (crawl: Crawl) => {
+  const isUserInCrawl = (crawl: Crawl) => {
     if (!session?.user?.id) return false;
     return crawl.participants.some((p) => p.userId === session.user.id);
   };
 
-  // Calculate tab counts from all crawls
-  const calculateTabCounts = () => {
-    const now = new Date();
-
-    const createdCount = allCrawls.filter((crawl) =>
-      isUserCreator(crawl)
-    ).length;
-
-    const participatingCount = allCrawls.filter((crawl) =>
-      isUserParticipant(crawl)
-    ).length;
-
-    const upcomingCount = allCrawls.filter(
-      (crawl) =>
-        isUserParticipant(crawl) &&
-        new Date(crawl.date) >= now &&
-        crawl.status !== "COMPLETED" &&
-        crawl.status !== "CANCELLED"
-    ).length;
-
-    const pastCount = allCrawls.filter(
-      (crawl) =>
-        isUserParticipant(crawl) &&
-        (new Date(crawl.date) < now ||
-          crawl.status === "COMPLETED" ||
-          crawl.status === "CANCELLED")
-    ).length;
-
-    return {
-      created: createdCount,
-      participating: participatingCount,
-      upcoming: upcomingCount,
-      past: pastCount,
-    };
+  const isCrawlFull = (crawl: Crawl) => {
+    return crawl._count.participants >= crawl.maxParticipants;
   };
 
-  const tabCounts = calculateTabCounts();
-  const displayCrawls = getFilteredCrawls();
+  const isCrawlPast = (crawl: Crawl) => {
+    const crawlDate = new Date(crawl.date);
+    const now = new Date();
+
+    // If the crawl date is in a previous year, it's definitely past
+    if (crawlDate.getFullYear() < now.getFullYear()) {
+      return true;
+    }
+
+    // If it's the same year but the date has passed, it's past
+    if (crawlDate.getFullYear() === now.getFullYear() && crawlDate < now) {
+      return true;
+    }
+
+    // Also check status
+    return crawl.status === "COMPLETED" || crawl.status === "CANCELLED";
+  };
+
+  const canJoinCrawl = (crawl: Crawl) => {
+    return (
+      isAuthenticated &&
+      !isUserInCrawl(crawl) &&
+      !isCrawlFull(crawl) &&
+      !isCrawlPast(crawl) &&
+      (crawl.status === "PLANNING" || crawl.status === "UPCOMING")
+    );
+  };
+
+  // Calculate tab counts from the correct state variables
+  const tabCounts = {
+    discover: discoverCrawls.length,
+    "my-crawls": myUpcomingCrawls.length,
+    "past-events": pastPublicCrawls.length,
+    "my-past-events": myPastCrawls.length,
+  };
+
+  // Determine which crawls to display based on active tab
+  const displayCrawls =
+    activeTab === "discover"
+      ? discoverCrawls
+      : activeTab === "my-crawls"
+      ? myUpcomingCrawls
+      : activeTab === "past-events"
+      ? pastPublicCrawls
+      : myPastCrawls;
+
+  const isPastTab =
+    activeTab === "past-events" || activeTab === "my-past-events";
 
   if (status === "loading") {
     return (
       <Page>
-        <Title>My Crawls</Title>
-        <Description>Managing your bar crawl adventures</Description>
-        <LoadingState>
-          <p>Loading your crawls...</p>
-        </LoadingState>
-      </Page>
-    );
-  }
-
-  if (!session) {
-    return (
-      <Page>
-        <Title>My Crawls</Title>
-        <Description>Sign in to view and manage your crawls</Description>
-        <EmptyState>
-          <div className="icon">🔐</div>
-          <h3 style={{ color: "#e2e8f0", marginBottom: "0.5rem" }}>
-            Authentication Required
-          </h3>
-          <p>Please sign in to view your crawls</p>
-          <CreateCrawlCard
-            href="/auth/signin"
-            style={{
-              marginTop: "1rem",
-              minHeight: "auto",
-              padding: "1.5rem",
-            }}
-          >
-            <CreateText>Sign In</CreateText>
-          </CreateCrawlCard>
-        </EmptyState>
+        <Title>Bar Crawls</Title>
+        <Description>Discover amazing bar crawls in your city</Description>
+        <LoadingContainer>
+          <HopprLoader />
+        </LoadingContainer>
       </Page>
     );
   }
 
   return (
     <Page>
-      <Title>My Crawls</Title>
+      <Title>Bar Crawls</Title>
       <Description>
-        Manage your created crawls and track the ones you&apos;re participating
-        in
+        {isAuthenticated
+          ? "Discover amazing bar crawls or create your own adventure!"
+          : "Discover amazing bar crawls in your city. Sign up to join or create your own!"}
       </Description>
 
-      <TabsContainer>
+      <TabContainer>
         <Tab
-          $active={activeTab === "upcoming"}
-          onClick={() => setActiveTab("upcoming")}
+          $active={activeTab === "discover"}
+          onClick={() => setActiveTab("discover")}
         >
-          Upcoming ({tabCounts.upcoming})
+          Discover ({tabCounts.discover})
         </Tab>
-        <Tab
-          $active={activeTab === "created"}
-          onClick={() => setActiveTab("created")}
-        >
-          Created ({tabCounts.created})
-        </Tab>
-        <Tab
-          $active={activeTab === "participating"}
-          onClick={() => setActiveTab("participating")}
-        >
-          Participating ({tabCounts.participating})
-        </Tab>
-        <Tab
-          $active={activeTab === "past"}
-          onClick={() => setActiveTab("past")}
-        >
-          Past ({tabCounts.past})
-        </Tab>
-      </TabsContainer>
+
+        {isAuthenticated && (
+          <>
+            <Tab
+              $active={activeTab === "my-crawls"}
+              onClick={() => setActiveTab("my-crawls")}
+            >
+              My Crawls ({tabCounts["my-crawls"]})
+            </Tab>
+            <Tab
+              $active={activeTab === "past-events"}
+              onClick={() => setActiveTab("past-events")}
+            >
+              Past Public ({tabCounts["past-events"]})
+            </Tab>
+            <Tab
+              $active={activeTab === "my-past-events"}
+              onClick={() => setActiveTab("my-past-events")}
+            >
+              My Past ({tabCounts["my-past-events"]})
+            </Tab>
+          </>
+        )}
+      </TabContainer>
 
       <CrawlsGrid>
-        {/* Create New Crawl Card - Only show in created tab */}
-        {activeTab === "created" && (
-          <CreateCrawlCard href="/crawl-planner">
-            <CreateIcon>🎯</CreateIcon>
-            <CreateText>Create New Crawl</CreateText>
-            <CreateSubtext>Plan your next bar adventure</CreateSubtext>
-          </CreateCrawlCard>
-        )}
+        {/* Show loading state OR content, not both */}
+        {isLoading ? (
+          <LoadingContainer>
+            <HopprLoader />
+          </LoadingContainer>
+        ) : (
+          <>
+            {/* Create Crawl Card - Only show for non-past tabs */}
+            {!isPastTab &&
+              (isAuthenticated ? (
+                <CreateCrawlCard href="/crawl-planner">
+                  <CreateIcon>🎯</CreateIcon>
+                  <CreateText>Create New Crawl</CreateText>
+                  <CreateSubtext>Plan your own bar adventure</CreateSubtext>
+                </CreateCrawlCard>
+              ) : (
+                <CreateCrawlCard href="/auth/signup">
+                  <CreateIcon>🔐</CreateIcon>
+                  <CreateText>Sign Up to Create Crawls</CreateText>
+                  <CreateSubtext>Join to start planning crawls</CreateSubtext>
+                </CreateCrawlCard>
+              ))}
 
-        {/* Display crawls */}
-        {!isLoading &&
-          displayCrawls.map((crawl) => {
-            const userIsCreator = isUserCreator(crawl);
-            const userIsParticipant = isUserParticipant(crawl);
+            {/* Display crawls */}
+            {displayCrawls.map((crawl) => {
+              const userInCrawl = isUserInCrawl(crawl);
+              const crawlFull = isCrawlFull(crawl);
+              const canJoin = canJoinCrawl(crawl);
+              const isPastCrawl = isCrawlPast(crawl);
+              const CardComponent = isPastCrawl ? PastCrawlCard : CrawlCard;
 
-            return (
-              <CrawlCard key={crawl.id}>
-                <CrawlHeader>
-                  <CrawlName>
-                    {crawl.name}
-                    <RoleBadge $isCreator={userIsCreator}>
-                      {userIsCreator ? "Creator" : "Participant"}
-                    </RoleBadge>
-                  </CrawlName>
-                  <CrawlStatus $status={crawl.status}>
-                    {crawl.status.toLowerCase()}
-                  </CrawlStatus>
-                </CrawlHeader>
+              return (
+                <CardComponent key={crawl.id}>
+                  <CrawlHeader>
+                    <CrawlName>
+                      {crawl.name}
+                      {isPastCrawl && (
+                        <PastEventIndicator>(Past Event)</PastEventIndicator>
+                      )}
+                    </CrawlName>
+                    <CrawlStatus $status={crawl.status}>
+                      {isPastCrawl
+                        ? "Past"
+                        : crawl.status === "PLANNING"
+                        ? "Joinable"
+                        : crawl.status.toLowerCase()}
+                    </CrawlStatus>
+                  </CrawlHeader>
 
-                <CrawlMeta>
-                  <MetaItem>
-                    <MetaLabel>Date & Time</MetaLabel>
-                    <MetaValue>{formatDate(crawl.date)}</MetaValue>
-                  </MetaItem>
-                  <MetaItem>
-                    <MetaLabel>City</MetaLabel>
-                    <MetaValue>{crawl.city.name}</MetaValue>
-                  </MetaItem>
-                  <MetaItem>
-                    <MetaLabel>Participants</MetaLabel>
-                    <MetaValue>
-                      {crawl._count.participants}/{crawl.maxParticipants}
-                    </MetaValue>
-                  </MetaItem>
-                  <MetaItem>
-                    <MetaLabel>Bars</MetaLabel>
-                    <MetaValue>{crawl.crawlBars.length} stops</MetaValue>
-                  </MetaItem>
-                </CrawlMeta>
+                  <CrawlMeta>
+                    <MetaItem>
+                      <MetaLabel>Date & Time</MetaLabel>
+                      <MetaValue>{formatDate(crawl.date)}</MetaValue>
+                    </MetaItem>
+                    <MetaItem>
+                      <MetaLabel>City</MetaLabel>
+                      <MetaValue>{crawl.city.name}</MetaValue>
+                    </MetaItem>
+                    <MetaItem>
+                      <MetaLabel>Participants</MetaLabel>
+                      <MetaValue>
+                        {crawl._count.participants}/{crawl.maxParticipants}
+                      </MetaValue>
+                    </MetaItem>
+                    <MetaItem>
+                      <MetaLabel>Bars</MetaLabel>
+                      <MetaValue>{crawl.crawlBars.length} stops</MetaValue>
+                    </MetaItem>
+                  </CrawlMeta>
 
-                <BarPreview>
-                  <BarCount>
-                    {Math.floor(
-                      (crawl._count.participants / crawl.maxParticipants) * 100
-                    )}
-                    % full • {crawl.isPublic ? "Public" : "Private"}
-                  </BarCount>
-                </BarPreview>
+                  <BarPreview>
+                    <BarCount>
+                      {Math.floor(
+                        (crawl._count.participants / crawl.maxParticipants) *
+                          100
+                      )}
+                      % full • {crawl.isPublic ? "Public" : "Private"}
+                      {isPastCrawl && " • Past Event"}
+                    </BarCount>
+                  </BarPreview>
 
-                <ActionButtons>
-                  <ViewButton href={`/crawls/${crawl.id}`}>
-                    View Details
-                  </ViewButton>
-
-                  {userIsCreator ? (
-                    <ManageButton href={`/crawls/${crawl.id}/manage`}>
-                      Manage
-                    </ManageButton>
-                  ) : (
-                    <ViewButton href={`/crawls/${crawl.id}/chat`}>
-                      Chat
+                  <ActionButtons>
+                    <ViewButton href={`/crawls/${crawl.id}`}>
+                      {isPastCrawl ? "View Details" : "View Details"}
                     </ViewButton>
-                  )}
-                </ActionButtons>
-              </CrawlCard>
-            );
-          })}
 
-        {/* Loading State */}
-        {isLoading && (
-          <LoadingState>
-            <p>Loading your crawls...</p>
-          </LoadingState>
-        )}
+                    {!isPastCrawl && (
+                      <JoinButtonWrapper>
+                        <JoinButton
+                          onClick={() => handleJoinCrawl(crawl.id)}
+                          $requiresAuth={!isAuthenticated || !canJoin}
+                          disabled={!canJoin || isJoining === crawl.id}
+                        >
+                          {isJoining === crawl.id
+                            ? "Joining..."
+                            : userInCrawl
+                            ? "Joined"
+                            : crawlFull
+                            ? "Full"
+                            : !isAuthenticated
+                            ? "Sign Up to Join"
+                            : !canJoin
+                            ? "Cannot Join"
+                            : "Join Crawl"}
+                        </JoinButton>
 
-        {/* Empty State */}
-        {!isLoading && displayCrawls.length === 0 && (
-          <EmptyState>
-            <div className="icon">
-              {activeTab === "created"
-                ? "📝"
-                : activeTab === "participating"
-                ? "👥"
-                : activeTab === "upcoming"
-                ? "📅"
-                : "🏁"}
-            </div>
-            <h3 style={{ color: "#e2e8f0", marginBottom: "0.5rem" }}>
-              {activeTab === "created" && "No crawls created yet"}
-              {activeTab === "participating" &&
-                "Not participating in any crawls"}
-              {activeTab === "upcoming" && "No upcoming crawls"}
-              {activeTab === "past" && "No past crawls"}
-            </h3>
-            <p>
-              {activeTab === "created" &&
-                "Create your first crawl to get started!"}
-              {activeTab === "participating" &&
-                "Join a crawl from the discover page!"}
-              {activeTab === "upcoming" &&
-                "All your upcoming crawls will appear here"}
-              {activeTab === "past" && "Your completed crawls will appear here"}
-            </p>
-            {activeTab === "created" && (
-              <CreateCrawlCard
-                href="/crawl-planner"
-                style={{
-                  marginTop: "1rem",
-                  minHeight: "auto",
-                  padding: "1.5rem",
-                }}
-              >
-                <CreateText>Create Your First Crawl</CreateText>
-              </CreateCrawlCard>
+                        {crawlFull && <Tooltip>This crawl is full</Tooltip>}
+                        {!isAuthenticated && !crawlFull && (
+                          <Tooltip>Sign up to join this crawl</Tooltip>
+                        )}
+                        {isAuthenticated && userInCrawl && (
+                          <Tooltip>You&apos;re already in this crawl</Tooltip>
+                        )}
+                        {isAuthenticated &&
+                          !userInCrawl &&
+                          !crawlFull &&
+                          !canJoin && (
+                            <Tooltip>This crawl is no longer joinable</Tooltip>
+                          )}
+                      </JoinButtonWrapper>
+                    )}
+
+                    {isPastCrawl && (
+                      <ViewButton
+                        href={`/crawls/${crawl.id}`}
+                        style={{ flex: 1 }}
+                      >
+                        View Memories
+                      </ViewButton>
+                    )}
+                  </ActionButtons>
+                </CardComponent>
+              );
+            })}
+
+            {/* Empty State */}
+            {displayCrawls.length === 0 && (
+              <EmptyState>
+                <div className="icon">
+                  {activeTab === "discover"
+                    ? "🔍"
+                    : activeTab === "my-crawls"
+                    ? "📅"
+                    : activeTab === "past-events"
+                    ? "🏁"
+                    : "📖"}
+                </div>
+                <h3 style={{ color: "#e2e8f0", marginBottom: "0.5rem" }}>
+                  {activeTab === "discover" && "No upcoming crawls available"}
+                  {activeTab === "my-crawls" && "No upcoming crawls"}
+                  {activeTab === "past-events" && "No past events found"}
+                  {activeTab === "my-past-events" && "No past events joined"}
+                </h3>
+                <p>
+                  {activeTab === "discover" &&
+                    "Check back later for new crawl opportunities!"}
+                  {activeTab === "my-crawls" &&
+                    "Join a crawl from the Discover tab to get started!"}
+                  {activeTab === "past-events" &&
+                    "Past public events will appear here"}
+                  {activeTab === "my-past-events" &&
+                    "Your past crawl history will appear here"}
+                </p>
+                {!isPastTab && (
+                  <CreateCrawlCard
+                    href={isAuthenticated ? "/crawl-planner" : "/auth/signup"}
+                    style={{
+                      marginTop: "1rem",
+                      minHeight: "auto",
+                      padding: "1.5rem",
+                    }}
+                  >
+                    <CreateText>
+                      {isAuthenticated
+                        ? "Create Your First Crawl"
+                        : "Be the first to create one!"}
+                    </CreateText>
+                  </CreateCrawlCard>
+                )}
+              </EmptyState>
             )}
-            {(activeTab === "participating" || activeTab === "upcoming") && (
-              <CreateCrawlCard
-                href="/crawls"
-                style={{
-                  marginTop: "1rem",
-                  minHeight: "auto",
-                  padding: "1.5rem",
-                }}
-              >
-                <CreateText>Discover Crawls</CreateText>
-              </CreateCrawlCard>
-            )}
-          </EmptyState>
+          </>
         )}
       </CrawlsGrid>
     </Page>
   );
-};
-
-export default MyCrawls;
+}
