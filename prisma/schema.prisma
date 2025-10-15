@@ -92,7 +92,7 @@ model City {
 
 model Bar {
   id          String   @id @default(cuid())
-  name        String
+  name        String   @unique 
   description String?
   address     String
   cityId      String
@@ -215,6 +215,7 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
 model Crawl {

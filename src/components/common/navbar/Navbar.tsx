@@ -2,7 +2,7 @@
 import styled from "styled-components";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 
 const Nav = styled.nav`
@@ -99,7 +99,7 @@ const GradientButton = styled(Link)`
   border: 1px solid rgba(139, 92, 246, 0.3);
   color: white;
   padding: 0.75rem 1.5rem;
-  /* border-radius: 8px; */
+  border-radius: 8px;
   text-decoration: none;
   font-weight: 600;
   transition: all 0.3s ease;
@@ -188,9 +188,14 @@ const UserAvatar = styled.div`
   color: white;
   font-weight: 600;
   font-size: 0.875rem;
+  transition: transform 0.2s ease;
+
+  ${UserMenu}:hover & {
+    transform: scale(1.05);
+  }
 `;
 
-const UserDropdown = styled.div`
+const UserDropdown = styled.div<{ $isOpen: boolean }>`
   position: absolute;
   top: 100%;
   right: 0;
@@ -202,10 +207,18 @@ const UserDropdown = styled.div`
   padding: 0.75rem;
   min-width: 200px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  display: none;
+  display: ${(props) => (props.$isOpen ? "block" : "none")};
+  z-index: 1001;
 
-  ${UserMenu}:hover & {
-    display: block;
+  /* Create invisible gap to prevent hover interruption */
+  &::before {
+    content: "";
+    position: absolute;
+    top: -0.5rem;
+    left: 0;
+    right: 0;
+    height: 0.5rem;
+    background: transparent;
   }
 `;
 
@@ -295,6 +308,7 @@ const MobileMenu = styled.div<{ $isOpen: boolean }>`
   backdrop-filter: blur(20px);
   border-bottom: 1px solid #334155;
   padding: 1rem;
+  z-index: 1000;
 
   @media (min-width: 769px) {
     display: none;
@@ -344,14 +358,33 @@ const MobileAuthSection = styled.div`
 export default function Navbar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { data: session } = useSession();
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsUserMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const navigation = [
     { name: "Home", href: "/" },
     { name: "Bars", href: "/bars" },
     { name: "Plan a Crawl", href: "/crawl-planner" },
     // Only show "My Crawls" when user is authenticated
-    ...(session ? [{ name: "My Crawls", href: "/crawls-dashboard" }] : []),
+    ...(session ? [{ name: "My Crawls", href: "/my-crawls" }] : []),
     { name: "Discover Crawls", href: "/crawls-dashboard" },
   ];
 
@@ -364,7 +397,12 @@ export default function Navbar() {
 
   const handleLogout = () => {
     signOut();
+    setIsUserMenuOpen(false);
     setIsMobileMenuOpen(false);
+  };
+
+  const toggleUserMenu = () => {
+    setIsUserMenuOpen(!isUserMenuOpen);
   };
 
   const isAuthenticated = !!session;
@@ -394,24 +432,34 @@ export default function Navbar() {
         {/* Desktop Auth Section */}
         <AuthSection>
           {isAuthenticated ? (
-            <UserMenu>
+            <UserMenu ref={userMenuRef} onClick={toggleUserMenu}>
               <UserAvatar>
                 {session.user?.name?.charAt(0).toUpperCase() || "U"}
               </UserAvatar>
-              <UserDropdown>
+              <UserDropdown $isOpen={isUserMenuOpen}>
                 <UserInfo>
                   <UserName>{session.user?.name || "User"}</UserName>
                   <UserEmail>{session.user?.email}</UserEmail>
                 </UserInfo>
-                <DropdownItem href="/crawls-dashboard">My Crawls</DropdownItem>
-                <DropdownItem href="/profile">Profile</DropdownItem>
+                <DropdownItem
+                  href="/crawls-dashboard"
+                  onClick={() => setIsUserMenuOpen(false)}
+                >
+                  My Crawls
+                </DropdownItem>
+                <DropdownItem
+                  href="/profile"
+                  onClick={() => setIsUserMenuOpen(false)}
+                >
+                  Profile
+                </DropdownItem>
                 <DropdownDivider />
                 <DropdownButton onClick={handleLogout}>Log out</DropdownButton>
               </UserDropdown>
             </UserMenu>
           ) : (
             <>
-              <SecondaryGradientButton href="/auth/signin">
+              <SecondaryGradientButton href="/auth/login">
                 Log in
               </SecondaryGradientButton>
               <GradientButton href="/auth/signup">Sign up</GradientButton>
@@ -462,7 +510,7 @@ export default function Navbar() {
           ) : (
             <>
               <SecondaryGradientButton
-                href="/auth/signin"
+                href="/auth/login"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Log in

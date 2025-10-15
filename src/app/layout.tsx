@@ -4,8 +4,8 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/common/navbar/Navbar";
 import StyledComponentsRegistry from "@/lib/registry";
-import Providers from "@/components/providers/Providers";
 import Footer from "@/components/common/footer/Footer";
+import { AuthProvider } from "@/components/providers/Providers";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,11 +43,11 @@ export default function RootLayout({
         }}
       >
         <StyledComponentsRegistry>
-          <Providers>
+          <AuthProvider>
             <Navbar />
             {children}
             <Footer />
-          </Providers>
+          </AuthProvider>
         </StyledComponentsRegistry>
       </body>
     </html>

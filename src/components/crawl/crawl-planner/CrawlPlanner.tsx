@@ -2,6 +2,7 @@
 import styled from "styled-components";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 const Page = styled.div`
   padding: 2rem 1rem;
@@ -532,7 +533,42 @@ interface CrawlResult {
   shareableLink: string;
 }
 
+interface CrawlFormData {
+  name: string;
+  description: string;
+  cityId: string;
+  date: string;
+  time: string;
+  maxParticipants: string;
+  barTypes: string[];
+}
+
+interface City {
+  id: string;
+  name: string;
+}
+
+interface CrawlResult {
+  id: string;
+  name: string;
+  description: string;
+  city: City;
+  date: string;
+  startTime: string;
+  maxParticipants: number;
+  status: string;
+  crawlBars: Array<{
+    bar: {
+      name: string;
+      type: string;
+    };
+    orderIndex: number;
+  }>;
+  shareableLink: string;
+}
+
 export default function CrawlPlanner() {
+  const { data: session, status } = useSession();
   const [formData, setFormData] = useState<CrawlFormData>({
     name: "",
     description: "",
@@ -547,6 +583,7 @@ export default function CrawlPlanner() {
   const [isLoading, setIsLoading] = useState(false);
   const [crawlResult, setCrawlResult] = useState<CrawlResult | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const barTypeOptions = [
     "PUB",
@@ -567,9 +604,12 @@ export default function CrawlPlanner() {
         if (response.ok) {
           const citiesData = await response.json();
           setCities(citiesData);
+        } else {
+          setError("Failed to load cities");
         }
       } catch (error) {
         console.error("Error fetching cities:", error);
+        setError("Failed to load cities");
       }
     };
 
@@ -583,6 +623,7 @@ export default function CrawlPlanner() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setError(null); // Clear error when user makes changes
   };
 
   const handleBarTypeChange = (barType: string) => {
@@ -592,18 +633,30 @@ export default function CrawlPlanner() {
         ? prev.barTypes.filter((type) => type !== barType)
         : [...prev.barTypes, barType],
     }));
+    setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid) return;
+
+    if (!session) {
+      setError("Please sign in to create a crawl");
+      return;
+    }
+
+    if (!isFormValid) {
+      setError("Please fill in all required fields");
+      return;
+    }
 
     setIsLoading(true);
+    setError(null);
 
     try {
       // Combine date and time into a single DateTime
       const dateTime = new Date(`${formData.date}T${formData.time}`);
 
+      // CHANGED: Use /api/crawls/my-crawls instead of /api/crawls
       const response = await fetch("/api/crawls", {
         method: "POST",
         headers: {
@@ -617,16 +670,16 @@ export default function CrawlPlanner() {
           startTime: dateTime.toISOString(),
           maxParticipants: parseInt(formData.maxParticipants),
           barTypes: formData.barTypes,
-          isPublic: true,
         }),
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create crawl");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create crawl");
       }
 
-      const crawl = await response.json();
+      const result = await response.json();
+      const crawl = result.crawl;
 
       setCrawlResult({
         ...crawl,
@@ -635,7 +688,7 @@ export default function CrawlPlanner() {
       setShowSuccess(true);
     } catch (error) {
       console.error("Error creating crawl:", error);
-      alert(
+      setError(
         error instanceof Error
           ? error.message
           : "Failed to create crawl. Please try again."
@@ -661,6 +714,10 @@ export default function CrawlPlanner() {
       }
     } catch (error) {
       console.error("Error sharing:", error);
+      // Don't show error for user cancellation
+      if (error instanceof Error && error.name !== "AbortError") {
+        alert("Failed to share crawl");
+      }
     }
   };
 
@@ -701,13 +758,18 @@ export default function CrawlPlanner() {
     });
   };
 
-  // Set body background
-  useEffect(() => {
-    document.body.style.background =
-      "linear-gradient(-45deg, rgb(9, 9, 11), rgb(24, 20, 31), rgb(9, 9, 11), rgb(21, 17, 23))";
-    document.body.style.backgroundSize = "400% 400%";
-    document.body.style.animation = "gradientShift 10s ease infinite";
-  }, []);
+  // Set minimum date to today
+  const today = new Date().toISOString().split("T")[0];
+
+  // Show loading state while checking session
+  if (status === "loading") {
+    return (
+      <Page>
+        <Title>Plan Your Bar Crawl</Title>
+        <Description>Loading...</Description>
+      </Page>
+    );
+  }
 
   return (
     <Page>
@@ -716,6 +778,22 @@ export default function CrawlPlanner() {
         Create the perfect night out with our smart crawl planner. We&apos;ll
         optimize your route and suggest the best bars.
       </Description>
+
+      {error && (
+        <div
+          style={{
+            background: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.3)",
+            color: "#fca5a5",
+            padding: "1rem",
+            borderRadius: "8px",
+            marginBottom: "2rem",
+            textAlign: "center",
+          }}
+        >
+          {error}
+        </div>
+      )}
 
       <PlannerContainer>
         {/* Form Section */}
@@ -782,7 +860,7 @@ export default function CrawlPlanner() {
                   name="date"
                   value={formData.date}
                   onChange={handleInputChange}
-                  min={new Date().toISOString().split("T")[0]}
+                  min={today}
                   required
                   disabled={isLoading}
                 />
@@ -838,20 +916,34 @@ export default function CrawlPlanner() {
               </FormGroup>
             </FormGrid>
 
-            <CreateCrawlButton
-              type="submit"
-              $loading={isLoading}
-              disabled={!isFormValid || isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <span style={{ marginRight: "0.5rem" }}>⏳</span>
-                  Planning Your Crawl...
-                </>
-              ) : (
-                "Create My Crawl 🍻"
-              )}
-            </CreateCrawlButton>
+            {!session ? (
+              <SignUpButton
+                href="/auth/signin"
+                style={{
+                  width: "100",
+                  marginTop: "2rem",
+                  textAlign: "center",
+                  display: "block",
+                }}
+              >
+                Sign In to Create Crawl
+              </SignUpButton>
+            ) : (
+              <CreateCrawlButton
+                type="submit"
+                $loading={isLoading}
+                disabled={!isFormValid || isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <span style={{ marginRight: "0.5rem" }}>⏳</span>
+                    Planning Your Crawl...
+                  </>
+                ) : (
+                  "Create My Crawl 🍻"
+                )}
+              </CreateCrawlButton>
+            )}
           </form>
         </FormSection>
 
@@ -937,18 +1029,28 @@ export default function CrawlPlanner() {
               We&apos;ve created your crawl in {crawlResult.city.name}
               <br />
               starting at {new Date(crawlResult.startTime).toLocaleDateString()}
+              <br />
+              <br />
+              <strong>Your route includes:</strong>
+              <br />
+              {crawlResult.crawlBars.map((crawlBar) => (
+                <div key={crawlBar.orderIndex}>
+                  {crawlBar.orderIndex}. {crawlBar.bar.name} (
+                  {crawlBar.bar.type.replace("_", " ")})
+                </div>
+              ))}
             </SuccessMessage>
 
             <ActionButtons>
-              <SignUpButton href="/auth/signup">
-                Sign Up to Save Crawl
-              </SignUpButton>
               <ShareButton onClick={handleShareCrawl}>
                 Share with Friends
               </ShareButton>
               <NewCrawlButton onClick={handleCreateNewCrawl}>
                 Plan Another
               </NewCrawlButton>
+              <SignUpButton href={`/crawls/${crawlResult.id}`}>
+                View Crawl Details
+              </SignUpButton>
             </ActionButtons>
           </SuccessCard>
         </SuccessOverlay>
