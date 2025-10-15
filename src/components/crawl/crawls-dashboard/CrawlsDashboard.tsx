@@ -600,14 +600,21 @@ const ViewButton = styled(Link)`
   }
 `;
 
-const JoinButton = styled.button<{ $requiresAuth?: boolean }>`
+const JoinButton = styled.button<{
+  $requiresAuth?: boolean;
+  $isLeaving?: boolean;
+}>`
   background: ${(props) =>
-    props.$requiresAuth
+    props.$isLeaving
+      ? "linear-gradient(45deg, #f59e0b, #d97706)"
+      : props.$requiresAuth
       ? "linear-gradient(45deg, #6b7280, #4b5563)"
       : "linear-gradient(45deg, #10b981, #059669)"};
   border: 1px solid
     ${(props) =>
-      props.$requiresAuth
+      props.$isLeaving
+        ? "rgba(245, 158, 11, 0.3)"
+        : props.$requiresAuth
         ? "rgba(107, 114, 128, 0.3)"
         : "rgba(16, 185, 129, 0.3)"};
   color: white;
@@ -638,13 +645,19 @@ const JoinButton = styled.button<{ $requiresAuth?: boolean }>`
 
   &:hover:not(:disabled) {
     background: ${(props) =>
-      props.$requiresAuth
+      props.$isLeaving
+        ? "linear-gradient(45deg, #d97706, #b45309)"
+        : props.$requiresAuth
         ? "linear-gradient(45deg, #6b7280, #4b5563)"
         : "linear-gradient(45deg, #059669, #047857)"};
     transform: ${(props) =>
       props.$requiresAuth ? "none" : "translateY(-1px)"};
     box-shadow: ${(props) =>
-      props.$requiresAuth ? "none" : "0 4px 12px rgba(16, 185, 129, 0.3)"};
+      props.$isLeaving
+        ? "0 4px 12px rgba(245, 158, 11, 0.3)"
+        : props.$requiresAuth
+        ? "none"
+        : "0 4px 12px rgba(16, 185, 129, 0.3)"};
   }
 
   /* Reduce hover on mobile */
@@ -788,6 +801,113 @@ const PastCrawlCard = styled(CrawlCard)`
   }
 `;
 
+// New styled components for notifications
+const NotificationContainer = styled.div`
+  position: fixed;
+  top: 100px;
+  right: 2rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 400px;
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    right: 1rem;
+    left: 1rem;
+    top: 80px;
+  }
+`;
+
+const Notification = styled.div<{
+  $type: "success" | "error" | "info" | "warning";
+}>`
+  background: ${(props) =>
+    props.$type === "success"
+      ? "linear-gradient(45deg, #10b981, #059669)"
+      : props.$type === "error"
+      ? "linear-gradient(45deg, #ef4444, #dc2626)"
+      : props.$type === "warning"
+      ? "linear-gradient(45deg, #f59e0b, #d97706)"
+      : "linear-gradient(45deg, #8b5cf6, #3b82f6)"};
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  animation: slideIn 0.3s ease-out;
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+`;
+
+const NotificationContent = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const NotificationIcon = styled.div`
+  font-size: 1.25rem;
+`;
+
+const NotificationMessage = styled.div`
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.4;
+`;
+
+const UndoButton = styled.button`
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+  }
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+`;
+
 interface CrawlUser {
   id: string;
   name: string | null;
@@ -826,6 +946,15 @@ interface Crawl {
 
 type CrawlTab = "discover" | "my-crawls" | "past-events" | "my-past-events";
 
+interface NotificationData {
+  id: string;
+  type: "success" | "error" | "info" | "warning";
+  message: string;
+  crawlId?: string;
+  crawlName?: string;
+  undoAction?: () => void;
+}
+
 export default function CrawlsDashboard() {
   const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState<CrawlTab>("discover");
@@ -839,8 +968,33 @@ export default function CrawlsDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isJoining, setIsJoining] = useState<string | null>(null);
+  const [isLeaving, setIsLeaving] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
 
   const isAuthenticated = !!session;
+
+  // Add notification
+  const addNotification = useCallback(
+    (notification: Omit<NotificationData, "id">) => {
+      const id = Math.random().toString(36).substr(2, 9);
+      setNotifications((prev) => [...prev, { ...notification, id }]);
+
+      // Auto remove after 5 seconds (except for notifications with undo)
+      if (!notification.undoAction) {
+        setTimeout(() => {
+          removeNotification(id);
+        }, 5000);
+      }
+    },
+    []
+  );
+
+  // Remove notification
+  const removeNotification = useCallback((id: string) => {
+    setNotifications((prev) =>
+      prev.filter((notification) => notification.id !== id)
+    );
+  }, []);
 
   // Fetch data for ALL tabs when component mounts or auth changes
   const fetchAllTabData = useCallback(async () => {
@@ -962,31 +1116,113 @@ export default function CrawlsDashboard() {
     }
   }, [activeTab, fetchActiveTabData, isInitialLoad]);
 
-  const handleJoinCrawl = async (crawlId: string) => {
+  const handleJoinCrawl = async (crawlId: string, crawlName: string) => {
     if (!isAuthenticated) {
       window.location.href = `/auth/signup?redirect=/crawls&crawl=${crawlId}`;
       return;
     }
 
+    setIsJoining(crawlId);
+
     try {
-      setIsJoining(crawlId);
       const response = await fetch(`/api/crawls/${crawlId}/join`, {
         method: "POST",
       });
 
       if (response.ok) {
+        // Store the previous state for undo
+        const previousDiscoverCrawls = [...discoverCrawls];
+        const previousMyCrawls = [...myUpcomingCrawls];
+
         // Refresh all data after joining
         await fetchAllTabData();
-        alert("Successfully joined the crawl!");
+
+        // Show success notification with undo option
+        addNotification({
+          type: "success",
+          message: `You've joined "${crawlName}"!`,
+          crawlId,
+          crawlName,
+          undoAction: async () => {
+            try {
+              const leaveResponse = await fetch(
+                `/api/crawls/${crawlId}/leave`,
+                {
+                  method: "POST",
+                }
+              );
+
+              if (leaveResponse.ok) {
+                await fetchAllTabData();
+                addNotification({
+                  type: "info",
+                  message: `You've left "${crawlName}"`,
+                });
+              } else {
+                addNotification({
+                  type: "error",
+                  message: "Failed to leave crawl",
+                });
+              }
+            } catch (error) {
+              console.error("Error leaving crawl:", error);
+              addNotification({
+                type: "error",
+                message: "Failed to leave crawl",
+              });
+            }
+          },
+        });
       } else {
         const errorData = await response.json();
-        alert(errorData.message || "Failed to join crawl. Please try again.");
+        addNotification({
+          type: "error",
+          message:
+            errorData.message || "Failed to join crawl. Please try again.",
+        });
       }
     } catch (error) {
       console.error("Error joining crawl:", error);
-      alert("Failed to join crawl. Please try again.");
+      addNotification({
+        type: "error",
+        message: "Failed to join crawl. Please try again.",
+      });
     } finally {
       setIsJoining(null);
+    }
+  };
+
+  const handleLeaveCrawl = async (crawlId: string, crawlName: string) => {
+    if (!isAuthenticated) return;
+
+    setIsLeaving(crawlId);
+
+    try {
+      const response = await fetch(`/api/crawls/${crawlId}/leave`, {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        await fetchAllTabData();
+        addNotification({
+          type: "info",
+          message: `You've left "${crawlName}"`,
+        });
+      } else {
+        const errorData = await response.json();
+        addNotification({
+          type: "error",
+          message: errorData.message || "Failed to leave crawl",
+        });
+      }
+    } catch (error) {
+      console.error("Error leaving crawl:", error);
+      addNotification({
+        type: "error",
+        message: "Failed to leave crawl",
+      });
+    } finally {
+      setIsLeaving(null);
     }
   };
 
@@ -1004,6 +1240,11 @@ export default function CrawlsDashboard() {
   const isUserInCrawl = (crawl: Crawl) => {
     if (!session?.user?.id) return false;
     return crawl.participants.some((p) => p.userId === session.user.id);
+  };
+
+  const isUserCreator = (crawl: Crawl) => {
+    if (!session?.user?.id) return false;
+    return crawl.creator.id === session.user.id;
   };
 
   const isCrawlFull = (crawl: Crawl) => {
@@ -1035,6 +1276,15 @@ export default function CrawlsDashboard() {
       !isCrawlFull(crawl) &&
       !isCrawlPast(crawl) &&
       (crawl.status === "PLANNING" || crawl.status === "UPCOMING")
+    );
+  };
+
+  const canLeaveCrawl = (crawl: Crawl) => {
+    return (
+      isAuthenticated &&
+      isUserInCrawl(crawl) &&
+      !isUserCreator(crawl) &&
+      !isCrawlPast(crawl)
     );
   };
 
@@ -1075,6 +1325,33 @@ export default function CrawlsDashboard() {
 
   return (
     <Page>
+      {/* Notifications */}
+      <NotificationContainer>
+        {notifications.map((notification) => (
+          <Notification key={notification.id} $type={notification.type}>
+            <NotificationContent>
+              <NotificationIcon>
+                {notification.type === "success" && "🎉"}
+                {notification.type === "error" && "❌"}
+                {notification.type === "info" && "ℹ️"}
+                {notification.type === "warning" && "⚠️"}
+              </NotificationIcon>
+              <NotificationMessage>{notification.message}</NotificationMessage>
+            </NotificationContent>
+            <div
+              style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}
+            >
+              {notification.undoAction && (
+                <UndoButton onClick={notification.undoAction}>Undo</UndoButton>
+              )}
+              <CloseButton onClick={() => removeNotification(notification.id)}>
+                ×
+              </CloseButton>
+            </div>
+          </Notification>
+        ))}
+      </NotificationContainer>
+
       <Title>Bar Crawls</Title>
       <Description>
         {isAuthenticated
@@ -1141,8 +1418,10 @@ export default function CrawlsDashboard() {
             {/* Display crawls */}
             {displayCrawls.map((crawl) => {
               const userInCrawl = isUserInCrawl(crawl);
+              const userIsCreator = isUserCreator(crawl);
               const crawlFull = isCrawlFull(crawl);
               const canJoin = canJoinCrawl(crawl);
+              const canLeave = canLeaveCrawl(crawl);
               const isPastCrawl = isCrawlPast(crawl);
               const CardComponent = isPastCrawl ? PastCrawlCard : CrawlCard;
 
@@ -1192,6 +1471,7 @@ export default function CrawlsDashboard() {
                           100
                       )}
                       % full • {crawl.isPublic ? "Public" : "Private"}
+                      {userIsCreator && " • Your Crawl"}
                       {isPastCrawl && " • Past Event"}
                     </BarCount>
                   </BarPreview>
@@ -1204,14 +1484,29 @@ export default function CrawlsDashboard() {
                     {!isPastCrawl && (
                       <JoinButtonWrapper>
                         <JoinButton
-                          onClick={() => handleJoinCrawl(crawl.id)}
-                          $requiresAuth={!isAuthenticated || !canJoin}
-                          disabled={!canJoin || isJoining === crawl.id}
+                          onClick={() =>
+                            userInCrawl && canLeave
+                              ? handleLeaveCrawl(crawl.id, crawl.name)
+                              : handleJoinCrawl(crawl.id, crawl.name)
+                          }
+                          $requiresAuth={
+                            !isAuthenticated || (!canJoin && !canLeave)
+                          }
+                          $isLeaving={userInCrawl && canLeave}
+                          disabled={
+                            (!canJoin && !canLeave) ||
+                            isJoining === crawl.id ||
+                            isLeaving === crawl.id
+                          }
                         >
                           {isJoining === crawl.id
                             ? "Joining..."
-                            : userInCrawl
-                            ? "Joined"
+                            : isLeaving === crawl.id
+                            ? "Leaving..."
+                            : userInCrawl && userIsCreator
+                            ? "Your Crawl"
+                            : userInCrawl && canLeave
+                            ? "Leave Crawl"
                             : crawlFull
                             ? "Full"
                             : !isAuthenticated
@@ -1225,8 +1520,11 @@ export default function CrawlsDashboard() {
                         {!isAuthenticated && !crawlFull && (
                           <Tooltip>Sign up to join this crawl</Tooltip>
                         )}
-                        {isAuthenticated && userInCrawl && (
-                          <Tooltip>You&apos;re already in this crawl</Tooltip>
+                        {isAuthenticated && userInCrawl && userIsCreator && (
+                          <Tooltip>You created this crawl</Tooltip>
+                        )}
+                        {isAuthenticated && userInCrawl && canLeave && (
+                          <Tooltip>Click to leave this crawl</Tooltip>
                         )}
                         {isAuthenticated &&
                           !userInCrawl &&

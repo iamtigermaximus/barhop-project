@@ -442,7 +442,7 @@ export default function Navbar() {
                   <UserEmail>{session.user?.email}</UserEmail>
                 </UserInfo>
                 <DropdownItem
-                  href="/crawls-dashboard"
+                  href="/my-crawls"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
                   My Crawls
