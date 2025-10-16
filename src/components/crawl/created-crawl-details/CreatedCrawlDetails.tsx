@@ -130,51 +130,178 @@ const SectionTitle = styled.h3`
   padding-bottom: 0.5rem;
 `;
 
-const BarList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+// Enhanced Route Components
+const RouteMap = styled.div`
+  margin-top: 1.5rem;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(139, 92, 246, 0.2);
 `;
 
-const BarItem = styled.div`
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 8px;
-  padding: 1rem;
+const RouteStep = styled.div<{ $isLast: boolean }>`
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  transition: all 0.3s ease;
+  align-items: flex-start;
+  padding: 1.5rem;
+  background: rgba(15, 23, 42, 0.4);
+  position: relative;
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+  &:not(:last-child) {
+    border-bottom: 1px solid rgba(139, 92, 246, 0.1);
   }
 `;
 
-const BarInfo = styled.div`
+const StepNumber = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #8b5cf6, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-right: 1rem;
+  flex-shrink: 0;
+`;
+
+const StepContent = styled.div`
   flex: 1;
+`;
+
+const StepHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 `;
 
 const BarName = styled.div`
   color: #f8fafc;
   font-weight: 600;
   font-size: 1.1rem;
+  flex: 1;
+  min-width: 200px;
 `;
 
-const BarType = styled.div`
+// Fix: Provide default value for $walkable
+const DistanceBadge = styled.span<{ $walkable?: boolean }>`
+  background: ${(props) =>
+    props.$walkable
+      ? "linear-gradient(45deg, #10b981, #059669)"
+      : "linear-gradient(45deg, #f59e0b, #d97706)"};
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+`;
+
+const BarDetails = styled.div`
   color: #94a3b8;
   font-size: 0.875rem;
-  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
 `;
 
-const BarOrder = styled.div`
-  background: rgba(139, 92, 246, 0.2);
-  color: #e2e8f0;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-weight: 600;
+// Fix: Provide default value for $walkable
+const TravelInfo = styled.div<{ $walkable?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: ${(props) => (props.$walkable ? "#10b981" : "#f59e0b")};
   font-size: 0.875rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 6px;
+  border-left: 3px solid ${(props) => (props.$walkable ? "#10b981" : "#f59e0b")};
+`;
+
+const RideShareButtons = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+`;
+
+const RideShareButton = styled.a`
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+`;
+
+const UberButton = styled(RideShareButton)`
+  background: #000;
+  color: white;
+`;
+
+const LyftButton = styled(RideShareButton)`
+  background: #ff00bf;
+  color: white;
+`;
+
+const TimeEstimate = styled.div`
+  color: #8b5cf6;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+`;
+
+const RouteSummary = styled.div`
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+`;
+
+const SummaryGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+`;
+
+const SummaryItem = styled.div`
+  text-align: center;
+  padding: 0.5rem;
+`;
+
+const SummaryValue = styled.div`
+  color: #f8fafc;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+`;
+
+const SummaryLabel = styled.div`
+  color: #94a3b8;
+  font-size: 0.75rem;
+`;
+
+// Fix: Provide default value for $isGood
+const WeatherAlert = styled.div<{ $isGood?: boolean }>`
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  text-align: center;
+  background: ${(props) =>
+    props.$isGood ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)"};
+  border: 1px solid
+    ${(props) =>
+      props.$isGood ? "rgba(16, 185, 129, 0.3)" : "rgba(245, 158, 11, 0.3)"};
+  color: ${(props) => (props.$isGood ? "#10b981" : "#f59e0b")};
 `;
 
 const ParticipantsSection = styled.div`
@@ -413,6 +540,15 @@ const CancelButton = styled.button`
   }
 `;
 
+interface Bar {
+  id: string;
+  name: string;
+  type: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
 interface Crawl {
   id: string;
   name: string;
@@ -440,17 +576,70 @@ interface Crawl {
   }>;
   crawlBars: Array<{
     orderIndex: number;
-    bar: {
-      id: string;
-      name: string;
-      type: string;
-      address: string;
-    };
+    bar: Bar;
   }>;
   _count: {
     participants: number;
   };
 }
+
+interface BarWithDistance {
+  bar: Bar;
+  orderIndex: number;
+  distanceToNext?: number;
+  travelTime?: number;
+  isWalkable?: boolean;
+  estimatedArrival?: string;
+}
+
+interface RouteSummary {
+  totalDistance: number;
+  totalWalkTime: number;
+  totalDriveTime: number;
+  maxWalkDistance: number;
+  needsTransportation: boolean;
+}
+
+interface WeatherData {
+  temperature: number;
+  condition: string;
+  isGoodForCrawl: boolean;
+  description: string;
+}
+
+// Utility function to calculate distance between coordinates (Haversine formula)
+const calculateDistance = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number => {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+// Mock weather data - in a real app, you'd fetch this from a weather API
+const getMockWeather = (city: string, date: string): WeatherData => {
+  const conditions = ["Sunny", "Partly Cloudy", "Clear", "Cloudy"];
+  const randomCondition =
+    conditions[Math.floor(Math.random() * conditions.length)];
+
+  return {
+    temperature: Math.floor(Math.random() * 30) + 60, // 60-90°F
+    condition: randomCondition,
+    isGoodForCrawl: !["Rainy", "Stormy", "Snowy"].includes(randomCondition),
+    description: `${randomCondition} and pleasant for a crawl`,
+  };
+};
 
 export default function CreatedCrawlDetails() {
   const params = useParams();
@@ -462,6 +651,15 @@ export default function CreatedCrawlDetails() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [enhancedBars, setEnhancedBars] = useState<BarWithDistance[]>([]);
+  const [routeSummary, setRouteSummary] = useState<RouteSummary>({
+    totalDistance: 0,
+    totalWalkTime: 0,
+    totalDriveTime: 0,
+    maxWalkDistance: 0,
+    needsTransportation: false,
+  });
+  const [weather, setWeather] = useState<WeatherData | null>(null);
 
   const crawlId = params.id as string;
 
@@ -472,6 +670,13 @@ export default function CreatedCrawlDetails() {
         if (response.ok) {
           const crawlData = await response.json();
           setCrawl(crawlData);
+
+          // Fetch mock weather data
+          const weatherData = getMockWeather(
+            crawlData.city.name,
+            crawlData.date
+          );
+          setWeather(weatherData);
         } else {
           setError("Crawl not found");
         }
@@ -487,6 +692,84 @@ export default function CreatedCrawlDetails() {
       fetchCrawl();
     }
   }, [crawlId]);
+
+  useEffect(() => {
+    const calculateRouteMetrics = () => {
+      if (!crawl?.crawlBars.length) return;
+
+      const sortedBars = [...crawl.crawlBars].sort(
+        (a, b) => a.orderIndex - b.orderIndex
+      );
+      const enhanced: BarWithDistance[] = [];
+
+      let totalDistance = 0;
+      let maxWalkDistance = 0;
+      const currentTime = new Date(`${crawl.date}T${crawl.startTime}`);
+
+      for (let i = 0; i < sortedBars.length; i++) {
+        const currentBar = sortedBars[i];
+        const nextBar = sortedBars[i + 1];
+
+        let distanceToNext = 0;
+        let travelTime = 0;
+        let isWalkable = false;
+
+        // Calculate arrival time for current bar
+        const estimatedArrival = currentTime.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+
+        if (nextBar) {
+          // Calculate distance between current and next bar
+          distanceToNext = calculateDistance(
+            currentBar.bar.latitude,
+            currentBar.bar.longitude,
+            nextBar.bar.latitude,
+            nextBar.bar.longitude
+          );
+
+          // Convert to miles (1km = 0.621371 miles)
+          distanceToNext = distanceToNext * 0.621371;
+
+          // Walking time (assuming 3 mph average walking speed)
+          travelTime = (distanceToNext / 3) * 60; // in minutes
+
+          // Consider walkable if under 0.5 miles
+          isWalkable = distanceToNext <= 0.5;
+
+          totalDistance += distanceToNext;
+          maxWalkDistance = Math.max(maxWalkDistance, distanceToNext);
+        }
+
+        enhanced.push({
+          ...currentBar,
+          distanceToNext,
+          travelTime,
+          isWalkable,
+          estimatedArrival,
+        });
+
+        // Update time for next bar (45 minutes at current bar + travel time)
+        currentTime.setMinutes(currentTime.getMinutes() + 45); // 45 minutes at bar
+        if (travelTime > 0) {
+          currentTime.setMinutes(currentTime.getMinutes() + travelTime);
+        }
+      }
+
+      setEnhancedBars(enhanced);
+      setRouteSummary({
+        totalDistance: Math.round(totalDistance * 10) / 10,
+        totalWalkTime: Math.round((totalDistance / 3) * 60),
+        totalDriveTime: Math.round((totalDistance / 25) * 60), // assuming 25 mph average
+        maxWalkDistance: Math.round(maxWalkDistance * 10) / 10,
+        needsTransportation: maxWalkDistance > 0.5,
+      });
+    };
+
+    calculateRouteMetrics();
+  }, [crawl]);
 
   const handleJoinCrawl = async () => {
     if (!session) {
@@ -526,9 +809,8 @@ export default function CreatedCrawlDetails() {
       });
 
       if (response.ok) {
-        // Redirect to my-crawls page after successful deletion
         router.push("/my-crawls");
-        router.refresh(); // Refresh the router cache
+        router.refresh();
       } else {
         const errorData = await response.json();
         setError(errorData.message || "Failed to delete crawl");
@@ -559,6 +841,22 @@ export default function CreatedCrawlDetails() {
       }
     } catch (error) {
       console.error("Error sharing:", error);
+    }
+  };
+
+  const getRideShareLink = (
+    fromAddress: string,
+    toAddress: string,
+    service: "uber" | "lyft"
+  ) => {
+    if (service === "uber") {
+      return `https://m.uber.com/ul/?action=setPickup&pickup[formatted_address]=${encodeURIComponent(
+        fromAddress
+      )}&dropoff[formatted_address]=${encodeURIComponent(toAddress)}`;
+    } else {
+      return `https://lyft.com/ride?id=lyft&pickup[formatted_address]=${encodeURIComponent(
+        fromAddress
+      )}&destination[formatted_address]=${encodeURIComponent(toAddress)}`;
     }
   };
 
@@ -649,24 +947,138 @@ export default function CreatedCrawlDetails() {
           </DetailCard>
         </DetailsGrid>
 
+        {/* Weather Alert */}
+        {weather && (
+          <WeatherAlert
+            $isGood={weather.isGoodForCrawl}
+            style={{ marginBottom: "1.5rem" }}
+          >
+            {weather.isGoodForCrawl ? "☀️" : "🌧️"} Weather:{" "}
+            {weather.temperature}°F and {weather.description}
+          </WeatherAlert>
+        )}
+
         <BarsSection>
           <SectionTitle>Crawl Route</SectionTitle>
-          <BarList>
-            {crawl.crawlBars
-              .sort((a, b) => a.orderIndex - b.orderIndex)
-              .map((crawlBar) => (
-                <BarItem key={crawlBar.bar.id}>
-                  <BarInfo>
+
+          {/* Route Summary */}
+          <RouteSummary>
+            <SummaryGrid>
+              <SummaryItem>
+                <SummaryValue>{routeSummary.totalDistance} mi</SummaryValue>
+                <SummaryLabel>Total Distance</SummaryLabel>
+              </SummaryItem>
+              <SummaryItem>
+                <SummaryValue>
+                  {routeSummary.needsTransportation ? "🚗" : "🚶"}
+                </SummaryValue>
+                <SummaryLabel>
+                  {routeSummary.needsTransportation
+                    ? "Transport Needed"
+                    : "Walkable"}
+                </SummaryLabel>
+              </SummaryItem>
+              <SummaryItem>
+                <SummaryValue>{routeSummary.totalWalkTime} min</SummaryValue>
+                <SummaryLabel>Walking Time</SummaryLabel>
+              </SummaryItem>
+              <SummaryItem>
+                <SummaryValue>{enhancedBars.length}</SummaryValue>
+                <SummaryLabel>Total Stops</SummaryLabel>
+              </SummaryItem>
+            </SummaryGrid>
+
+            {routeSummary.needsTransportation && (
+              <WeatherAlert $isGood={false}>
+                🚗 Transportation recommended - longest walk is{" "}
+                {routeSummary.maxWalkDistance} miles
+              </WeatherAlert>
+            )}
+          </RouteSummary>
+
+          {/* Enhanced Route Map */}
+          <RouteMap>
+            {enhancedBars.map((crawlBar, index) => (
+              <RouteStep
+                key={crawlBar.bar.id}
+                $isLast={index === enhancedBars.length - 1}
+              >
+                <StepNumber>{crawlBar.orderIndex}</StepNumber>
+                <StepContent>
+                  <StepHeader>
                     <BarName>{crawlBar.bar.name}</BarName>
-                    <BarType>
-                      {crawlBar.bar.type.replace("_", " ")} •{" "}
-                      {crawlBar.bar.address}
-                    </BarType>
-                  </BarInfo>
-                  <BarOrder>Stop #{crawlBar.orderIndex}</BarOrder>
-                </BarItem>
-              ))}
-          </BarList>
+                    {crawlBar.distanceToNext && crawlBar.distanceToNext > 0 && (
+                      <DistanceBadge $walkable={crawlBar.isWalkable}>
+                        {crawlBar.distanceToNext.toFixed(1)} mi
+                      </DistanceBadge>
+                    )}
+                  </StepHeader>
+
+                  <BarDetails>
+                    {crawlBar.bar.type.replace("_", " ")} •{" "}
+                    {crawlBar.bar.address}
+                  </BarDetails>
+
+                  {crawlBar.estimatedArrival && (
+                    <TimeEstimate>
+                      {/* 🕐 Arrive around {crawlBar.estimatedArrival} */}
+                    </TimeEstimate>
+                  )}
+
+                  {crawlBar.distanceToNext && crawlBar.distanceToNext > 0 && (
+                    <>
+                      <TravelInfo $walkable={crawlBar.isWalkable}>
+                        {crawlBar.isWalkable ? (
+                          <>
+                            <span>🚶</span>
+                            <span>
+                              Walk {crawlBar.travelTime?.toFixed(0)} min to next
+                              bar
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span>🚗</span>
+                            <span>
+                              Drive {crawlBar.travelTime?.toFixed(0)} min to
+                              next bar
+                            </span>
+                          </>
+                        )}
+                      </TravelInfo>
+
+                      {!crawlBar.isWalkable && enhancedBars[index + 1] && (
+                        <RideShareButtons>
+                          <UberButton
+                            href={getRideShareLink(
+                              crawlBar.bar.address,
+                              enhancedBars[index + 1].bar.address,
+                              "uber"
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Uber
+                          </UberButton>
+                          <LyftButton
+                            href={getRideShareLink(
+                              crawlBar.bar.address,
+                              enhancedBars[index + 1].bar.address,
+                              "lyft"
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Lyft
+                          </LyftButton>
+                        </RideShareButtons>
+                      )}
+                    </>
+                  )}
+                </StepContent>
+              </RouteStep>
+            ))}
+          </RouteMap>
         </BarsSection>
 
         <ParticipantsSection>
