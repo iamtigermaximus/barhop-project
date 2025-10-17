@@ -1,4 +1,5 @@
 "use client";
+import { UserSocialProfileWithRelations } from "@/types/social";
 import styled from "styled-components";
 
 const ListContainer = styled.div`
@@ -86,8 +87,8 @@ const HopInButton = styled.button`
 `;
 
 interface UserListProps {
-  users: any[];
-  onHopIn: (user: any) => void;
+  users: UserSocialProfileWithRelations[];
+  onHopIn: (user: UserSocialProfileWithRelations) => void;
   isLoading?: boolean;
 }
 
