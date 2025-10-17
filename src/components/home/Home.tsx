@@ -644,24 +644,59 @@ const ButtonGroup = styled.div`
   flex-wrap: wrap;
   position: relative;
   background: transparent !important;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 1rem;
+  }
 `;
 
-const PrimaryButton = styled(Link)`
-  background: linear-gradient(45deg, #8b5cf6, #3b82f6, #0ea5e9);
-  background-size: 400% 400%;
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  color: white;
-  padding: 1rem 2rem;
+const BaseButton = styled(Link)`
+  padding: 1rem 1.5rem;
   border-radius: 8px;
   text-decoration: none;
   font-weight: 600;
   transition: all 0.3s ease;
-  animation: gradientShift 4s ease infinite;
   position: relative;
   overflow: hidden;
+  text-align: center;
+  display: inline-block;
+  min-width: 160px;
+  white-space: nowrap;
+
+  @media (max-width: 768px) {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
+    min-width: 180px;
+    width: 100%;
+    max-width: 260px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    min-width: 160px;
+    max-width: 220px;
+  }
 
   &:hover {
     transform: translateY(-2px);
+  }
+`;
+
+const PrimaryButton = styled(BaseButton)`
+  background: linear-gradient(45deg, #8b5cf6, #3b82f6, #0ea5e9);
+  background-size: 400% 400%;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: white;
+  animation: gradientShift 4s ease infinite;
+
+  &:hover {
     box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
     border-color: rgba(139, 92, 246, 0.6);
   }
@@ -699,17 +734,11 @@ const PrimaryButton = styled(Link)`
   }
 `;
 
-const SecondaryButton = styled(Link)`
+const SecondaryButton = styled(BaseButton)`
   background: transparent;
   border: 1px solid;
   border-image: linear-gradient(45deg, #0ea5e9, #8b5cf6) 1;
   color: #e2e8f0;
-  padding: 1rem 2rem;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  position: relative;
 
   &:hover {
     background: linear-gradient(
@@ -718,7 +747,6 @@ const SecondaryButton = styled(Link)`
       rgba(139, 92, 246, 0.1)
     );
     color: white;
-    transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(14, 165, 233, 0.2);
   }
 `;
@@ -794,18 +822,15 @@ const SectionDescription = styled.p`
 
 const FeaturesGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2rem;
   max-width: 1200px;
   margin: 0 auto;
   background: transparent !important;
 
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(4, 1fr);
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 `;
 
@@ -959,10 +984,16 @@ const StepDescription = styled.p`
   font-size: 0.875rem;
 `;
 
+const CtaSection = styled.div`
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(139, 92, 246, 0.2);
+`;
+
 const SafetySection = styled.div`
   margin-top: 2rem;
   padding-top: 2rem;
-  /* border-top: 1px solid rgba(139, 92, 246, 0.2); */
   text-align: center;
   background-color: transparent !important;
 `;
@@ -1126,6 +1157,11 @@ export default function Home() {
       title: "Smart Discovery",
       description: "Find bars by type, district, and real-time availability",
     },
+    {
+      icon: "🚀",
+      title: "Instant Connections",
+      description: "Hop in with nearby users and make new friends instantly",
+    },
   ];
 
   const popularCities = [
@@ -1152,7 +1188,7 @@ export default function Home() {
       <HeroSection>
         <HeroTitle>Connect Through Shared Experiences</HeroTitle>
         <HeroDescription>
-          Plan bar crawls, skip lines with VIP passes,meet new people and
+          Plan bar crawls, skip lines with VIP passes, meet new people and
           connect with friends. Explore your city&apos;s social scene together —
           from casual hangouts to unforgettable nights out.
         </HeroDescription>
@@ -1160,8 +1196,7 @@ export default function Home() {
           <PrimaryButton href="/social">
             See Who&apos;s Out Tonight
           </PrimaryButton>
-          <PrimaryButton href="/bars">Explore All Bars</PrimaryButton>
-          <SecondaryButton href="/crawl-planner">Plan a Crawl</SecondaryButton>
+          <SecondaryButton href="/bars">Explore Bars</SecondaryButton>
         </ButtonGroup>
       </HeroSection>
 
@@ -1213,6 +1248,13 @@ export default function Home() {
             </StepDescription>
           </StepCard>
         </StepsContainer>
+
+        {/* Plan a Crawl CTA */}
+        <CtaSection>
+          <PrimaryButton href="/crawl-planner">
+            Start Planning Your Crawl
+          </PrimaryButton>
+        </CtaSection>
 
         <SafetySection>
           <SafetyTitle>Your Safety is Our Priority</SafetyTitle>
