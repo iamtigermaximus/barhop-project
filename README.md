@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🍻 Hoppr - Bar Crawl Planner & Social Platform
 
-## Getting Started
+Hoppr is a modern web application that helps you plan, discover, and join amazing bar crawls with friends and fellow enthusiasts. 
 
-First, run the development server:
+## 🚀 Features
+- **🗺️ Live Social Map** - See who's out tonight and join spontaneous meetups
+- **🍻 Smart Crawl Planning** - Plan multi-stop bar routes with optimized timing
+- **⭐ VIP Skip-the-Line** - Buy passes to bypass queues at popular venues
+- **👥 Social Groups** - Join or create groups based on interests and vibes
+- **🎯 Smart Discovery** - Find bars by type, music, crowd, and real-time availability
+- **🔒 Safety Features** - Verified users, group size limits, and venue partnerships
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 🎯 Core Functionality
+- **Smart Crawl Planning** - AI-powered bar route optimization
+- **Social Discovery** - Find and join public crawls in your city
+- **Real-time Participation** - Join crawls and interact with participants
+- **VIP Access** - Premium bar experiences and reservations
+- **Group Management** - Create and manage crawl groups
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 🏙️ City & Bar Management
+- **Multi-city Support** - Currently focused on Finnish cities
+- **Bar Database** - Comprehensive bar information with types, locations, and features
+- **Smart Filtering** - Filter bars by type, amenities, and VIP availability
+- **Geolocation** - Find bars near you
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 👥 Social Features
+- **User Profiles** - Complete user management with authentication
+- **Participant Management** - Track who's joining your crawls
+- **Real-time Chat** - In-crawl communication
+- **Public & Private Crawls** - Choose your privacy level
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠️ Tech Stack
 
-## Learn More
+**Frontend:**
+- Next.js with App Router
+- TypeScript for type safety
+- Styled Components for styling
+- NextAuth.js for authentication
 
-To learn more about Next.js, take a look at the following resources:
+**Backend:**
+- Next.js API Routes
+- Prisma ORM
+- PostgreSQL database
+- NextAuth.js sessions
+- Neon
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Database:**
+- User authentication & profiles
+- Cities, bars, and venues
+- Crawl events and participants
+- VIP passes and reservations
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🚦 Quick Start
 
-## Deploy on Vercel
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database
+- npm or yarn
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Installation
+1. **Clone the repository
+   git clone https://github.com/iamtigermaximus/barhop-project.git
+   cd hoppr
+2. **Install dependencies
+   npm install
+3. **Set up environment variables
+   cp .env.example .env.local
+4. **Set up database
+   cp .env.example .env.local
+5. **Run the development server
+    npm run dev
+6. **Open http://localhost:3000 in your browser
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
