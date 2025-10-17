@@ -444,9 +444,10 @@
 //   );
 // }
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styled from "styled-components";
 import { SocialVibe } from "@prisma/client";
+import { UserSocialProfileWithRelations } from "@/types/social";
 
 const SetupContainer = styled.div`
   background: rgba(30, 41, 59, 0.8);
@@ -661,6 +662,7 @@ interface SetupSocialProfileProps {
   }) => void;
   onSkip: () => void;
   isLoading?: boolean;
+  existingProfile?: UserSocialProfileWithRelations | null;
 }
 
 const vibeOptions = [
@@ -713,11 +715,32 @@ export default function SetupSocialProfile({
   onComplete,
   onSkip,
   isLoading = false,
+  existingProfile = null,
 }: SetupSocialProfileProps) {
   const [bio, setBio] = useState("");
   const [selectedVibe, setSelectedVibe] = useState<SocialVibe | null>(null);
   const [interests, setInterests] = useState<string[]>([]);
   const [newInterest, setNewInterest] = useState("");
+
+  // Populate form with existing data
+  useEffect(() => {
+    if (existingProfile) {
+      console.log("🔄 POPULATING FORM WITH EXISTING DATA:", existingProfile);
+      setBio(existingProfile.bio || "");
+      setSelectedVibe(existingProfile.vibe || null);
+      setInterests(existingProfile.interests || []);
+    }
+  }, [existingProfile]);
+
+  // Debug form state
+  useEffect(() => {
+    console.log("🔍 CURRENT FORM STATE:", {
+      bio,
+      selectedVibe,
+      interests,
+      hasExistingProfile: !!existingProfile,
+    });
+  }, [bio, selectedVibe, interests, existingProfile]);
 
   const addInterest = () => {
     if (newInterest.trim() && !interests.includes(newInterest.trim())) {
@@ -753,6 +776,7 @@ export default function SetupSocialProfile({
       console.log("✅ onComplete CALLED!");
     } else {
       console.log("🔴 NO VIBE SELECTED - CANNOT SUBMIT");
+      alert("Please select a vibe before saving!");
     }
   };
 
@@ -764,10 +788,13 @@ export default function SetupSocialProfile({
 
   return (
     <SetupContainer>
-      <Title>Set Up Your Social Profile</Title>
+      <Title>
+        {existingProfile ? "Edit Social Profile" : "Set Up Your Social Profile"}
+      </Title>
       <Description>
-        Tell others about yourself to make better connections. You can update
-        this anytime.
+        {existingProfile
+          ? "Update your social profile to make better connections."
+          : "Tell others about yourself to make better connections. You can update this anytime."}
       </Description>
 
       <Form onSubmit={handleSubmit}>
@@ -878,10 +905,14 @@ export default function SetupSocialProfile({
 
         <ButtonGroup>
           <SecondaryButton type="button" onClick={onSkip}>
-            Skip for Now
+            {existingProfile ? "Cancel" : "Skip for Now"}
           </SecondaryButton>
           <PrimaryButton type="submit" disabled={!selectedVibe || isLoading}>
-            {isLoading ? "Saving..." : "Complete Setup"}
+            {isLoading
+              ? "Saving..."
+              : existingProfile
+              ? "Update Profile"
+              : "Complete Setup"}
           </PrimaryButton>
         </ButtonGroup>
       </Form>

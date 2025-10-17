@@ -103,74 +103,54 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { bio, vibe, interests } = body;
 
-    console.log("📥 RAW REQUEST BODY:", JSON.stringify(body, null, 2));
-    console.log("🔍 PARSED FIELDS:", {
-      bio: bio || "empty",
-      vibe: vibe || "empty",
-      interests: interests || "empty",
-      interestsIsArray: Array.isArray(interests),
-    });
+    console.log("🚨 STARTING SAVE FOR USER:", session.user.id);
+    console.log("📥 DATA:", { bio, vibe, interests });
 
-    // Validate vibe
-    const validVibes = Object.values(SocialVibe);
-    const finalVibe = validVibes.includes(vibe) ? vibe : SocialVibe.CASUAL;
+    // SIMPLE DIRECT APPROACH - Delete and recreate to avoid update issues
+    try {
+      // First, delete any existing profile
+      await prisma.userSocialProfile.deleteMany({
+        where: { userId: session.user.id },
+      });
 
-    // Validate interests
-    const finalInterests = Array.isArray(interests) ? interests : [];
+      console.log("✅ DELETED EXISTING PROFILE");
 
-    console.log("✅ FINAL VALUES FOR DB:", {
-      bio: bio || "",
-      vibe: finalVibe,
-      interests: finalInterests,
-    });
-
-    // SAVE TO DATABASE
-    const socialProfile = await prisma.userSocialProfile.upsert({
-      where: { userId: session.user.id },
-      update: {
-        bio: bio || "",
-        vibe: finalVibe,
-        interests: finalInterests,
-      },
-      create: {
-        userId: session.user.id,
-        bio: bio || "",
-        vibe: finalVibe,
-        interests: finalInterests,
-        isSocialMode: false,
-        socialStatus: "OFFLINE",
-        isVisibleOnMap: true,
-        maxDistance: 1000,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-          },
+      // Then create fresh with ALL data
+      const result = await prisma.userSocialProfile.create({
+        data: {
+          userId: session.user.id,
+          bio: bio || "",
+          vibe: vibe || "CASUAL",
+          interests: Array.isArray(interests) ? interests : [],
+          isSocialMode: false,
+          socialStatus: "OFFLINE",
+          isVisibleOnMap: true,
+          maxDistance: 1000,
         },
-      },
-    });
+      });
 
-    console.log("💾 PROFILE SAVED TO DB:", {
-      id: socialProfile.id,
-      userId: socialProfile.userId,
-      bio: socialProfile.bio,
-      vibe: socialProfile.vibe,
-      interests: socialProfile.interests,
-    });
+      console.log("💾 CREATED NEW PROFILE:", result);
 
-    return NextResponse.json({
-      success: true,
-      socialProfile,
-      message: "Profile saved successfully",
-    });
+      // Verify with fresh query
+      const verify = await prisma.userSocialProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      console.log("🔍 VERIFICATION:", verify);
+
+      return NextResponse.json({
+        success: true,
+        socialProfile: verify,
+        message: "Profile saved successfully",
+      });
+    } catch (dbError) {
+      console.error("❌ DATABASE ERROR:", dbError);
+      throw dbError;
+    }
   } catch (error) {
-    console.error("❌ DATABASE ERROR:", error);
+    console.error("💥 FINAL ERROR:", error);
     return NextResponse.json(
-      { message: "Internal server error" },
+      { message: "Failed to save profile" },
       { status: 500 }
     );
   }
@@ -186,33 +166,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const socialProfile = await prisma.userSocialProfile.findUnique({
+    const profile = await prisma.userSocialProfile.findUnique({
       where: { userId: session.user.id },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-          },
-        },
-      },
     });
 
-    console.log("📥 FETCHED PROFILE:", {
-      hasProfile: !!socialProfile,
-      bio: socialProfile?.bio,
-      vibe: socialProfile?.vibe,
-      interests: socialProfile?.interests,
-    });
+    console.log("📤 SENDING PROFILE TO CLIENT:", profile);
 
     return NextResponse.json({
-      socialProfile,
-      hasProfile: !!socialProfile,
+      socialProfile: profile,
+      hasProfile: !!profile,
     });
   } catch (error) {
-    console.error("Error fetching social profile:", error);
+    console.error("Error:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
