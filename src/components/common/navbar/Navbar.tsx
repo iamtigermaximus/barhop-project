@@ -381,6 +381,7 @@ export default function Navbar() {
 
   const navigation = [
     { name: "Home", href: "/" },
+    { name: "Social Map", href: "/social" },
     { name: "Bars", href: "/bars" },
     { name: "Plan a Crawl", href: "/crawl-planner" },
     // Only show "My Crawls" when user is authenticated
@@ -448,7 +449,7 @@ export default function Navbar() {
                   My Crawls
                 </DropdownItem>
                 <DropdownItem
-                  href="/profile"
+                  href="/user-profile"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
                   Profile

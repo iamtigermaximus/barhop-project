@@ -1101,6 +1101,12 @@ const BarCount = styled.span`
 export default function Home() {
   const features = [
     {
+      icon: "🔍",
+      title: "Live Social Map",
+      description:
+        "See who's free nearby and join spontaneous meetups in real-time",
+    },
+    {
       icon: "🗺️",
       title: "Custom Crawl Planner",
       description: "Plan multi-bar routes with optimized timing and routes",
@@ -1151,6 +1157,9 @@ export default function Home() {
           from casual hangouts to unforgettable nights out.
         </HeroDescription>
         <ButtonGroup>
+          <PrimaryButton href="/social">
+            See Who&apos;s Out Tonight
+          </PrimaryButton>
           <PrimaryButton href="/bars">Explore All Bars</PrimaryButton>
           <SecondaryButton href="/crawl-planner">Plan a Crawl</SecondaryButton>
         </ButtonGroup>
