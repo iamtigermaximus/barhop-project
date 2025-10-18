@@ -3530,28 +3530,30 @@ import { UserSocialProfileWithRelations } from "@/types/social";
 import { SocialVibe } from "@prisma/client";
 import SetupSocialProfile from "../social-profile/setup-social-profile/SetupSocialProfile";
 
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 
-const SocialMap = dynamic(() => import('./social-map/SocialMap'), {
+const SocialMap = dynamic(() => import("./social-map/SocialMap"), {
   ssr: false,
   loading: () => (
-    <div style={{ 
-      background: 'rgba(30, 41, 59, 0.6)', 
-      borderRadius: '12px', 
-      border: '1px solid rgba(139, 92, 246, 0.2)', 
-      height: '400px', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      color: '#e2e8f0',
-      margin: '1.5rem 0'
-    }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🗺️</div>
+    <div
+      style={{
+        background: "rgba(30, 41, 59, 0.6)",
+        borderRadius: "12px",
+        border: "1px solid rgba(139, 92, 246, 0.2)",
+        height: "400px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#e2e8f0",
+        margin: "1.5rem 0",
+      }}
+    >
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🗺️</div>
         <p>Loading interactive map...</p>
       </div>
     </div>
-  )
+  ),
 });
 
 const SocialContainer = styled.div`
@@ -3597,20 +3599,44 @@ const EditProfileButton = styled.button`
   background: rgba(139, 92, 246, 0.1);
   border: 1px solid rgba(139, 92, 246, 0.3);
   color: #8b5cf6;
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 1rem;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
 
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
     background: rgba(139, 92, 246, 0.2);
+  }
+
+  /* Make span (icon) same size as text */
+  span {
+    font-size: 1em; /* Same as parent font-size */
+  }
+
+  /* Tablet */
+  @media (max-width: 768px) {
+    padding: 0.4rem 0.8rem;
+    font-size: 1rem; /* Smaller text */
+  }
+
+  /* Mobile */
+  @media (max-width: 480px) {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.5rem; /* Even smaller text */
+  }
+
+  /* Small mobile */
+  @media (max-width: 360px) {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.5rem; /* Smallest text */
   }
 `;
 
@@ -4945,7 +4971,7 @@ export default function Social() {
           <HeaderActions>
             <EditProfileButton onClick={handleEditProfile}>
               <span>⚙️</span>
-              Edit Profile
+              Edit
             </EditProfileButton>
           </HeaderActions>
         )}
