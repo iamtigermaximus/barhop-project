@@ -3630,13 +3630,13 @@ const EditProfileButton = styled.button`
   /* Mobile */
   @media (max-width: 480px) {
     padding: 0.375rem 0.75rem;
-    font-size: 0.5rem; /* Even smaller text */
+    font-size: 0.75rem; /* Even smaller text */
   }
 
   /* Small mobile */
   @media (max-width: 360px) {
     padding: 0.25rem 0.5rem;
-    font-size: 0.5rem; /* Smallest text */
+    font-size: 0.75rem; /* Smallest text */
   }
 `;
 
