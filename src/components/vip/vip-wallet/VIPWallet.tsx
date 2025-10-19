@@ -37,7 +37,7 @@ const WalletContainer = styled.div`
   background: #0f172a;
   min-height: 100vh;
   color: #e2e8f0;
-  max-width: 800px;
+  max-width: 1200px; /* Increased for multi-column layout */
   margin: 0 auto;
 
   @media (max-width: 768px) {
@@ -74,6 +74,66 @@ const Subtitle = styled.p`
   }
 `;
 
+// NEW: Grid layout for passes
+const PassesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  padding: 0 0.5rem;
+
+  /* 2 columns on medium screens */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* 3 columns on large screens */
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Single column on mobile */
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+`;
+
+// UPDATED: PassCard for grid layout
+const PassCard = styled.div<{ $status: string }>`
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid
+    ${(props) =>
+      props.$status === "ACTIVE"
+        ? "rgba(16, 185, 129, 0.3)"
+        : props.$status === "USED"
+        ? "rgba(107, 114, 128, 0.3)"
+        : "rgba(245, 158, 11, 0.3)"};
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+  cursor: ${(props) => (props.$status === "ACTIVE" ? "pointer" : "default")};
+  height: fit-content;
+
+  &:hover {
+    border-color: ${(props) =>
+      props.$status === "ACTIVE"
+        ? "rgba(16, 185, 129, 0.6)"
+        : props.$status === "USED"
+        ? "rgba(107, 114, 128, 0.6)"
+        : "rgba(245, 158, 11, 0.6)"};
+    transform: ${(props) =>
+      props.$status === "ACTIVE" ? "translateY(-4px)" : "none"};
+    box-shadow: ${(props) =>
+      props.$status === "ACTIVE"
+        ? "0 8px 25px rgba(16, 185, 129, 0.2)"
+        : "0 4px 12px rgba(0, 0, 0, 0.1)"};
+  }
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+`;
+
 // Filter Section
 const FilterSection = styled.div`
   display: flex;
@@ -92,13 +152,13 @@ const FilterButton = styled.button<{ $isActive: boolean }>`
   border: 1px solid
     ${(props) => (props.$isActive ? "#8b5cf6" : "rgba(139, 92, 246, 0.3)")};
   color: ${(props) => (props.$isActive ? "white" : "#94a3b8")};
-  padding: 0.4rem 0.8rem;
+  padding: 0.5rem 1rem;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
   transition: all 0.3s ease;
-  min-width: 70px;
+  min-width: 80px;
 
   &:hover {
     border-color: #8b5cf6;
@@ -107,40 +167,8 @@ const FilterButton = styled.button<{ $isActive: boolean }>`
 
   @media (max-width: 480px) {
     font-size: 0.75rem;
-    padding: 0.35rem 0.7rem;
-    min-width: 60px;
-  }
-`;
-
-const PassCard = styled.div<{ $status: string }>`
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid
-    ${(props) =>
-      props.$status === "ACTIVE"
-        ? "rgba(16, 185, 129, 0.3)"
-        : props.$status === "USED"
-        ? "rgba(107, 114, 128, 0.3)"
-        : "rgba(245, 158, 11, 0.3)"};
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  transition: all 0.3s ease;
-  cursor: ${(props) => (props.$status === "ACTIVE" ? "pointer" : "default")};
-
-  &:hover {
-    border-color: ${(props) =>
-      props.$status === "ACTIVE"
-        ? "rgba(16, 185, 129, 0.6)"
-        : props.$status === "USED"
-        ? "rgba(107, 114, 128, 0.6)"
-        : "rgba(245, 158, 11, 0.6)"};
-    transform: ${(props) =>
-      props.$status === "ACTIVE" ? "translateY(-2px)" : "none"};
-  }
-
-  @media (max-width: 768px) {
-    padding: 0.75rem;
-    margin-bottom: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    min-width: 70px;
   }
 `;
 
@@ -157,12 +185,12 @@ const StatusBadge = styled.div<{ $status: string }>`
       : props.$status === "USED"
       ? "#94a3b8"
       : "#f59e0b"};
-  padding: 0.3rem 0.7rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 10px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   display: inline-block;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
   border: 1px solid;
   border-color: ${(props) =>
     props.$status === "ACTIVE"
@@ -179,6 +207,7 @@ const EmptyState = styled.div`
   border-radius: 16px;
   border: 1px solid rgba(139, 92, 246, 0.2);
   margin: 0 0.5rem;
+  grid-column: 1 / -1; /* Span full width in grid */
 
   @media (max-width: 768px) {
     padding: 2rem 1rem;
@@ -475,7 +504,7 @@ export default function VIPWallet() {
             {filter !== "ALL" && ` (${filter.toLowerCase()})`}
           </PassesCount>
 
-          {/* Passes List */}
+          {/* Passes Grid */}
           {filteredPasses.length === 0 ? (
             <EmptyState>
               <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>
@@ -507,7 +536,7 @@ export default function VIPWallet() {
               )}
             </EmptyState>
           ) : (
-            <div>
+            <PassesGrid>
               {filteredPasses.map((pass) => (
                 <PassCard
                   key={pass.id}
@@ -525,114 +554,149 @@ export default function VIPWallet() {
                   <div
                     style={{
                       display: "flex",
-                      gap: "1rem",
-                      alignItems: "flex-start",
+                      flexDirection: "column",
+                      gap: "0.75rem",
                     }}
                   >
-                    {/* Small QR Code Preview */}
+                    {/* Pass Header with QR and Basic Info */}
                     <div
                       style={{
-                        background: "white",
-                        padding: "0.5rem",
-                        borderRadius: "8px",
-                        flexShrink: 0,
+                        display: "flex",
+                        gap: "0.75rem",
+                        alignItems: "flex-start",
                       }}
                     >
-                      <QRCode
-                        value={pass.qrCode}
-                        size={60}
-                        style={{
-                          height: "auto",
-                          maxWidth: "100%",
-                          width: "100%",
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      {" "}
-                      {/* minWidth: 0 for text truncation */}
-                      <h3
-                        style={{
-                          margin: "0 0 0.25rem 0",
-                          color: "#f8fafc",
-                          fontSize: "1rem",
-                          fontWeight: "700",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {pass.vipPass.name}
-                      </h3>
-                      <p
-                        style={{
-                          color: "#0ea5e9",
-                          margin: "0 0 0.25rem 0",
-                          fontWeight: "600",
-                          fontSize: "0.85rem",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {pass.vipPass.bar.name} • {pass.vipPass.bar.district}
-                      </p>
+                      {/* Small QR Code Preview */}
                       <div
                         style={{
-                          color: "#94a3b8",
-                          fontSize: "0.75rem",
-                          lineHeight: "1.4",
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "0.25rem",
+                          background: "white",
+                          padding: "0.5rem",
+                          borderRadius: "8px",
+                          flexShrink: 0,
                         }}
                       >
-                        <div>
-                          <strong>Type:</strong>{" "}
-                          {pass.vipPass.type.replace("_", " ")}
-                        </div>
-                        <div>
-                          <strong>Purchased:</strong>{" "}
-                          {new Date(pass.purchasedAt).toLocaleDateString()}
-                        </div>
-                        <div>
-                          <strong>Expires:</strong>{" "}
-                          {new Date(pass.expiresAt).toLocaleDateString()}
-                        </div>
-                        <div>
-                          <strong>Price:</strong> €
-                          {(pass.purchasePriceCents / 100).toFixed(2)}
-                        </div>
-                        {pass.scannedAt && (
-                          <div style={{ gridColumn: "1 / -1" }}>
-                            <strong>Used:</strong>{" "}
-                            {new Date(pass.scannedAt).toLocaleDateString()}
-                          </div>
-                        )}
+                        <QRCode
+                          value={pass.qrCode}
+                          size={50}
+                          style={{
+                            height: "auto",
+                            maxWidth: "100%",
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h3
+                          style={{
+                            margin: "0 0 0.25rem 0",
+                            color: "#f8fafc",
+                            fontSize: "1rem",
+                            fontWeight: "700",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {pass.vipPass.name}
+                        </h3>
+                        <p
+                          style={{
+                            color: "#0ea5e9",
+                            margin: "0 0 0.25rem 0",
+                            fontWeight: "600",
+                            fontSize: "0.85rem",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {pass.vipPass.bar.name}
+                        </p>
+                        <p
+                          style={{
+                            color: "#94a3b8",
+                            margin: 0,
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          {pass.vipPass.bar.district}
+                        </p>
                       </div>
                     </div>
-                  </div>
 
-                  {pass.status === "ACTIVE" && (
+                    {/* Pass Details */}
                     <div
                       style={{
-                        marginTop: "0.75rem",
-                        padding: "0.5rem",
-                        background: "rgba(16, 185, 129, 0.1)",
-                        borderRadius: "6px",
-                        border: "1px solid rgba(16, 185, 129, 0.2)",
-                        color: "#10b981",
+                        color: "#94a3b8",
                         fontSize: "0.8rem",
+                        lineHeight: "1.4",
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: "0.5rem",
+                        paddingTop: "0.5rem",
+                        borderTop: "1px solid rgba(255, 255, 255, 0.1)",
                       }}
                     >
-                      <strong>Tap to show QR code</strong> - Show at{" "}
-                      {pass.vipPass.bar.name}
+                      <div>
+                        <strong>Type:</strong>
+                      </div>
+                      <div>{pass.vipPass.type.replace("_", " ")}</div>
+
+                      <div>
+                        <strong>Purchased:</strong>
+                      </div>
+                      <div>
+                        {new Date(pass.purchasedAt).toLocaleDateString()}
+                      </div>
+
+                      <div>
+                        <strong>Expires:</strong>
+                      </div>
+                      <div>{new Date(pass.expiresAt).toLocaleDateString()}</div>
+
+                      <div>
+                        <strong>Price:</strong>
+                      </div>
+                      <div>€{(pass.purchasePriceCents / 100).toFixed(2)}</div>
+
+                      {pass.scannedAt && (
+                        <>
+                          <div>
+                            <strong>Used:</strong>
+                          </div>
+                          <div>
+                            {new Date(pass.scannedAt).toLocaleDateString()}
+                          </div>
+                        </>
+                      )}
                     </div>
-                  )}
+
+                    {pass.status === "ACTIVE" && (
+                      <div
+                        style={{
+                          padding: "0.75rem",
+                          background: "rgba(16, 185, 129, 0.1)",
+                          borderRadius: "8px",
+                          border: "1px solid rgba(16, 185, 129, 0.2)",
+                          color: "#10b981",
+                          fontSize: "0.8rem",
+                          textAlign: "center",
+                          marginTop: "0.5rem",
+                        }}
+                      >
+                        <strong>Tap to show QR code</strong>
+                        <div
+                          style={{ fontSize: "0.7rem", marginTop: "0.25rem" }}
+                        >
+                          Show at {pass.vipPass.bar.name}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </PassCard>
               ))}
-            </div>
+            </PassesGrid>
           )}
         </>
       )}
