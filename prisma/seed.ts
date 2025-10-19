@@ -9,6 +9,8 @@ import {
   MeetupStatus,
   ParticipantStatus,
   MessageType,
+  VIPPassType,
+  VIPPassStatus,
 } from "@prisma/client";
 import { hash } from "bcryptjs";
 
@@ -31,6 +33,8 @@ async function main() {
   await prisma.crawlParticipant.deleteMany();
   await prisma.userGroup.deleteMany();
   await prisma.phoneVerification.deleteMany();
+  await prisma.userVIPPass.deleteMany();
+  await prisma.vIPPassEnhanced.deleteMany();
   await prisma.vIPPass.deleteMany();
   await prisma.featuredBar.deleteMany();
   await prisma.crawlBar.deleteMany();
@@ -122,9 +126,25 @@ async function main() {
         emailVerified: new Date(),
       },
     }),
+    prisma.user.create({
+      data: {
+        name: "Jari Nieminen",
+        email: "jari.nieminen@example.com",
+        hashedPassword,
+        emailVerified: new Date(),
+      },
+    }),
+    prisma.user.create({
+      data: {
+        name: "Sofia Karlsson",
+        email: "sofia.karlsson@example.com",
+        hashedPassword,
+        emailVerified: new Date(),
+      },
+    }),
   ]);
 
-  const [user1, user2, user3, user4, user5, user6] = users;
+  const [user1, user2, user3, user4, user5, user6, user7, user8] = users;
 
   // Create Bars for Helsinki - 3 for each BarType
   console.log("🍻 Creating Helsinki bars...");
@@ -653,6 +673,26 @@ async function main() {
         isActive: true,
       },
     }),
+    prisma.bar.create({
+      data: {
+        name: "Tampere Sports Arena Bar",
+        description: "Sports bar with big screens and game day specials",
+        address: "Rautatienkatu 25, 33100 Tampere",
+        cityId: tampere.id,
+        district: "Keskusta",
+        type: BarType.SPORTS_BAR,
+        latitude: 61.4985,
+        longitude: 23.7734,
+        imageUrl:
+          "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=500",
+        phone: "+358 10 1234574",
+        website: "https://tamperesports.fi",
+        vipEnabled: true,
+        vipPrice: 8.0,
+        vipCapacity: 20,
+        isActive: true,
+      },
+    }),
   ]);
 
   // Create Bars for Turku
@@ -696,7 +736,545 @@ async function main() {
         isActive: true,
       },
     }),
+    prisma.bar.create({
+      data: {
+        name: "Turku Harbor Lounge",
+        description: "Lounge bar with beautiful harbor views",
+        address: "Linnankatu 32, 20100 Turku",
+        cityId: turku.id,
+        district: "Portsa",
+        type: BarType.LOUNGE,
+        latitude: 60.4345,
+        longitude: 22.2334,
+        imageUrl:
+          "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=500",
+        phone: "+358 10 1234577",
+        website: "https://turkuharborlounge.fi",
+        vipEnabled: true,
+        vipPrice: 15.0,
+        vipCapacity: 15,
+        isActive: true,
+      },
+    }),
   ]);
+
+  // Create Enhanced VIP passes (for the new VIP system)
+  console.log("⭐ Creating enhanced VIP passes...");
+
+  const enhancedVIPPasses = await Promise.all([
+    // Club Helsinki - Friday Night Fast Pass
+    prisma.vIPPassEnhanced.create({
+      data: {
+        barId: helsinkiBars[4].id, // Club Helsinki
+        name: "Friday Night Fast Pass",
+        description:
+          "Skip the line and get priority entry on Friday nights at Helsinki's hottest club",
+        type: VIPPassType.SKIP_LINE,
+        priceCents: 1500, // €15.00
+        originalPriceCents: 2000, // Original €20.00 - showing discount
+        benefits: [
+          "Skip 45min line",
+          "Priority entry",
+          "Cover fee included",
+          "Express coat check",
+        ],
+        skipLinePriority: true,
+        coverFeeIncluded: true,
+        coverFeeAmount: 1000, // €10 cover included
+        validityStart: new Date("2025-10-01"),
+        validityEnd: new Date("2025-12-31"),
+        validDays: ["friday", "saturday"],
+        validHours: { start: "20:00", end: "02:00" },
+        totalQuantity: 50,
+        soldCount: 12,
+        maxPerUser: 2,
+        isActive: true,
+      },
+    }),
+    // Nightclub Aurora - VIP Experience
+    prisma.vIPPassEnhanced.create({
+      data: {
+        barId: helsinkiBars[3].id, // Nightclub Aurora
+        name: "VIP Club Experience",
+        description:
+          "Premium VIP treatment with reserved seating and bottle service access",
+        type: VIPPassType.PREMIUM_ENTRY,
+        priceCents: 2500, // €25.00
+        benefits: [
+          "Skip 60min line",
+          "Reserved seating area",
+          "Bottle service priority",
+          "VIP host",
+          "Complimentary champagne",
+        ],
+        skipLinePriority: true,
+        coverFeeIncluded: true,
+        coverFeeAmount: 1500, // €15 cover included
+        validityStart: new Date("2025-10-01"),
+        validityEnd: new Date("2025-12-31"),
+        validDays: ["friday", "saturday"],
+        validHours: { start: "22:00", end: "04:00" },
+        totalQuantity: 20,
+        soldCount: 8,
+        maxPerUser: 1,
+        isActive: true,
+      },
+    }),
+    // Sky Lounge Helsinki - Sunset Pass
+    prisma.vIPPassEnhanced.create({
+      data: {
+        barId: helsinkiBars[6].id, // Sky Lounge Helsinki
+        name: "Sunset VIP Pass",
+        description:
+          "Enjoy Helsinki's best sunset views with premium lounge access",
+        type: VIPPassType.COVER_INCLUDED,
+        priceCents: 2000, // €20.00
+        originalPriceCents: 2500, // Original €25.00
+        benefits: [
+          "Priority rooftop access",
+          "Cover fee included",
+          "Complimentary welcome drink",
+          "Best sunset views",
+        ],
+        skipLinePriority: true,
+        coverFeeIncluded: true,
+        coverFeeAmount: 1200, // €12 cover included
+        validityStart: new Date("2025-10-01"),
+        validityEnd: new Date("2025-10-31"), // Seasonal (until winter)
+        validDays: [
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday",
+          "saturday",
+          "sunday",
+        ],
+        validHours: { start: "17:00", end: "21:00" },
+        totalQuantity: 30,
+        soldCount: 5,
+        maxPerUser: 4,
+        isActive: true,
+      },
+    }),
+    // The Alchemist - Mixology Experience
+    prisma.vIPPassEnhanced.create({
+      data: {
+        barId: helsinkiBars[11].id, // The Alchemist
+        name: "Mixology VIP Pass",
+        description:
+          "Exclusive access to molecular mixology experience with master mixologists",
+        type: VIPPassType.PREMIUM_ENTRY,
+        priceCents: 3000, // €30.00
+        benefits: [
+          "Guaranteed seating",
+          "Molecular cocktail tasting",
+          "Meet the mixologist",
+          "VIP cocktail menu",
+        ],
+        skipLinePriority: true,
+        coverFeeIncluded: false,
+        coverFeeAmount: 0,
+        validityStart: new Date("2025-10-01"),
+        validityEnd: new Date("2025-12-31"),
+        validDays: ["thursday", "friday", "saturday"],
+        validHours: { start: "19:00", end: "23:00" },
+        totalQuantity: 12,
+        soldCount: 3,
+        maxPerUser: 2,
+        isActive: true,
+      },
+    }),
+    // Sports Bar Helsinki - Game Day Pass
+    prisma.vIPPassEnhanced.create({
+      data: {
+        barId: helsinkiBars[15].id, // Sports Bar Helsinki
+        name: "Game Day VIP Pass",
+        description:
+          "Best seats in the house for major sports events with drink specials",
+        type: VIPPassType.PREMIUM_ENTRY,
+        priceCents: 1200, // €12.00
+        benefits: [
+          "Reserved premium seating",
+          "Game day drink specials",
+          "Skip entry line",
+          "Priority service",
+        ],
+        skipLinePriority: true,
+        coverFeeIncluded: true,
+        coverFeeAmount: 500, // €5 cover included
+        validityStart: new Date("2025-10-01"),
+        validityEnd: new Date("2025-12-31"),
+        validDays: ["saturday", "sunday"],
+        validHours: { start: "12:00", end: "23:00" },
+        totalQuantity: 25,
+        soldCount: 15,
+        maxPerUser: 4,
+        isActive: true,
+      },
+    }),
+    // Helsinki Jazz Club - Weekend VIP
+    prisma.vIPPassEnhanced.create({
+      data: {
+        barId: helsinkiBars[21].id, // Helsinki Jazz Club
+        name: "Weekend Jazz VIP",
+        description:
+          "Premium seating for weekend jazz performances with cocktail package",
+        type: VIPPassType.COVER_INCLUDED,
+        priceCents: 3500, // €35.00
+        originalPriceCents: 4500, // Original €45.00
+        benefits: [
+          "Front row seating",
+          "Cover fee included",
+          "Welcome cocktail",
+          "Meet the artists (when available)",
+        ],
+        skipLinePriority: true,
+        coverFeeIncluded: true,
+        coverFeeAmount: 2000, // €20 cover included
+        validityStart: new Date("2025-10-01"),
+        validityEnd: new Date("2025-12-31"),
+        validDays: ["friday", "saturday"],
+        validHours: { start: "19:00", end: "01:00" },
+        totalQuantity: 15,
+        soldCount: 7,
+        maxPerUser: 2,
+        isActive: true,
+      },
+    }),
+    // Rock Arena Helsinki - Concert Fast Pass
+    prisma.vIPPassEnhanced.create({
+      data: {
+        barId: helsinkiBars[22].id, // Rock Arena Helsinki
+        name: "Concert Fast Pass",
+        description:
+          "Skip the line and get early entry for live concerts and events",
+        type: VIPPassType.SKIP_LINE,
+        priceCents: 1800, // €18.00
+        benefits: [
+          "Skip 30min entry line",
+          "Early venue access",
+          "Cover fee included",
+          "Merchandise discount",
+        ],
+        skipLinePriority: true,
+        coverFeeIncluded: true,
+        coverFeeAmount: 1000, // €10 cover included
+        validityStart: new Date("2025-10-01"),
+        validityEnd: new Date("2025-12-31"),
+        validDays: ["friday", "saturday"],
+        validHours: { start: "19:00", end: "02:00" },
+        totalQuantity: 40,
+        soldCount: 22,
+        maxPerUser: 4,
+        isActive: true,
+      },
+    }),
+    // Velvet Lounge - Weekday Executive Pass
+    prisma.vIPPassEnhanced.create({
+      data: {
+        barId: helsinkiBars[7].id, // Velvet Lounge
+        name: "Executive Weekday Pass",
+        description:
+          "Perfect for business meetings and after-work networking sessions",
+        type: VIPPassType.PREMIUM_ENTRY,
+        priceCents: 1500, // €15.00
+        benefits: [
+          "Reserved quiet area",
+          "Complimentary appetizer",
+          "Priority service",
+          "Business networking events access",
+        ],
+        skipLinePriority: false,
+        coverFeeIncluded: false,
+        coverFeeAmount: 0,
+        validityStart: new Date("2025-10-01"),
+        validityEnd: new Date("2025-12-31"),
+        validDays: ["monday", "tuesday", "wednesday", "thursday"],
+        validHours: { start: "16:00", end: "22:00" },
+        totalQuantity: 20,
+        soldCount: 6,
+        maxPerUser: 6,
+        isActive: true,
+      },
+    }),
+    // Spirit Society - Cocktail Masterclass Pass
+    prisma.vIPPassEnhanced.create({
+      data: {
+        barId: helsinkiBars[10].id, // Spirit Society
+        name: "Cocktail Masterclass VIP",
+        description:
+          "Includes cocktail masterclass session with professional mixologists",
+        type: VIPPassType.PREMIUM_ENTRY,
+        priceCents: 4500, // €45.00
+        benefits: [
+          "Private cocktail masterclass",
+          "Tasting of 5 premium spirits",
+          "Take-home recipe book",
+          "VIP seating for the evening",
+        ],
+        skipLinePriority: true,
+        coverFeeIncluded: true,
+        coverFeeAmount: 1500, // €15 cover included
+        validityStart: new Date("2025-10-01"),
+        validityEnd: new Date("2025-12-31"),
+        validDays: ["tuesday", "wednesday"],
+        validHours: { start: "18:00", end: "21:00" },
+        totalQuantity: 8,
+        soldCount: 3,
+        maxPerUser: 2,
+        isActive: true,
+      },
+    }),
+    // Tampere Sports Arena Bar - Match Day VIP
+    prisma.vIPPassEnhanced.create({
+      data: {
+        barId: tampereBars[2].id, // Tampere Sports Arena Bar
+        name: "Match Day VIP Experience",
+        description:
+          "Premium viewing experience for local sports matches with all-inclusive package",
+        type: VIPPassType.COVER_INCLUDED,
+        priceCents: 2200, // €22.00
+        benefits: [
+          "Best screen views",
+          "Cover fee included",
+          "2 drink tokens",
+          "Match day food special",
+          "Reserved seating",
+        ],
+        skipLinePriority: true,
+        coverFeeIncluded: true,
+        coverFeeAmount: 800, // €8 cover included
+        validityStart: new Date("2025-10-01"),
+        validityEnd: new Date("2025-12-31"),
+        validDays: ["saturday", "sunday"],
+        validHours: { start: "14:00", end: "22:00" },
+        totalQuantity: 30,
+        soldCount: 18,
+        maxPerUser: 6,
+        isActive: true,
+      },
+    }),
+    // Turku Harbor Lounge - Weekend Brunch Pass
+    prisma.vIPPassEnhanced.create({
+      data: {
+        barId: turkuBars[2].id, // Turku Harbor Lounge
+        name: "Weekend Brunch VIP",
+        description:
+          "Exclusive brunch experience with harbor views and bottomless mimosas",
+        type: VIPPassType.COVER_INCLUDED,
+        priceCents: 2800, // €28.00
+        originalPriceCents: 3500, // Original €35.00
+        benefits: [
+          "Priority brunch reservation",
+          "Bottomless mimosas (2 hours)",
+          "Cover fee included",
+          "Best harbor view table",
+        ],
+        skipLinePriority: true,
+        coverFeeIncluded: true,
+        coverFeeAmount: 1200, // €12 cover included
+        validityStart: new Date("2025-10-01"),
+        validityEnd: new Date("2025-12-31"),
+        validDays: ["saturday", "sunday"],
+        validHours: { start: "11:00", end: "15:00" },
+        totalQuantity: 25,
+        soldCount: 12,
+        maxPerUser: 4,
+        isActive: true,
+      },
+    }),
+    // Sing Along Bar - Karaoke Party Pass
+    prisma.vIPPassEnhanced.create({
+      data: {
+        barId: helsinkiBars[17].id, // Sing Along Bar
+        name: "Karaoke Party VIP",
+        description:
+          "Private karaoke room reservation with drink package for groups",
+        type: VIPPassType.PREMIUM_ENTRY,
+        priceCents: 4000, // €40.00
+        benefits: [
+          "2-hour private room rental",
+          "4 drink tokens",
+          "Priority song selection",
+          "Dedicated server",
+        ],
+        skipLinePriority: true,
+        coverFeeIncluded: true,
+        coverFeeAmount: 1500, // €15 cover included
+        validityStart: new Date("2025-10-01"),
+        validityEnd: new Date("2025-12-31"),
+        validDays: ["friday", "saturday"],
+        validHours: { start: "19:00", end: "01:00" },
+        totalQuantity: 10,
+        soldCount: 4,
+        maxPerUser: 1,
+        isActive: true,
+      },
+    }),
+    // Dance Factory - Saturday Night VIP
+    prisma.vIPPassEnhanced.create({
+      data: {
+        barId: helsinkiBars[5].id, // Dance Factory
+        name: "Saturday Night VIP",
+        description:
+          "Ultimate Saturday night experience at Helsinki's top electronic music venue",
+        type: VIPPassType.PREMIUM_ENTRY,
+        priceCents: 3200, // €32.00
+        benefits: [
+          "Skip 60min line",
+          "VIP balcony access",
+          "Complimentary bottle service",
+          "Meet & greet with DJs",
+          "Express coat check",
+        ],
+        skipLinePriority: true,
+        coverFeeIncluded: true,
+        coverFeeAmount: 1800, // €18 cover included
+        validityStart: new Date("2025-10-01"),
+        validityEnd: new Date("2025-12-31"),
+        validDays: ["saturday"],
+        validHours: { start: "22:00", end: "04:00" },
+        totalQuantity: 15,
+        soldCount: 9,
+        maxPerUser: 2,
+        isActive: true,
+      },
+    }),
+    // The English Pub - Traditional Experience
+    prisma.vIPPassEnhanced.create({
+      data: {
+        barId: helsinkiBars[2].id, // The English Pub
+        name: "Traditional Pub Experience",
+        description:
+          "Authentic British pub experience with traditional food and drink pairing",
+        type: VIPPassType.COVER_INCLUDED,
+        priceCents: 1800, // €18.00
+        benefits: [
+          "Traditional pub platter",
+          "2 pint tokens",
+          "Cover fee included",
+          "Reserved booth seating",
+        ],
+        skipLinePriority: false,
+        coverFeeIncluded: true,
+        coverFeeAmount: 800, // €8 cover included
+        validityStart: new Date("2025-10-01"),
+        validityEnd: new Date("2025-12-31"),
+        validDays: [
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday",
+          "saturday",
+        ],
+        validHours: { start: "17:00", end: "23:00" },
+        totalQuantity: 20,
+        soldCount: 11,
+        maxPerUser: 4,
+        isActive: true,
+      },
+    }),
+  ]);
+
+  // Create some purchased User VIP passes for testing
+  console.log("🎟️ Creating user VIP pass purchases...");
+
+  await prisma.userVIPPass.createMany({
+    data: [
+      {
+        userId: user1.id,
+        vipPassId: enhancedVIPPasses[0].id,
+        barId: helsinkiBars[4].id,
+        qrCode: "HOPPR-VIP-ALEX-001",
+        purchasePriceCents: 1500,
+        status: VIPPassStatus.ACTIVE,
+        expiresAt: new Date("2025-12-31T23:59:59Z"),
+      },
+      {
+        userId: user2.id,
+        vipPassId: enhancedVIPPasses[1].id,
+        barId: helsinkiBars[3].id,
+        qrCode: "HOPPR-VIP-SARAH-001",
+        purchasePriceCents: 2500,
+        status: VIPPassStatus.ACTIVE,
+        expiresAt: new Date("2025-12-31T23:59:59Z"),
+      },
+      {
+        userId: user6.id,
+        vipPassId: enhancedVIPPasses[3].id,
+        barId: helsinkiBars[11].id,
+        qrCode: "HOPPR-VIP-LISA-001",
+        purchasePriceCents: 3000,
+        status: VIPPassStatus.ACTIVE,
+        expiresAt: new Date("2025-12-31T23:59:59Z"),
+      },
+      {
+        userId: user3.id,
+        vipPassId: enhancedVIPPasses[4].id,
+        barId: helsinkiBars[15].id,
+        qrCode: "HOPPR-VIP-MIKKO-001",
+        purchasePriceCents: 1200,
+        status: VIPPassStatus.ACTIVE,
+        expiresAt: new Date("2025-12-31T23:59:59Z"),
+      },
+      {
+        userId: user4.id,
+        vipPassId: enhancedVIPPasses[11].id,
+        barId: turkuBars[2].id,
+        qrCode: "HOPPR-VIP-EMMA-001",
+        purchasePriceCents: 2800,
+        status: VIPPassStatus.ACTIVE,
+        expiresAt: new Date("2025-12-31T23:59:59Z"),
+      },
+      {
+        userId: user5.id,
+        vipPassId: enhancedVIPPasses[10].id,
+        barId: tampereBars[2].id,
+        qrCode: "HOPPR-VIP-DAVID-001",
+        purchasePriceCents: 2200,
+        status: VIPPassStatus.ACTIVE,
+        expiresAt: new Date("2025-12-31T23:59:59Z"),
+      },
+      {
+        userId: user7.id,
+        vipPassId: enhancedVIPPasses[6].id,
+        barId: helsinkiBars[21].id,
+        qrCode: "HOPPR-VIP-JARI-001",
+        purchasePriceCents: 3500,
+        status: VIPPassStatus.ACTIVE,
+        expiresAt: new Date("2025-12-31T23:59:59Z"),
+      },
+      {
+        userId: user8.id,
+        vipPassId: enhancedVIPPasses[12].id,
+        barId: helsinkiBars[17].id,
+        qrCode: "HOPPR-VIP-SOFIA-001",
+        purchasePriceCents: 4000,
+        status: VIPPassStatus.ACTIVE,
+        expiresAt: new Date("2025-12-31T23:59:59Z"),
+      },
+      {
+        userId: user1.id,
+        vipPassId: enhancedVIPPasses[8].id,
+        barId: helsinkiBars[7].id,
+        qrCode: "HOPPR-VIP-ALEX-002",
+        purchasePriceCents: 1500,
+        status: VIPPassStatus.USED,
+        expiresAt: new Date("2025-12-31T23:59:59Z"),
+      },
+      {
+        userId: user2.id,
+        vipPassId: enhancedVIPPasses[13].id,
+        barId: helsinkiBars[5].id,
+        qrCode: "HOPPR-VIP-SARAH-002",
+        purchasePriceCents: 3200,
+        status: VIPPassStatus.EXPIRED,
+        expiresAt: new Date("2024-12-31T23:59:59Z"), // Past date for expired
+      },
+    ],
+  });
 
   // Create Social Profiles for Users
   console.log("🎭 Creating social profiles...");
@@ -814,6 +1392,40 @@ async function main() {
         maxDistance: 2000,
       },
     }),
+    // User 7: Jari - Active in social mode (Helsinki)
+    prisma.userSocialProfile.create({
+      data: {
+        userId: user7.id,
+        bio: "Jazz musician and cocktail enthusiast. Enjoy good conversations and live music.",
+        vibe: SocialVibe.CHILL,
+        interests: ["Jazz", "Classic Cocktails", "Live Music", "Art"],
+        isSocialMode: true,
+        socialStatus: SocialStatus.SOCIAL_MODE,
+        lastActive: new Date(),
+        locationLat: 60.1685,
+        locationLng: 24.9442,
+        currentBarId: helsinkiBars[21].id,
+        isVisibleOnMap: true,
+        maxDistance: 800,
+      },
+    }),
+    // User 8: Sofia - Active in social mode (Helsinki)
+    prisma.userSocialProfile.create({
+      data: {
+        userId: user8.id,
+        bio: "Marketing professional who loves karaoke nights and meeting new friends.",
+        vibe: SocialVibe.PARTY,
+        interests: ["Karaoke", "Pop Music", "Cocktails", "Social Events"],
+        isSocialMode: true,
+        socialStatus: SocialStatus.SOCIAL_MODE,
+        lastActive: new Date(),
+        locationLat: 60.1618,
+        locationLng: 24.9412,
+        currentBarId: helsinkiBars[17].id,
+        isVisibleOnMap: true,
+        maxDistance: 1000,
+      },
+    }),
   ]);
 
   // Create Social Interactions
@@ -856,37 +1468,107 @@ async function main() {
           "Lisa, I see we both enjoy cocktails! Would love to chat about your favorite spots.",
         createdAt: new Date(Date.now() - 30 * 60 * 1000),
       },
+      {
+        initiatorId: user7.id,
+        targetUserId: user2.id,
+        interactionType: InteractionType.HOP_IN,
+        status: InteractionStatus.ACCEPTED,
+        message:
+          "Sarah, I noticed you love jazz too! Would you like to join me for the live performance tonight?",
+        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+      },
+      {
+        initiatorId: user8.id,
+        targetUserId: user6.id,
+        interactionType: InteractionType.HOP_IN,
+        status: InteractionStatus.PENDING,
+        message:
+          "Lisa, you seem like so much fun! Want to join our karaoke session this Friday?",
+        createdAt: new Date(Date.now() - 45 * 60 * 1000),
+      },
     ],
   });
 
   // Create Social Meetups
   console.log("👥 Creating social meetups...");
 
-  const meetup = await prisma.socialMeetup.create({
-    data: {
-      name: "Friday Night Cocktails",
-      description: "Casual meetup for cocktail enthusiasts",
-      barId: helsinkiBars[2].id,
-      creatorId: user1.id,
-      status: MeetupStatus.ACTIVE,
-      maxParticipants: 6,
-      startTime: new Date(),
-      expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
-      isPublic: true,
-      participants: {
-        create: [
-          {
-            userId: user1.id,
-            status: ParticipantStatus.JOINED,
-          },
-          {
-            userId: user2.id,
-            status: ParticipantStatus.JOINED,
-          },
-        ],
+  const meetups = await Promise.all([
+    prisma.socialMeetup.create({
+      data: {
+        name: "Friday Night Cocktails",
+        description: "Casual meetup for cocktail enthusiasts",
+        barId: helsinkiBars[2].id,
+        creatorId: user1.id,
+        status: MeetupStatus.ACTIVE,
+        maxParticipants: 6,
+        startTime: new Date(),
+        expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
+        isPublic: true,
+        participants: {
+          create: [
+            {
+              userId: user1.id,
+              status: ParticipantStatus.JOINED,
+            },
+            {
+              userId: user2.id,
+              status: ParticipantStatus.JOINED,
+            },
+          ],
+        },
       },
-    },
-  });
+    }),
+    prisma.socialMeetup.create({
+      data: {
+        name: "Jazz Night Gathering",
+        description: "Enjoy live jazz music with fellow enthusiasts",
+        barId: helsinkiBars[21].id,
+        creatorId: user7.id,
+        status: MeetupStatus.ACTIVE,
+        maxParticipants: 8,
+        startTime: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes from now
+        expiresAt: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours from now
+        isPublic: true,
+        participants: {
+          create: [
+            {
+              userId: user7.id,
+              status: ParticipantStatus.JOINED,
+            },
+            {
+              userId: user2.id,
+              status: ParticipantStatus.JOINED,
+            },
+          ],
+        },
+      },
+    }),
+    prisma.socialMeetup.create({
+      data: {
+        name: "Karaoke Fun Night",
+        description: "Let's sing our hearts out! All skill levels welcome",
+        barId: helsinkiBars[17].id,
+        creatorId: user8.id,
+        status: MeetupStatus.ACTIVE,
+        maxParticipants: 10,
+        startTime: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
+        expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours from now
+        isPublic: true,
+        participants: {
+          create: [
+            {
+              userId: user8.id,
+              status: ParticipantStatus.JOINED,
+            },
+            {
+              userId: user6.id,
+              status: ParticipantStatus.INVITED,
+            },
+          ],
+        },
+      },
+    }),
+  ]);
 
   // Create Social Chat Messages
   console.log("💬 Creating social chat messages...");
@@ -894,18 +1576,32 @@ async function main() {
   await prisma.socialChatMessage.createMany({
     data: [
       {
-        meetupId: meetup.id,
+        meetupId: meetups[0].id,
         userId: user1.id,
         content: "Hey everyone! Thanks for joining the meetup!",
         messageType: MessageType.TEXT,
         createdAt: new Date(),
       },
       {
-        meetupId: meetup.id,
+        meetupId: meetups[0].id,
         userId: user2.id,
         content: "Glad to be here! The cocktails look amazing 🍸",
         messageType: MessageType.TEXT,
         createdAt: new Date(Date.now() - 5 * 60 * 1000),
+      },
+      {
+        meetupId: meetups[1].id,
+        userId: user7.id,
+        content: "Welcome to jazz night! The band starts in 15 minutes 🎷",
+        messageType: MessageType.TEXT,
+        createdAt: new Date(),
+      },
+      {
+        meetupId: meetups[1].id,
+        userId: user2.id,
+        content: "Excited for the performance! Got a great seat near the stage",
+        messageType: MessageType.TEXT,
+        createdAt: new Date(Date.now() - 10 * 60 * 1000),
       },
     ],
   });
@@ -931,6 +1627,54 @@ async function main() {
         socialScore: 88,
         badges: ["Cocktail Expert"],
       },
+      {
+        userId: user3.id,
+        totalMeetups: 2,
+        successfulMeetups: 1,
+        hopInCount: 5,
+        socialScore: 72,
+        badges: ["Sports Fan"],
+      },
+      {
+        userId: user4.id,
+        totalMeetups: 4,
+        successfulMeetups: 3,
+        hopInCount: 7,
+        socialScore: 81,
+        badges: ["History Buff"],
+      },
+      {
+        userId: user5.id,
+        totalMeetups: 3,
+        successfulMeetups: 2,
+        hopInCount: 6,
+        socialScore: 76,
+        badges: ["Tech Guru"],
+      },
+      {
+        userId: user6.id,
+        totalMeetups: 6,
+        successfulMeetups: 5,
+        hopInCount: 15,
+        socialScore: 92,
+        badges: ["Party Starter", "Social Butterfly"],
+      },
+      {
+        userId: user7.id,
+        totalMeetups: 4,
+        successfulMeetups: 4,
+        hopInCount: 9,
+        socialScore: 89,
+        badges: ["Jazz Lover"],
+      },
+      {
+        userId: user8.id,
+        totalMeetups: 5,
+        successfulMeetups: 4,
+        hopInCount: 11,
+        socialScore: 87,
+        badges: ["Karaoke Star"],
+      },
     ],
   });
 
@@ -953,6 +1697,34 @@ async function main() {
         isHotspot: true,
         heatLevel: 6,
       },
+      {
+        barId: helsinkiBars[21].id,
+        activeUsersCount: 2,
+        socialMeetupsCount: 1,
+        isHotspot: true,
+        heatLevel: 7,
+      },
+      {
+        barId: helsinkiBars[17].id,
+        activeUsersCount: 2,
+        socialMeetupsCount: 1,
+        isHotspot: true,
+        heatLevel: 5,
+      },
+      {
+        barId: tampereBars[0].id,
+        activeUsersCount: 1,
+        socialMeetupsCount: 0,
+        isHotspot: false,
+        heatLevel: 2,
+      },
+      {
+        barId: turkuBars[0].id,
+        activeUsersCount: 1,
+        socialMeetupsCount: 0,
+        isHotspot: false,
+        heatLevel: 2,
+      },
     ],
   });
 
@@ -968,9 +1740,9 @@ async function main() {
           "Explore the best bars in Helsinki city center. Perfect for groups and solo travelers looking to meet new people!",
         creatorId: user1.id,
         cityId: helsinki.id,
-        date: new Date("2025-02-15T19:00:00Z"),
-        startTime: new Date("2025-02-15T19:00:00Z"),
-        endTime: new Date("2025-02-16T01:00:00Z"),
+        date: new Date("2025-10-25T19:00:00Z"),
+        startTime: new Date("2025-10-25T19:00:00Z"),
+        endTime: new Date("2025-10-26T01:00:00Z"),
         maxParticipants: 15,
         isPublic: true,
         status: CrawlStatus.UPCOMING,
@@ -980,19 +1752,19 @@ async function main() {
               barId: helsinkiBars[0].id,
               orderIndex: 1,
               duration: 90,
-              startTime: new Date("2025-02-15T19:00:00Z"),
+              startTime: new Date("2025-10-25T19:00:00Z"),
             },
             {
               barId: helsinkiBars[1].id,
               orderIndex: 2,
               duration: 60,
-              startTime: new Date("2025-02-15T20:30:00Z"),
+              startTime: new Date("2025-10-25T20:30:00Z"),
             },
             {
               barId: helsinkiBars[2].id,
               orderIndex: 3,
               duration: 75,
-              startTime: new Date("2025-02-15T21:30:00Z"),
+              startTime: new Date("2025-10-25T21:30:00Z"),
             },
           ],
         },
@@ -1002,6 +1774,74 @@ async function main() {
             { userId: user2.id },
             { userId: user3.id },
           ],
+        },
+      },
+    }),
+    // Tampere Student Night - ACTIVE
+    prisma.crawl.create({
+      data: {
+        name: "Tampere Student Night",
+        description: "Student-friendly bar crawl through Tampere's best spots",
+        creatorId: user5.id,
+        cityId: tampere.id,
+        date: new Date(),
+        startTime: new Date(),
+        endTime: new Date(Date.now() + 4 * 60 * 60 * 1000),
+        maxParticipants: 12,
+        isPublic: true,
+        status: CrawlStatus.ACTIVE,
+        crawlBars: {
+          create: [
+            {
+              barId: tampereBars[0].id,
+              orderIndex: 1,
+              duration: 60,
+              startTime: new Date(),
+            },
+            {
+              barId: tampereBars[1].id,
+              orderIndex: 2,
+              duration: 90,
+              startTime: new Date(Date.now() + 60 * 60 * 1000),
+            },
+          ],
+        },
+        participants: {
+          create: [{ userId: user5.id }, { userId: user3.id }],
+        },
+      },
+    }),
+    // Turku Historic Pubs - COMPLETED
+    prisma.crawl.create({
+      data: {
+        name: "Turku Historic Pubs Tour",
+        description: "Explore Turku's most historic and charming pubs",
+        creatorId: user4.id,
+        cityId: turku.id,
+        date: new Date("2025-10-18T18:00:00Z"),
+        startTime: new Date("2025-10-18T18:00:00Z"),
+        endTime: new Date("2025-10-18T23:00:00Z"),
+        maxParticipants: 8,
+        isPublic: true,
+        status: CrawlStatus.COMPLETED,
+        crawlBars: {
+          create: [
+            {
+              barId: turkuBars[1].id,
+              orderIndex: 1,
+              duration: 90,
+              startTime: new Date("2025-10-18T18:00:00Z"),
+            },
+            {
+              barId: turkuBars[0].id,
+              orderIndex: 2,
+              duration: 120,
+              startTime: new Date("2025-10-18T19:30:00Z"),
+            },
+          ],
+        },
+        participants: {
+          create: [{ userId: user4.id }, { userId: user6.id }],
         },
       },
     }),
@@ -1024,12 +1864,28 @@ async function main() {
           { userId: user2.id },
           { userId: user4.id },
           { userId: user6.id },
+          { userId: user7.id },
+          { userId: user8.id },
         ],
       },
     },
   });
 
-  // Create VIP passes
+  await prisma.group.create({
+    data: {
+      name: "Tampere Social Club",
+      description: "Social events and meetups in Tampere area",
+      creatorId: user5.id,
+      cityId: tampere.id,
+      isPublic: true,
+      maxMembers: 15,
+      members: {
+        create: [{ userId: user5.id }, { userId: user3.id }],
+      },
+    },
+  });
+
+  // Create VIP passes (old system)
   console.log("🎫 Creating VIP passes...");
 
   await prisma.vIPPass.createMany({
@@ -1038,15 +1894,53 @@ async function main() {
         userId: user1.id,
         barId: helsinkiBars[0].id,
         qrCode: "VIP-HELS-001",
-        startTime: new Date("2025-02-15T19:00:00Z"),
-        endTime: new Date("2025-02-16T01:00:00Z"),
+        startTime: new Date("2025-10-25T19:00:00Z"),
+        endTime: new Date("2025-10-26T01:00:00Z"),
       },
       {
         userId: user2.id,
         barId: helsinkiBars[1].id,
         qrCode: "VIP-HELS-002",
-        startTime: new Date("2025-03-05T18:30:00Z"),
-        endTime: new Date("2025-03-06T00:00:00Z"),
+        startTime: new Date("2025-11-05T18:30:00Z"),
+        endTime: new Date("2025-11-06T00:00:00Z"),
+      },
+    ],
+  });
+
+  // Create Featured Bars
+  console.log("🌟 Creating featured bars...");
+
+  await prisma.featuredBar.createMany({
+    data: [
+      {
+        barId: helsinkiBars[3].id, // Nightclub Aurora
+        startDate: new Date("2025-10-01"),
+        endDate: new Date("2025-10-31"),
+        priority: 1,
+      },
+      {
+        barId: helsinkiBars[4].id, // Club Helsinki
+        startDate: new Date("2025-10-01"),
+        endDate: new Date("2025-10-31"),
+        priority: 2,
+      },
+      {
+        barId: helsinkiBars[11].id, // The Alchemist
+        startDate: new Date("2025-10-01"),
+        endDate: new Date("2025-10-31"),
+        priority: 3,
+      },
+      {
+        barId: tampereBars[1].id, // Klubi Tampere
+        startDate: new Date("2025-10-01"),
+        endDate: new Date("2025-10-31"),
+        priority: 4,
+      },
+      {
+        barId: turkuBars[0].id, // Uusi Apteekki
+        startDate: new Date("2025-10-01"),
+        endDate: new Date("2025-10-31"),
+        priority: 5,
       },
     ],
   });
@@ -1073,13 +1967,26 @@ async function main() {
   console.log(`   - ${await prisma.bar.count()} bars`);
   console.log(`   - ${await prisma.crawl.count()} crawls`);
   console.log(`   - ${await prisma.group.count()} groups`);
-  console.log(`   - ${await prisma.vIPPass.count()} VIP passes`);
+  console.log(`   - ${await prisma.vIPPass.count()} VIP passes (old)`);
+  console.log(
+    `   - ${await prisma.vIPPassEnhanced.count()} enhanced VIP passes`
+  );
+  console.log(
+    `   - ${await prisma.userVIPPass.count()} user VIP pass purchases`
+  );
+  console.log(`   - ${await prisma.featuredBar.count()} featured bars`);
 
   console.log("\n🔑 Test User Logins:");
   console.log("   Email: alex.johnson@example.com");
   console.log("   Email: sarah.miller@example.com");
   console.log("   Email: mikko.korhonen@example.com");
   console.log("   Password for all: password123");
+
+  console.log("\n⭐ VIP Pass Highlights:");
+  console.log(`   - Created ${enhancedVIPPasses.length} enhanced VIP passes`);
+  console.log("   - Various types: Skip Line, Premium Entry, Cover Included");
+  console.log("   - Different price points from €12 to €45");
+  console.log("   - Multiple validity patterns (weekdays, weekends, seasonal)");
 }
 
 main()

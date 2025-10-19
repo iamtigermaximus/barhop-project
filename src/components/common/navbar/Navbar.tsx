@@ -52,22 +52,39 @@ const Navbar = () => {
     };
   }, []);
 
+  const isActive = (path: string) => {
+    if (path === "/") {
+      return pathname === "/";
+    }
+
+    // For "/vip" only highlight when exactly on "/vip"
+    if (path === "/vip") {
+      return pathname === "/vip";
+    }
+
+    // For other paths, use startsWith
+    return pathname.startsWith(path);
+  };
+
   const navigation = [
     { name: "Home", href: "/" },
     { name: "Social Map", href: "/social" },
     { name: "Bars", href: "/bars" },
+    { name: "VIP Passes", href: "/vip" },
+    ...(session ? [{ name: "My VIP Passes", href: "/vip/wallet" }] : []),
+
     { name: "Plan a Crawl", href: "/crawl-planner" },
     // Only show "My Crawls" when user is authenticated
     ...(session ? [{ name: "My Crawls", href: "/my-crawls" }] : []),
     { name: "Discover Crawls", href: "/crawls-dashboard" },
   ];
 
-  const isActive = (path: string) => {
-    if (path === "/") {
-      return pathname === "/";
-    }
-    return pathname.startsWith(path);
-  };
+  // const isActive = (path: string) => {
+  //   if (path === "/") {
+  //     return pathname === "/";
+  //   }
+  //   return pathname.startsWith(path);
+  // };
 
   const handleLogout = () => {
     signOut();
@@ -115,6 +132,12 @@ const Navbar = () => {
                   <UserName>{session.user?.name || "User"}</UserName>
                   <UserEmail>{session.user?.email}</UserEmail>
                 </UserInfo>
+                <DropdownItem
+                  href="/vip/wallet"
+                  onClick={() => setIsUserMenuOpen(false)}
+                >
+                  My VIP Passes
+                </DropdownItem>
                 <DropdownItem
                   href="/my-crawls"
                   onClick={() => setIsUserMenuOpen(false)}

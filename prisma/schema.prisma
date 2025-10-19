@@ -35,37 +35,38 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  phoneNumber   String?   @unique
-  phoneVerified Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime?
+  image          String?
+  phoneNumber    String?   @unique
+  phoneVerified  Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   hashedPassword String?
 
   // Relations
-  accounts          Account[]
-  sessions          Session[]
-  vipPasses         VIPPass[]
-  groups            UserGroup[]
-  createdGroups     Group[]
-  chatMessages      ChatMessage[]
-  createdCrawls     Crawl[]           @relation("CrawlCreator")
-  crawlParticipants CrawlParticipant[]
-  crawlChats        CrawlChatMessage[]
+  accounts           Account[]
+  sessions           Session[]
+  vipPasses          VIPPass[]
+  userVIPPasses      UserVIPPass[]
+  groups             UserGroup[]
+  createdGroups      Group[]
+  chatMessages       ChatMessage[]
+  createdCrawls      Crawl[]             @relation("CrawlCreator")
+  crawlParticipants  CrawlParticipant[]
+  crawlChats         CrawlChatMessage[]
   phoneVerifications PhoneVerification[]
 
   // ADD THESE NEW RELATIONS for Social Mode
-  socialProfile          UserSocialProfile?
-  initiatedInteractions  SocialInteraction[] @relation("InteractionInitiator")
-  receivedInteractions   SocialInteraction[] @relation("InteractionTarget")
-  createdSocialMeetups   SocialMeetup[]
-  meetupParticipants     MeetupParticipant[]
-  socialChatMessages     SocialChatMessage[]
-  socialStats            UserSocialStats?
+  socialProfile         UserSocialProfile?
+  initiatedInteractions SocialInteraction[] @relation("InteractionInitiator")
+  receivedInteractions  SocialInteraction[] @relation("InteractionTarget")
+  createdSocialMeetups  SocialMeetup[]
+  meetupParticipants    MeetupParticipant[]
+  socialChatMessages    SocialChatMessage[]
+  socialStats           UserSocialStats?
 
   @@map("users")
 }
@@ -101,7 +102,7 @@ model City {
 
 model Bar {
   id          String   @id @default(cuid())
-  name        String   @unique 
+  name        String   @unique
   description String?
   address     String
   cityId      String
@@ -121,10 +122,12 @@ model Bar {
   vipCapacity Int?
 
   // Relations
-  city      City          @relation(fields: [cityId], references: [id])
-  vipPasses VIPPass[]
-  featured  FeaturedBar[]
-  crawlBars CrawlBar[]
+  city              City              @relation(fields: [cityId], references: [id])
+  vipPasses         VIPPass[]
+  userVIPPasses     UserVIPPass[]
+  vipPassesEnhanced VIPPassEnhanced[]
+  featured          FeaturedBar[]
+  crawlBars         CrawlBar[]
 
   // Social Mode Relations
   socialProfiles UserSocialProfile[]
@@ -233,26 +236,26 @@ model VerificationToken {
 }
 
 model Crawl {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  creatorId   String
-  cityId      String
-  date        DateTime
-  startTime   DateTime
-  endTime     DateTime?
-  maxParticipants Int  @default(10)
-  isPublic    Boolean  @default(true)
-  status      CrawlStatus @default(PLANNING)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String      @id @default(cuid())
+  name            String
+  description     String?
+  creatorId       String
+  cityId          String
+  date            DateTime
+  startTime       DateTime
+  endTime         DateTime?
+  maxParticipants Int         @default(10)
+  isPublic        Boolean     @default(true)
+  status          CrawlStatus @default(PLANNING)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   // Relations
-  creator     User              @relation("CrawlCreator", fields: [creatorId], references: [id], onDelete: Cascade)
-  city        City              @relation(fields: [cityId], references: [id])
+  creator      User               @relation("CrawlCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  city         City               @relation(fields: [cityId], references: [id])
   participants CrawlParticipant[]
-  crawlBars   CrawlBar[]
-  chats       CrawlChatMessage[]
+  crawlBars    CrawlBar[]
+  chats        CrawlChatMessage[]
 
   @@map("crawls")
 }
@@ -271,13 +274,13 @@ model CrawlParticipant {
 }
 
 model CrawlBar {
-  id          String   @id @default(cuid())
-  crawlId     String
-  barId       String
-  orderIndex  Int
-  duration    Int
-  startTime   DateTime?
-  endTime     DateTime?
+  id         String    @id @default(cuid())
+  crawlId    String
+  barId      String
+  orderIndex Int
+  duration   Int
+  startTime  DateTime?
+  endTime    DateTime?
 
   // Relations
   crawl Crawl @relation(fields: [crawlId], references: [id])
@@ -363,127 +366,210 @@ enum MessageType {
 
 // Add these models with proper bidirectional relations
 model UserSocialProfile {
-  id                String      @id @default(cuid())
-  userId            String      @unique
-  bio               String?
-  vibe              SocialVibe? @default(CASUAL)  // Keep it nullable for now
-  interests         String[]
-  isSocialMode      Boolean     @default(false)
-  socialStatus      SocialStatus @default(OFFLINE)
-  lastActive        DateTime?
-  locationLat       Float?
-  locationLng       Float?
-  currentBarId      String?
-  isVisibleOnMap    Boolean     @default(true)
-  maxDistance       Int         @default(1000)
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  id             String       @id @default(cuid())
+  userId         String       @unique
+  bio            String?
+  vibe           SocialVibe?  @default(CASUAL) // Keep it nullable for now
+  interests      String[]
+  isSocialMode   Boolean      @default(false)
+  socialStatus   SocialStatus @default(OFFLINE)
+  lastActive     DateTime?
+  locationLat    Float?
+  locationLng    Float?
+  currentBarId   String?
+  isVisibleOnMap Boolean      @default(true)
+  maxDistance    Int          @default(1000)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  currentBar        Bar?        @relation(fields: [currentBarId], references: [id])
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentBar Bar? @relation(fields: [currentBarId], references: [id])
 
   @@map("user_social_profiles")
 }
 
 model SocialMeetup {
-  id                String      @id @default(cuid())
-  name              String?
-  description       String?
-  barId             String
-  creatorId         String
-  status            MeetupStatus @default(ACTIVE)
-  maxParticipants   Int         @default(8)
-  startTime         DateTime    @default(now())
-  endTime           DateTime?
-  expiresAt         DateTime
-  isPublic          Boolean     @default(true)
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  id              String       @id @default(cuid())
+  name            String?
+  description     String?
+  barId           String
+  creatorId       String
+  status          MeetupStatus @default(ACTIVE)
+  maxParticipants Int          @default(8)
+  startTime       DateTime     @default(now())
+  endTime         DateTime?
+  expiresAt       DateTime
+  isPublic        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
-  bar               Bar         @relation(fields: [barId], references: [id])
-  creator           User        @relation(fields: [creatorId], references: [id])
-  participants      MeetupParticipant[]
-  chatMessages      SocialChatMessage[]
-  interactions      SocialInteraction[]
+  bar          Bar                 @relation(fields: [barId], references: [id])
+  creator      User                @relation(fields: [creatorId], references: [id])
+  participants MeetupParticipant[]
+  chatMessages SocialChatMessage[]
+  interactions SocialInteraction[]
 
   @@map("social_meetups")
 }
 
 model MeetupParticipant {
-  id                String      @id @default(cuid())
-  meetupId          String
-  userId            String
-  status            ParticipantStatus @default(JOINED)
-  joinedAt          DateTime    @default(now())
-  leftAt            DateTime?
+  id       String            @id @default(cuid())
+  meetupId String
+  userId   String
+  status   ParticipantStatus @default(JOINED)
+  joinedAt DateTime          @default(now())
+  leftAt   DateTime?
 
-  meetup            SocialMeetup @relation(fields: [meetupId], references: [id])
-  user              User        @relation(fields: [userId], references: [id])
+  meetup SocialMeetup @relation(fields: [meetupId], references: [id])
+  user   User         @relation(fields: [userId], references: [id])
 
   @@unique([meetupId, userId])
   @@map("meetup_participants")
 }
 
 model SocialInteraction {
-  id                String      @id @default(cuid())
-  initiatorId       String
-  targetUserId      String
-  interactionType   InteractionType
-  meetupId          String?
-  message           String?
-  status            InteractionStatus @default(PENDING)
-  createdAt         DateTime    @default(now())
-  respondedAt       DateTime?
+  id              String            @id @default(cuid())
+  initiatorId     String
+  targetUserId    String
+  interactionType InteractionType
+  meetupId        String?
+  message         String?
+  status          InteractionStatus @default(PENDING)
+  createdAt       DateTime          @default(now())
+  respondedAt     DateTime?
 
   // Relations with explicit names to avoid ambiguity
-  initiator         User        @relation("InteractionInitiator", fields: [initiatorId], references: [id])
-  targetUser        User        @relation("InteractionTarget", fields: [targetUserId], references: [id])
-  meetup            SocialMeetup? @relation(fields: [meetupId], references: [id])
+  initiator  User          @relation("InteractionInitiator", fields: [initiatorId], references: [id])
+  targetUser User          @relation("InteractionTarget", fields: [targetUserId], references: [id])
+  meetup     SocialMeetup? @relation(fields: [meetupId], references: [id])
 
   @@map("social_interactions")
 }
 
 model SocialChatMessage {
-  id                String      @id @default(cuid())
-  meetupId          String
-  userId            String
-  content           String
-  messageType       MessageType @default(TEXT)
-  createdAt         DateTime    @default(now())
+  id          String      @id @default(cuid())
+  meetupId    String
+  userId      String
+  content     String
+  messageType MessageType @default(TEXT)
+  createdAt   DateTime    @default(now())
 
-  meetup            SocialMeetup @relation(fields: [meetupId], references: [id])
-  user              User        @relation(fields: [userId], references: [id])
+  meetup SocialMeetup @relation(fields: [meetupId], references: [id])
+  user   User         @relation(fields: [userId], references: [id])
 
   @@map("social_chat_messages")
 }
 
 model UserSocialStats {
-  id                String      @id @default(cuid())
-  userId            String      @unique
-  totalMeetups      Int         @default(0)
-  successfulMeetups Int         @default(0)
-  hopInCount        Int         @default(0)
-  socialScore       Int         @default(100)
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  totalMeetups      Int       @default(0)
+  successfulMeetups Int       @default(0)
+  hopInCount        Int       @default(0)
+  socialScore       Int       @default(100)
   badges            String[]
   lastRating        DateTime?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_social_stats")
 }
 
-model BarSocialActivity {
-  id                String      @id @default(cuid())
-  barId             String
-  activeUsersCount  Int         @default(0)
-  socialMeetupsCount Int        @default(0)
-  lastActivity      DateTime    @default(now())
-  isHotspot         Boolean     @default(false)
-  heatLevel         Int         @default(0)
+// NEW: Enhanced VIP passes (bars create these)
+model VIPPassEnhanced {
+  id          String      @id @default(cuid())
+  barId       String
+  name        String // "Friday Night Fast Pass"
+  description String?
+  type        VIPPassType @default(SKIP_LINE)
 
-  bar               Bar         @relation(fields: [barId], references: [id])
+  // Pricing
+  priceCents         Int // €10.00 = 1000
+  originalPriceCents Int? // For showing discounts
+
+  // Benefits
+  benefits         String[] // ["Skip line", "Cover included", "Priority seating"]
+  skipLinePriority Boolean  @default(true)
+  coverFeeIncluded Boolean  @default(false)
+  coverFeeAmount   Int      @default(0)
+
+  // Validity
+  validityStart DateTime
+  validityEnd   DateTime
+  validDays     String[] // ["friday", "saturday"]
+  validHours    Json? // { start: "20:00", end: "02:00" }
+
+  // Capacity
+  totalQuantity Int
+  soldCount     Int @default(0)
+  maxPerUser    Int @default(1)
+
+  // Status
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  bar        Bar           @relation(fields: [barId], references: [id], onDelete: Cascade)
+  userPasses UserVIPPass[]
+
+  @@map("vip_passes_enhanced") // Different table name to avoid conflict
+}
+
+// NEW: User purchased VIP passes
+model UserVIPPass {
+  id                 String  @id @default(cuid())
+  userId             String
+  vipPassId          String
+  barId              String? // ← ADD THIS FIELD
+  qrCode             String  @unique
+  purchasePriceCents Int
+
+  // Usage tracking
+  scannedAt DateTime?
+  scannedBy String? // Staff ID who scanned it
+  status    VIPPassStatus @default(ACTIVE)
+  expiresAt DateTime
+
+  // Timestamps
+  purchasedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vipPass VIPPassEnhanced @relation(fields: [vipPassId], references: [id], onDelete: Cascade)
+  bar     Bar?            @relation(fields: [barId], references: [id]) // ← Use barId
+
+  @@unique([userId, vipPassId])
+  @@map("user_vip_passes")
+}
+
+// Add these enums
+enum VIPPassType {
+  SKIP_LINE
+  COVER_INCLUDED
+  PREMIUM_ENTRY
+}
+
+enum VIPPassStatus {
+  ACTIVE
+  USED
+  EXPIRED
+  CANCELLED
+}
+
+model BarSocialActivity {
+  id                 String   @id @default(cuid())
+  barId              String
+  activeUsersCount   Int      @default(0)
+  socialMeetupsCount Int      @default(0)
+  lastActivity       DateTime @default(now())
+  isHotspot          Boolean  @default(false)
+  heatLevel          Int      @default(0)
+
+  bar Bar @relation(fields: [barId], references: [id])
 
   @@unique([barId])
   @@map("bar_social_activities")
