@@ -71,11 +71,12 @@ const Navbar = () => {
     { name: "Social Map", href: "/social" },
     { name: "Bars", href: "/bars" },
     { name: "VIP Passes", href: "/vip" },
-    ...(session ? [{ name: "My VIP Passes", href: "/vip/wallet" }] : []),
 
     { name: "Plan a Crawl", href: "/crawl-planner" },
     // Only show "My Crawls" when user is authenticated
     ...(session ? [{ name: "My Crawls", href: "/my-crawls" }] : []),
+    ...(session ? [{ name: "My VIP Passes", href: "/vip/wallet" }] : []),
+
     { name: "Discover Crawls", href: "/crawls-dashboard" },
   ];
 
@@ -132,17 +133,18 @@ const Navbar = () => {
                   <UserName>{session.user?.name || "User"}</UserName>
                   <UserEmail>{session.user?.email}</UserEmail>
                 </UserInfo>
-                <DropdownItem
-                  href="/vip/wallet"
-                  onClick={() => setIsUserMenuOpen(false)}
-                >
-                  My VIP Passes
-                </DropdownItem>
+
                 <DropdownItem
                   href="/my-crawls"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
                   My Crawls
+                </DropdownItem>
+                <DropdownItem
+                  href="/vip/wallet"
+                  onClick={() => setIsUserMenuOpen(false)}
+                >
+                  My VIP Passes
                 </DropdownItem>
                 <DropdownItem
                   href="/user-profile"

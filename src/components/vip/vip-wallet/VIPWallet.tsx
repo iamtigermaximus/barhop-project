@@ -478,7 +478,7 @@ export default function VIPWallet() {
           <p style={{ color: "#94a3b8", marginBottom: "2rem" }}>
             Purchase your first VIP pass from the marketplace to get started!
           </p>
-          <BrowseButton onClick={() => router.push("/marketplace")}>
+          <BrowseButton onClick={() => router.push("/vip")}>
             Browse Marketplace
           </BrowseButton>
         </EmptyState>

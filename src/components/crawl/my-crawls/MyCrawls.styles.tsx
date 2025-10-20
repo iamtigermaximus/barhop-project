@@ -784,6 +784,7 @@ export const EmptyState = styled.div`
   padding: 4rem 2rem;
   color: #94a3b8;
   grid-column: 1 / -1;
+  background-color: transparent !important;
 
   /* Mobile */
   @media (max-width: 768px) {

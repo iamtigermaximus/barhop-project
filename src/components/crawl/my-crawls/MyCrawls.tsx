@@ -883,11 +883,14 @@ const MyCrawls = () => {
             {/* Empty State */}
             {displayCrawls.length === 0 && (
               <EmptyState>
-                <div className="icon">
+                <div
+                  className="icon"
+                  style={{ backgroundColor: "red !important" }}
+                >
                   {activeTab === "discover"
                     ? "🔍"
                     : activeTab === "my-crawls"
-                    ? "📅"
+                    ? ""
                     : activeTab === "past-events"
                     ? "🏁"
                     : "📖"}
@@ -908,7 +911,7 @@ const MyCrawls = () => {
                   {activeTab === "my-past-events" &&
                     "Your past crawl history will appear here"}
                 </p>
-                {!isPastTab && (
+                {/* {!isPastTab && (
                   <CreateCrawlCard
                     href={isAuthenticated ? "/crawl-planner" : "/auth/signup"}
                     style={{
@@ -923,7 +926,7 @@ const MyCrawls = () => {
                         : "Be the first to create one!"}
                     </CreateText>
                   </CreateCrawlCard>
-                )}
+                )} */}
               </EmptyState>
             )}
           </>
