@@ -148,6 +148,67 @@ async function main() {
 
   // Create Bars for Helsinki - 3 for each BarType
   console.log("🍻 Creating Helsinki bars...");
+
+  // Define operating hours template
+  const standardOperatingHours = {
+    Monday: { open: "16:00", close: "01:00" },
+    Tuesday: { open: "16:00", close: "01:00" },
+    Wednesday: { open: "16:00", close: "01:00" },
+    Thursday: { open: "16:00", close: "02:00" },
+    Friday: { open: "16:00", close: "02:00" },
+    Saturday: { open: "14:00", close: "02:00" },
+    Sunday: { open: "14:00", close: "24:00" },
+  };
+
+  const eveningOperatingHours = {
+    Monday: { open: "17:00", close: "01:00" },
+    Tuesday: { open: "17:00", close: "01:00" },
+    Wednesday: { open: "17:00", close: "01:00" },
+    Thursday: { open: "17:00", close: "02:00" },
+    Friday: { open: "17:00", close: "02:00" },
+    Saturday: { open: "16:00", close: "02:00" },
+    Sunday: { open: "16:00", close: "24:00" },
+  };
+
+  const restaurantOperatingHours = {
+    Monday: { open: "11:00", close: "23:00" },
+    Tuesday: { open: "11:00", close: "23:00" },
+    Wednesday: { open: "11:00", close: "23:00" },
+    Thursday: { open: "11:00", close: "24:00" },
+    Friday: { open: "11:00", close: "24:00" },
+    Saturday: { open: "12:00", close: "24:00" },
+    Sunday: { open: "12:00", close: "22:00" },
+  };
+
+  const sportsBarOperatingHours = {
+    Monday: { open: "14:00", close: "01:00" },
+    Tuesday: { open: "14:00", close: "01:00" },
+    Wednesday: { open: "14:00", close: "01:00" },
+    Thursday: { open: "14:00", close: "02:00" },
+    Friday: { open: "14:00", close: "02:00" },
+    Saturday: { open: "12:00", close: "02:00" },
+    Sunday: { open: "12:00", close: "24:00" },
+  };
+
+  const karaokeOperatingHours = {
+    Monday: { open: "17:00", close: "02:00" },
+    Tuesday: { open: "17:00", close: "02:00" },
+    Wednesday: { open: "17:00", close: "02:00" },
+    Thursday: { open: "17:00", close: "03:00" },
+    Friday: { open: "17:00", close: "03:00" },
+    Saturday: { open: "15:00", close: "03:00" },
+    Sunday: { open: "15:00", close: "02:00" },
+  };
+
+  const liveMusicOperatingHours = {
+    Monday: { open: "19:00", close: "02:00" },
+    Tuesday: { open: "19:00", close: "02:00" },
+    Wednesday: { open: "19:00", close: "02:00" },
+    Thursday: { open: "19:00", close: "03:00" },
+    Friday: { open: "19:00", close: "03:00" },
+    Saturday: { open: "18:00", close: "03:00" },
+    Sunday: { open: "18:00", close: "02:00" },
+  };
   const helsinkiBars = await Promise.all([
     // PUB (3 bars)
     prisma.bar.create({
@@ -168,6 +229,7 @@ async function main() {
         vipPrice: 15.0,
         vipCapacity: 20,
         isActive: true,
+        operatingHours: standardOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -186,6 +248,7 @@ async function main() {
         website: "https://helsinkibeerhouse.fi",
         vipEnabled: false,
         isActive: true,
+        operatingHours: standardOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -206,6 +269,7 @@ async function main() {
         vipPrice: 12.0,
         vipCapacity: 15,
         isActive: true,
+        operatingHours: standardOperatingHours,
       },
     }),
 
@@ -228,6 +292,7 @@ async function main() {
         vipPrice: 25.0,
         vipCapacity: 15,
         isActive: true,
+        operatingHours: standardOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -248,6 +313,7 @@ async function main() {
         vipPrice: 20.0,
         vipCapacity: 25,
         isActive: true,
+        operatingHours: standardOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -268,6 +334,7 @@ async function main() {
         vipPrice: 18.0,
         vipCapacity: 30,
         isActive: true,
+        operatingHours: standardOperatingHours,
       },
     }),
 
@@ -290,6 +357,7 @@ async function main() {
         vipPrice: 20.0,
         vipCapacity: 15,
         isActive: true,
+        operatingHours: eveningOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -310,6 +378,7 @@ async function main() {
         vipPrice: 15.0,
         vipCapacity: 12,
         isActive: true,
+        operatingHours: eveningOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -328,6 +397,7 @@ async function main() {
         website: "https://urbanretreat.fi",
         vipEnabled: false,
         isActive: true,
+        operatingHours: eveningOperatingHours,
       },
     }),
 
@@ -348,6 +418,7 @@ async function main() {
         website: "https://lounge56.fi",
         vipEnabled: false,
         isActive: true,
+        operatingHours: eveningOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -368,6 +439,7 @@ async function main() {
         vipPrice: 25.0,
         vipCapacity: 8,
         isActive: true,
+        operatingHours: eveningOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -388,6 +460,7 @@ async function main() {
         vipPrice: 30.0,
         vipCapacity: 10,
         isActive: true,
+        operatingHours: eveningOperatingHours,
       },
     }),
 
@@ -410,6 +483,7 @@ async function main() {
         vipPrice: 15.0,
         vipCapacity: 20,
         isActive: true,
+        operatingHours: restaurantOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -428,6 +502,7 @@ async function main() {
         website: "https://seaviewhelsinki.fi",
         vipEnabled: false,
         isActive: true,
+        operatingHours: restaurantOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -448,6 +523,7 @@ async function main() {
         vipPrice: 12.0,
         vipCapacity: 18,
         isActive: true,
+        operatingHours: restaurantOperatingHours,
       },
     }),
 
@@ -470,6 +546,7 @@ async function main() {
         vipPrice: 10.0,
         vipCapacity: 30,
         isActive: true,
+        operatingHours: sportsBarOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -488,6 +565,7 @@ async function main() {
         website: "https://goalpost.fi",
         vipEnabled: false,
         isActive: true,
+        operatingHours: sportsBarOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -508,6 +586,7 @@ async function main() {
         vipPrice: 15.0,
         vipCapacity: 25,
         isActive: true,
+        operatingHours: sportsBarOperatingHours,
       },
     }),
 
@@ -528,6 +607,7 @@ async function main() {
         website: "https://karaokebox.fi",
         vipEnabled: false,
         isActive: true,
+        operatingHours: karaokeOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -548,6 +628,7 @@ async function main() {
         vipPrice: 8.0,
         vipCapacity: 20,
         isActive: true,
+        operatingHours: karaokeOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -568,6 +649,7 @@ async function main() {
         vipPrice: 12.0,
         vipCapacity: 15,
         isActive: true,
+        operatingHours: karaokeOperatingHours,
       },
     }),
 
@@ -590,6 +672,7 @@ async function main() {
         vipPrice: 20.0,
         vipCapacity: 12,
         isActive: true,
+        operatingHours: liveMusicOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -610,6 +693,7 @@ async function main() {
         vipPrice: 15.0,
         vipCapacity: 50,
         isActive: true,
+        operatingHours: liveMusicOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -628,6 +712,7 @@ async function main() {
         website: "https://bluescorner.fi",
         vipEnabled: false,
         isActive: true,
+        operatingHours: liveMusicOperatingHours,
       },
     }),
   ]);
@@ -651,6 +736,7 @@ async function main() {
         website: "https://tamperepubs.fi",
         vipEnabled: false,
         isActive: true,
+        operatingHours: standardOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -671,6 +757,7 @@ async function main() {
         vipPrice: 12.0,
         vipCapacity: 25,
         isActive: true,
+        operatingHours: eveningOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -691,6 +778,7 @@ async function main() {
         vipPrice: 8.0,
         vipCapacity: 20,
         isActive: true,
+        operatingHours: sportsBarOperatingHours,
       },
     }),
   ]);
@@ -716,6 +804,7 @@ async function main() {
         vipPrice: 18.0,
         vipCapacity: 12,
         isActive: true,
+        operatingHours: eveningOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -734,6 +823,7 @@ async function main() {
         website: "https://koulu.fi",
         vipEnabled: false,
         isActive: true,
+        operatingHours: standardOperatingHours,
       },
     }),
     prisma.bar.create({
@@ -754,6 +844,7 @@ async function main() {
         vipPrice: 15.0,
         vipCapacity: 15,
         isActive: true,
+        operatingHours: eveningOperatingHours,
       },
     }),
   ]);

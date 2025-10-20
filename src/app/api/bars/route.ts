@@ -56,6 +56,7 @@ export async function GET(req: Request) {
       imageUrl: bar.imageUrl,
       latitude: bar.latitude,
       longitude: bar.longitude,
+      operatingHours: bar.operatingHours,
     }));
 
     const response = NextResponse.json(barsData);

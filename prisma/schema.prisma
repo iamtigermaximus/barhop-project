@@ -100,6 +100,43 @@ model City {
   @@map("cities")
 }
 
+// model Bar {
+//   id          String   @id @default(cuid())
+//   name        String   @unique
+//   description String?
+//   address     String
+//   cityId      String
+//   district    String
+//   type        BarType
+//   latitude    Float
+//   longitude   Float
+//   imageUrl    String?
+//   phone       String?
+//   website     String?
+//   isActive    Boolean  @default(true)
+//   createdAt   DateTime @default(now())
+
+//   // VIP Features
+//   vipEnabled  Boolean @default(false)
+//   vipPrice    Float?
+//   vipCapacity Int?
+
+//   // Relations
+//   city              City              @relation(fields: [cityId], references: [id])
+//   vipPasses         VIPPass[]
+//   userVIPPasses     UserVIPPass[]
+//   vipPassesEnhanced VIPPassEnhanced[]
+//   featured          FeaturedBar[]
+//   crawlBars         CrawlBar[]
+
+//   // Social Mode Relations
+//   socialProfiles UserSocialProfile[]
+//   socialMeetups  SocialMeetup[]
+//   socialActivity BarSocialActivity?
+
+//   @@map("bars")
+// }
+
 model Bar {
   id          String   @id @default(cuid())
   name        String   @unique
@@ -120,6 +157,9 @@ model Bar {
   vipEnabled  Boolean @default(false)
   vipPrice    Float?
   vipCapacity Int?
+
+  // NEW: Operating Hours (required field)
+  operatingHours Json
 
   // Relations
   city              City              @relation(fields: [cityId], references: [id])

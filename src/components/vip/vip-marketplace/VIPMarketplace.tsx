@@ -1422,17 +1422,32 @@ const MarketplaceContainer = styled.div`
   margin: 0 auto;
 `;
 
+const Title = styled.h1`
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(-45deg, #0ea5e9, #8b5cf6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  @media (max-width: 768px) {
+    font-size: 1.75rem;
+  }
+`;
+const Subtitle = styled.p`
+  color: #94a3b8;
+  font-size: 1.1rem;
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+`;
+
 const HeaderSection = styled.div`
   text-align: center;
-  margin-bottom: 2rem;
   padding: 2rem 1rem;
-  background: linear-gradient(
-    135deg,
-    rgba(30, 41, 59, 0.8),
-    rgba(15, 23, 42, 0.9)
-  );
-  border-radius: 16px;
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background-color: transparent !important;
 `;
 
 const PassGrid = styled.div`
@@ -2379,34 +2394,11 @@ export default function VIPMarketplace() {
       <MarketplaceContainer>
         {/* Header */}
         <HeaderSection>
-          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>⭐</div>
-          <h1
-            style={{
-              fontSize: "3rem",
-              fontWeight: "800",
-              marginBottom: "1rem",
-              background: "linear-gradient(-45deg, #0ea5e9, #8b5cf6, #ec4899)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundSize: "300% 300%",
-              animation: "gradient 3s ease infinite",
-            }}
-          >
-            VIP Marketplace
-          </h1>
-          <p
-            style={{
-              color: "#94a3b8",
-              fontSize: "1.2rem",
-              maxWidth: "600px",
-              margin: "0 auto",
-              lineHeight: "1.6",
-            }}
-          >
+          <Title>VIP Marketplace</Title>
+          <Subtitle>
             Discover VIP passes at bars near you. Skip the line and enjoy
             exclusive access to Helsinki&apos;s hottest venues.
-          </p>
+          </Subtitle>
         </HeaderSection>
 
         {/* Filters and Location */}
