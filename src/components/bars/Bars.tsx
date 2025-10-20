@@ -94,12 +94,13 @@ export const ControlsContainer = styled.div`
 
   @media (max-width: 768px) {
     gap: 0.75rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
     padding: 0 0.5rem;
   }
 
   @media (max-width: 480px) {
     gap: 0.5rem;
+    margin-bottom: 0.75rem;
   }
 `;
 
@@ -133,18 +134,18 @@ export const FilterSelect = styled.select`
   }
 
   @media (max-width: 768px) {
-    min-width: 120px;
-    max-width: 160px;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
+    min-width: 100px;
+    max-width: 120px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
     flex: 0 1 calc(50% - 0.5rem);
   }
 
   @media (max-width: 480px) {
     min-width: 100px;
-    max-width: 140px;
+    max-width: 100px;
     padding: 0.4rem 0.6rem;
-    font-size: 0.8rem;
+    font-size: 0.6rem;
     flex: 0 1 calc(50% - 0.25rem);
   }
 `;
