@@ -21,7 +21,7 @@ export const Page = styled.div`
   width: 100%;
 
   @media (max-width: 768px) {
-    padding: 1rem;
+    padding: 1rem 0.5rem;
   }
 
   @keyframes gradientShift {
@@ -51,6 +51,7 @@ export const Title = styled.h1`
 
   @media (max-width: 768px) {
     font-size: 2rem;
+    margin-bottom: 0.75rem;
   }
 
   @keyframes gradientShift {
@@ -77,7 +78,8 @@ export const Description = styled.p`
 
   @media (max-width: 768px) {
     font-size: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
   }
 `;
 
@@ -91,8 +93,13 @@ export const ControlsContainer = styled.div`
   background-color: transparent !important;
 
   @media (max-width: 768px) {
-    flex-direction: column;
     gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+  }
+
+  @media (max-width: 480px) {
+    gap: 0.5rem;
   }
 `;
 
@@ -106,6 +113,9 @@ export const FilterSelect = styled.select`
   backdrop-filter: blur(10px);
   cursor: pointer;
   transition: all 0.3s ease;
+  min-width: 140px;
+  flex: 1;
+  max-width: 200px;
 
   &:hover {
     border-color: rgba(139, 92, 246, 0.5);
@@ -121,6 +131,22 @@ export const FilterSelect = styled.select`
     background: rgb(30, 41, 59);
     color: #e2e8f0;
   }
+
+  @media (max-width: 768px) {
+    min-width: 120px;
+    max-width: 160px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    flex: 0 1 calc(50% - 0.5rem);
+  }
+
+  @media (max-width: 480px) {
+    min-width: 100px;
+    max-width: 140px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    flex: 0 1 calc(50% - 0.25rem);
+  }
 `;
 
 export const FilterCheckbox = styled.label`
@@ -131,11 +157,13 @@ export const FilterCheckbox = styled.label`
   font-size: 0.9rem;
   cursor: pointer;
   padding: 0.5rem 1rem;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: transparent !important;
+  /* border: 1px solid rgba(139, 92, 246, 0.3); */
   border-radius: 8px;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
+  white-space: nowrap;
+  flex: 0 0 auto;
 
   &:hover {
     border-color: rgba(139, 92, 246, 0.5);
@@ -143,6 +171,40 @@ export const FilterCheckbox = styled.label`
 
   input[type="checkbox"] {
     accent-color: #8b5cf6;
+    transform: scale(0.9);
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    flex: 0 1 100%;
+    justify-content: center;
+    order: 3; /* Move to bottom on mobile */
+    margin-top: 0.25rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    gap: 0.4rem;
+  }
+`;
+
+export const MobileFiltersRow = styled.div`
+  display: flex;
+  background-color: transparent !important;
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 480px) {
+    gap: 0.25rem;
   }
 `;
 
@@ -155,6 +217,7 @@ export const BarsGrid = styled.div`
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+    padding: 0 0.5rem;
   }
 `;
 
@@ -197,6 +260,11 @@ export const BarCard = styled(Link)`
   }
 
   @media (max-width: 768px) {
+    padding: 1.25rem;
+    margin: 0 0.25rem;
+  }
+
+  @media (max-width: 480px) {
     padding: 1rem;
   }
 `;
@@ -210,12 +278,21 @@ export const BarName = styled.h3`
   @media (max-width: 768px) {
     font-size: 1.25rem;
   }
+
+  @media (max-width: 480px) {
+    font-size: 1.1rem;
+  }
 `;
 
 export const BarDescription = styled.p`
   color: #e2e8f0;
   margin-bottom: 1rem;
   line-height: 1.5;
+
+  @media (max-width: 480px) {
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+  }
 `;
 
 export const BarDetails = styled.div`
@@ -223,6 +300,11 @@ export const BarDetails = styled.div`
   gap: 0.5rem;
   margin-bottom: 1rem;
   flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+  }
 `;
 
 export const DetailTag = styled.span`
@@ -232,6 +314,11 @@ export const DetailTag = styled.span`
   border-radius: 6px;
   font-size: 0.875rem;
   backdrop-filter: blur(10px);
+
+  @media (max-width: 480px) {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8rem;
+  }
 `;
 
 export const VIPBadge = styled(DetailTag)`
@@ -245,6 +332,10 @@ export const VIPBadge = styled(DetailTag)`
 export const Address = styled.p`
   color: #94a3b8;
   font-size: 0.875rem;
+
+  @media (max-width: 480px) {
+    font-size: 0.8rem;
+  }
 `;
 
 export const LoadingState = styled.div`
@@ -292,6 +383,12 @@ export const OperatingHours = styled.div`
   background: rgba(30, 41, 59, 0.5);
   border-radius: 6px;
   border-left: 3px solid #475569;
+
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+    padding: 0.4rem;
+    margin-bottom: 0.5rem;
+  }
 `;
 
 export const ResultsCount = styled.div`
@@ -300,6 +397,17 @@ export const ResultsCount = styled.div`
   margin-bottom: 1.5rem;
   font-size: 0.9rem;
   background-color: transparent !important;
+  padding: 0 0.5rem;
+
+  @media (max-width: 768px) {
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.8rem;
+    margin-bottom: 0.75rem;
+  }
 `;
 
 interface Bar {
@@ -550,42 +658,44 @@ export default function Bars() {
 
       {/* Filter and Sort Controls */}
       <ControlsContainer>
-        <FilterSelect
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortOption)}
-        >
-          <option value="name">Sort by Name</option>
-          <option value="distance">Sort by Distance</option>
-          <option value="open">Sort by Open First</option>
-        </FilterSelect>
+        <MobileFiltersRow>
+          <FilterSelect
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+          >
+            <option value="name">Sort by Name</option>
+            <option value="distance">Sort by Distance</option>
+            <option value="open">Sort by Open First</option>
+          </FilterSelect>
 
-        <FilterSelect
-          value={filters.city}
-          onChange={(e) =>
-            setFilters((prev) => ({ ...prev, city: e.target.value }))
-          }
-        >
-          <option value="">All Cities</option>
-          {cities.map((city) => (
-            <option key={city} value={city}>
-              {city}
-            </option>
-          ))}
-        </FilterSelect>
+          <FilterSelect
+            value={filters.city}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, city: e.target.value }))
+            }
+          >
+            <option value="">All Cities</option>
+            {cities.map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            ))}
+          </FilterSelect>
 
-        <FilterSelect
-          value={filters.type}
-          onChange={(e) =>
-            setFilters((prev) => ({ ...prev, type: e.target.value }))
-          }
-        >
-          <option value="">All Types</option>
-          {types.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </FilterSelect>
+          <FilterSelect
+            value={filters.type}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, type: e.target.value }))
+            }
+          >
+            <option value="">All Types</option>
+            {types.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </FilterSelect>
+        </MobileFiltersRow>
 
         <FilterCheckbox>
           <input
