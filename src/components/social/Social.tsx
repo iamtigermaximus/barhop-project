@@ -327,7 +327,7 @@ const Social = () => {
   const { data: session } = useSession();
   const router = useRouter();
 
-  const [isSocialMode, setIsSocialMode] = useState(false);
+  // const [isSocialMode, setIsSocialMode] = useState(false);
   const [activeUsers, setActiveUsers] = useState<
     UserSocialProfileWithRelations[]
   >([]);
@@ -360,6 +360,15 @@ const Social = () => {
     UserSocialProfileWithRelations[]
   >([]);
   const [showLocationWarning, setShowLocationWarning] = useState(false);
+
+  // Initialize isSocialMode from localStorage first, then update from API
+  const [isSocialMode, setIsSocialMode] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("socialMode");
+      return saved ? JSON.parse(saved) : false;
+    }
+    return false;
+  });
 
   // Check if user has social profile on component mount
   useEffect(() => {
@@ -420,6 +429,41 @@ const Social = () => {
     return `${distance.toFixed(1)}km`;
   };
 
+  // const checkSocialProfile = async () => {
+  //   try {
+  //     console.log("🔍 Checking social profile...");
+  //     const response = await fetch("/api/social/profile");
+  //     console.log("📨 Profile check response status:", response.status);
+
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       console.log("✅ Profile check data:", data);
+  //       setHasSocialProfile(!!data.socialProfile);
+  //       setUserSocialProfile(data.socialProfile);
+
+  //       setDebugInfo({
+  //         type: "profile_check",
+  //         hasProfile: !!data.socialProfile,
+  //         profile: data.socialProfile,
+  //         timestamp: new Date().toISOString(),
+  //       });
+  //     } else {
+  //       const errorText = await response.text();
+  //       console.error("❌ Profile check error:", response.status, errorText);
+  //       setDebugInfo({
+  //         type: "profile_check_error",
+  //         status: response.status,
+  //         error: errorText,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("💥 Error checking social profile:", error);
+  //     setDebugInfo({
+  //       type: "profile_check_exception",
+  //       error: error instanceof Error ? error.message : "Unknown error",
+  //     });
+  //   }
+  // };
   const checkSocialProfile = async () => {
     try {
       console.log("🔍 Checking social profile...");
@@ -429,8 +473,34 @@ const Social = () => {
       if (response.ok) {
         const data = await response.json();
         console.log("✅ Profile check data:", data);
+
         setHasSocialProfile(!!data.socialProfile);
         setUserSocialProfile(data.socialProfile);
+
+        // ✅ Set social mode based on the profile data
+        if (data.socialProfile?.isSocialMode) {
+          console.log("🎯 Setting social mode to ACTIVE from profile");
+          setIsSocialMode(true);
+          localStorage.setItem("socialMode", "true"); // Save to localStorage
+
+          // If social mode is active, also set location and fetch users
+          if (
+            data.socialProfile.locationLat &&
+            data.socialProfile.locationLng
+          ) {
+            const location = {
+              lat: data.socialProfile.locationLat,
+              lng: data.socialProfile.locationLng,
+            };
+            setCurrentLocation(location);
+            await detectUserCity(location.lat, location.lng);
+            await fetchNearbyUsers();
+          }
+        } else {
+          console.log("🎯 Setting social mode to INACTIVE from profile");
+          setIsSocialMode(false);
+          localStorage.setItem("socialMode", "false"); // Save to localStorage
+        }
 
         setDebugInfo({
           type: "profile_check",
@@ -540,12 +610,140 @@ const Social = () => {
     }
   };
 
+  // const toggleSocialMode = async (status: boolean) => {
+  //   console.log("🔘 toggleSocialMode called:", {
+  //     status,
+  //     hasSocialProfile,
+  //     userSocialProfile: !!userSocialProfile,
+  //   });
+
+  //   setIsLoading(true);
+  //   setError(null);
+  //   setSuccess(null);
+  //   setShowLocationWarning(false);
+
+  //   try {
+  //     if (status && !hasSocialProfile && !userSocialProfile) {
+  //       console.log("🚫 No profile found, showing setup");
+  //       setShowProfileSetup(true);
+  //       setIsLoading(false);
+  //       return;
+  //     }
+
+  //     let locationData: LocationData = {};
+  //     let usedFallbackLocation = false;
+
+  //     if (status && navigator.geolocation) {
+  //       try {
+  //         const position = await new Promise<GeolocationPosition>(
+  //           (resolve, reject) => {
+  //             navigator.geolocation.getCurrentPosition(resolve, reject, {
+  //               enableHighAccuracy: true,
+  //               timeout: 10000, // Increased timeout for better accuracy
+  //               maximumAge: 300000, // 5 minutes
+  //             });
+  //           }
+  //         );
+
+  //         locationData = {
+  //           locationLat: position.coords.latitude,
+  //           locationLng: position.coords.longitude,
+  //         };
+
+  //         const newLocation = {
+  //           lat: position.coords.latitude,
+  //           lng: position.coords.longitude,
+  //         };
+
+  //         setCurrentLocation(newLocation);
+
+  //         // Detect city when we have location
+  //         console.log("📍 Getting city for location:", newLocation);
+  //         await detectUserCity(newLocation.lat, newLocation.lng);
+  //       } catch (geoError) {
+  //         console.error("Geolocation error:", geoError);
+  //         // Use Helsinki as fallback
+  //         const fallbackLocation = { lat: 60.1699, lng: 24.9384 };
+  //         setCurrentLocation(fallbackLocation);
+  //         setCurrentCity("Helsinki");
+  //         usedFallbackLocation = true;
+  //         setShowLocationWarning(true);
+  //         setError(
+  //           "Using Helsinki as default location. Enable location services for accurate city detection."
+  //         );
+  //       }
+  //     } else if (status) {
+  //       // No geolocation support
+  //       const fallbackLocation = { lat: 60.1699, lng: 24.9384 };
+  //       setCurrentLocation(fallbackLocation);
+  //       setCurrentCity("Helsinki");
+  //       usedFallbackLocation = true;
+  //       setShowLocationWarning(true);
+  //       setError(
+  //         "Geolocation not supported. Using Helsinki as default location."
+  //       );
+  //     }
+
+  //     const response = await fetch("/api/social/status", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         isActive: status,
+  //         ...locationData,
+  //         vibe: userSocialProfile?.vibe,
+  //         interests: userSocialProfile?.interests,
+  //       }),
+  //     });
+
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       throw new Error(errorData.error || "Failed to update social status");
+  //     }
+
+  //     const result = await response.json();
+  //     setUserSocialProfile(result.socialProfile);
+  //     setIsSocialMode(status);
+
+  //     if (status) {
+  //       if (
+  //         currentCity &&
+  //         currentCity !== "Not in Finland" &&
+  //         currentCity !== "Location not in Finland"
+  //       ) {
+  //         if (usedFallbackLocation) {
+  //           setSuccess(
+  //             `Social mode activated in ${currentCity}! Finding users nearby...`
+  //           );
+  //         } else {
+  //           setSuccess(
+  //             `Social mode activated in ${currentCity}! Finding users nearby...`
+  //           );
+  //         }
+  //       } else {
+  //         setSuccess("Social mode activated! Finding users nearby...");
+  //       }
+  //       await fetchNearbyUsers();
+  //     } else {
+  //       setSuccess("Social mode deactivated");
+  //       setAllUsers([]);
+  //       setFilteredUsers([]);
+  //     }
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : "An error occurred");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
   const toggleSocialMode = async (status: boolean) => {
     console.log("🔘 toggleSocialMode called:", {
       status,
       hasSocialProfile,
       userSocialProfile: !!userSocialProfile,
     });
+
+    // Save to localStorage immediately for instant feedback
+    localStorage.setItem("socialMode", JSON.stringify(status));
+    console.log("💾 Saved social mode to localStorage:", status);
 
     setIsLoading(true);
     setError(null);
@@ -569,8 +767,8 @@ const Social = () => {
             (resolve, reject) => {
               navigator.geolocation.getCurrentPosition(resolve, reject, {
                 enableHighAccuracy: true,
-                timeout: 10000, // Increased timeout for better accuracy
-                maximumAge: 300000, // 5 minutes
+                timeout: 10000,
+                maximumAge: 300000,
               });
             }
           );
@@ -586,13 +784,9 @@ const Social = () => {
           };
 
           setCurrentLocation(newLocation);
-
-          // Detect city when we have location
-          console.log("📍 Getting city for location:", newLocation);
           await detectUserCity(newLocation.lat, newLocation.lng);
         } catch (geoError) {
           console.error("Geolocation error:", geoError);
-          // Use Helsinki as fallback
           const fallbackLocation = { lat: 60.1699, lng: 24.9384 };
           setCurrentLocation(fallbackLocation);
           setCurrentCity("Helsinki");
@@ -603,7 +797,6 @@ const Social = () => {
           );
         }
       } else if (status) {
-        // No geolocation support
         const fallbackLocation = { lat: 60.1699, lng: 24.9384 };
         setCurrentLocation(fallbackLocation);
         setCurrentCity("Helsinki");
@@ -632,7 +825,7 @@ const Social = () => {
 
       const result = await response.json();
       setUserSocialProfile(result.socialProfile);
-      setIsSocialMode(status);
+      setIsSocialMode(status); // This will persist due to localStorage
 
       if (status) {
         if (
@@ -659,12 +852,13 @@ const Social = () => {
         setFilteredUsers([]);
       }
     } catch (err) {
+      // If API call fails, revert localStorage
+      localStorage.setItem("socialMode", JSON.stringify(!status));
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
   };
-
   const handleHopIn = async (user: UserSocialProfileWithRelations) => {
     setSelectedUser(user);
     setShowHopInModal(true);
