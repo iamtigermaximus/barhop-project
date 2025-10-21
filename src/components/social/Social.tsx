@@ -378,13 +378,26 @@ const Social = () => {
   const [showLocationWarning, setShowLocationWarning] = useState(false);
 
   // Initialize isSocialMode from localStorage first, then update from API
-  const [isSocialMode, setIsSocialMode] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("socialMode");
-      return saved ? JSON.parse(saved) : false;
+  // const [isSocialMode, setIsSocialMode] = useState(() => {
+  //   if (typeof window !== "undefined") {
+  //     const saved = localStorage.getItem("socialMode");
+  //     return saved ? JSON.parse(saved) : false;
+  //   }
+  //   return false;
+  // });
+  const [isSocialMode, setIsSocialMode] = useState(false);
+
+  // Add this useEffect to handle logout cleanup
+  useEffect(() => {
+    if (!session) {
+      // User logged out - reset everything
+      setIsSocialMode(false);
+      setAllUsers([]);
+      setFilteredUsers([]);
+      setCurrentLocation(null);
+      setCurrentCity("");
     }
-    return false;
-  });
+  }, [session]);
 
   // NOTIFICATION SYSTEM: Socket connection and event listeners
   useEffect(() => {
@@ -586,11 +599,10 @@ const Social = () => {
         setHasSocialProfile(!!data.socialProfile);
         setUserSocialProfile(data.socialProfile);
 
-        // ✅ Set social mode based on the profile data
+        // ✅ Set social mode ONLY from database, remove localStorage
         if (data.socialProfile?.isSocialMode) {
-          console.log("🎯 Setting social mode to ACTIVE from profile");
+          console.log("🎯 Setting social mode to ACTIVE from database");
           setIsSocialMode(true);
-          localStorage.setItem("socialMode", "true"); // Save to localStorage
 
           // If social mode is active, also set location and fetch users
           if (
@@ -606,32 +618,12 @@ const Social = () => {
             await fetchNearbyUsers();
           }
         } else {
-          console.log("🎯 Setting social mode to INACTIVE from profile");
+          console.log("🎯 Setting social mode to INACTIVE from database");
           setIsSocialMode(false);
-          localStorage.setItem("socialMode", "false"); // Save to localStorage
         }
-
-        setDebugInfo({
-          type: "profile_check",
-          hasProfile: !!data.socialProfile,
-          profile: data.socialProfile,
-          timestamp: new Date().toISOString(),
-        });
-      } else {
-        const errorText = await response.text();
-        console.error("❌ Profile check error:", response.status, errorText);
-        setDebugInfo({
-          type: "profile_check_error",
-          status: response.status,
-          error: errorText,
-        });
       }
     } catch (error) {
       console.error("💥 Error checking social profile:", error);
-      setDebugInfo({
-        type: "profile_check_exception",
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
     }
   };
 
@@ -844,15 +836,14 @@ const Social = () => {
   //   }
   // };
   const toggleSocialMode = async (status: boolean) => {
-    console.log("🔘 toggleSocialMode called:", {
-      status,
-      hasSocialProfile,
-      userSocialProfile: !!userSocialProfile,
-    });
+    // Early return if no session
+    if (!session?.user?.id) {
+      console.log("🚫 No session - cannot toggle social mode");
+      setIsSocialMode(false);
+      return;
+    }
 
-    // Save to localStorage immediately for instant feedback
-    localStorage.setItem("socialMode", JSON.stringify(status));
-    console.log("💾 Saved social mode to localStorage:", status);
+    console.log("🔘 toggleSocialMode called:", { status });
 
     setIsLoading(true);
     setError(null);
@@ -934,7 +925,7 @@ const Social = () => {
 
       const result = await response.json();
       setUserSocialProfile(result.socialProfile);
-      setIsSocialMode(status); // This will persist due to localStorage
+      setIsSocialMode(status);
 
       if (status) {
         if (
@@ -962,7 +953,7 @@ const Social = () => {
       }
     } catch (err) {
       // If API call fails, revert localStorage
-      localStorage.setItem("socialMode", JSON.stringify(!status));
+      setIsSocialMode(!status);
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
