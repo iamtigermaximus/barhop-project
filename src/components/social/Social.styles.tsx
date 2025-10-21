@@ -169,11 +169,11 @@ export const CityDetection = styled.div`
   justify-content: center;
   align-items: center;
   gap: 1rem;
-  margin: 1rem 0;
-  padding: 1rem;
+  /* margin: 1rem 0;
+  padding: 1rem; */
   background: rgba(30, 41, 59, 0.5);
   border-radius: 12px;
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  /* border: 1px solid rgba(139, 92, 246, 0.2); */
 `;
 
 export const CityBadge = styled.div`
@@ -409,20 +409,35 @@ export const SuccessState = styled.div`
 
 export const StatsContainer = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.5rem;
   margin: 1.5rem 0;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+
+  @media (min-width: 768px) {
+    gap: 1rem;
+  }
+
+  @media (min-width: 480px) {
+    gap: 1rem;
+  }
 `;
 
 export const StatCard = styled.div`
+  min-width: 100px;
+  padding: 0.5rem;
   background: rgba(30, 41, 59, 0.8);
+  text-align: center;
   border: 1px solid rgba(139, 92, 246, 0.3);
   border-radius: 8px;
-  padding: 1rem;
-  text-align: center;
+
+  @media (min-width: 768px) {
+  }
+
+  @media (min-width: 480px) {
+  }
 `;
 
 export const StatNumber = styled.div`
@@ -430,12 +445,27 @@ export const StatNumber = styled.div`
   font-weight: 700;
   color: #0ea5e9;
   margin-bottom: 0.25rem;
+  font-size: 1rem;
+
+  @media (min-width: 768px) {
+  }
+
+  @media (min-width: 480px) {
+  }
 `;
 
 export const StatLabel = styled.div`
-  font-size: 0.75rem;
+  font-size: 0.6rem;
   color: #94a3b8;
   font-weight: 500;
+
+  @media (min-width: 768px) {
+    font-size: 0.7rem;
+  }
+
+  @media (min-width: 480px) {
+    font-size: 0.75rem;
+  }
 `;
 
 export const EmptyUsersState = styled.div`

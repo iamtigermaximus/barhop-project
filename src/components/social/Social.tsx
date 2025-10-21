@@ -1096,16 +1096,6 @@ const Social = () => {
       {error && showLocationWarning && <ErrorState>{error}</ErrorState>}
       {error && !showLocationWarning && <ErrorState>{error}</ErrorState>}
 
-      {/* City Detection Display - Only show when we have a detected city and social mode is active */}
-      {isSocialMode && currentCity && !isDetectingCity && (
-        <CityDetection>
-          <CityBadge>
-            <span>📍</span>
-            <span>Currently in {currentCity}</span>
-          </CityBadge>
-        </CityDetection>
-      )}
-
       {showProfileSetup && (
         <SetupSocialProfile
           onComplete={handleProfileSetupComplete}
@@ -1131,6 +1121,15 @@ const Social = () => {
               isLoading={isLoading}
             />
           </div>
+          {/* City Detection Display - Only show when we have a detected city and social mode is active */}
+          {isSocialMode && currentCity && !isDetectingCity && (
+            <CityDetection>
+              <CityBadge>
+                <span>📍</span>
+                <span>Currently in {currentCity}</span>
+              </CityBadge>
+            </CityDetection>
+          )}
 
           {/* How it works section - Show below Social Toggle when relevant */}
           {showHowItWorks && (

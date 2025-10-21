@@ -71,7 +71,7 @@ export default function SocialToggle({
         disabled={isLoading}
       >
         {isLoading
-          ? "⏳"
+          ? "🎉 You're Social!"
           : isActive
           ? "🎉 You're Social!"
           : "🔘 I'm Free Tonight"}

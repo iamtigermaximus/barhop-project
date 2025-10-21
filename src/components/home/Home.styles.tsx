@@ -453,7 +453,8 @@ export const CtaSection = styled.div`
   text-align: center;
   margin-top: 3rem;
   padding-top: 2rem;
-  border-top: 1px solid rgba(139, 92, 246, 0.2);
+  /* border-top: 1px solid rgba(139, 92, 246, 0.2); */
+  background-color: transparent !important;
 `;
 
 export const SafetySection = styled.div`
