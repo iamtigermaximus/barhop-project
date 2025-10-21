@@ -67,6 +67,10 @@ import {
   ViewButton,
   ViewToggle,
 } from "./Social.styles";
+import { useSocket } from "../contexts/SocketContext";
+import { NotificationData } from "@/types/socket";
+
+// NOTIFICATION SYSTEM IMPORTS
 
 export const SocialMap = dynamic(() => import("./social-map/SocialMap"), {
   ssr: false,
@@ -327,6 +331,18 @@ const Social = () => {
   const { data: session } = useSession();
   const router = useRouter();
 
+  // NOTIFICATION SYSTEM STATE
+  const {
+    socket,
+    isConnected,
+    addNotification,
+    markAsRead,
+    notifications,
+    unreadCount,
+  } = useSocket(); // const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  // const [unreadCount, setUnreadCount] = useState(0);
+
   // const [isSocialMode, setIsSocialMode] = useState(false);
   const [activeUsers, setActiveUsers] = useState<
     UserSocialProfileWithRelations[]
@@ -369,6 +385,99 @@ const Social = () => {
     }
     return false;
   });
+
+  // NOTIFICATION SYSTEM: Socket connection and event listeners
+  useEffect(() => {
+    if (!socket || !session?.user?.id) return;
+
+    // Join user's private room
+    socket.emit("join_user_room", session.user.id);
+
+    // Listen for new notifications
+    socket.on("new_notification", (notification) => {
+      addNotification(notification);
+      setSuccess(`New notification: ${notification.message}`);
+    });
+
+    // Listen for hop request responses
+    socket.on("hop_request_accepted", (hopIn) => {
+      setSuccess(`${hopIn.toUser.name} accepted your hop in request! 🎉`);
+    });
+
+    // Listen for errors
+    socket.on("error", (error) => {
+      setError(error);
+    });
+
+    return () => {
+      socket.off("new_notification");
+      socket.off("hop_request_accepted");
+      socket.off("error");
+    };
+  }, [socket, session, addNotification]);
+
+  // NOTIFICATION SYSTEM: Fetch existing notifications on mount
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchNotifications();
+    }
+  }, [session]);
+
+  // NOTIFICATION SYSTEM: Fetch notifications from API
+  // const fetchNotifications = async () => {
+  //   try {
+  //     const response = await fetch("/api/notifications");
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       setNotifications(data.notifications);
+  //       setUnreadCount(data.unreadCount);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching notifications:", error);
+  //   }
+  // };
+
+  // In your Social component, add debugging:
+  const fetchNotifications = async () => {
+    try {
+      console.log("📡 Fetching notifications...");
+      const response = await fetch("/api/notifications");
+      console.log("📨 API Response status:", response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("✅ Notifications data:", data);
+
+        // Add notifications to context instead of local state
+        data.notifications?.forEach((notification: NotificationData) => {
+          addNotification(notification);
+        });
+      } else {
+        console.error("❌ API Error:", response.status);
+      }
+    } catch (error) {
+      console.error("💥 Error fetching notifications:", error);
+    }
+  };
+
+  // NOTIFICATION SYSTEM: Send wave to user
+  const sendWave = async (user: UserSocialProfileWithRelations) => {
+    if (!socket || !session?.user?.id) {
+      setError("Not connected to server");
+      return;
+    }
+
+    try {
+      socket.emit("send_wave", {
+        fromUserId: session.user.id,
+        toUserId: user.userId,
+      });
+
+      setSuccess(`You waved at ${user.user.name || "user"}! 👋`);
+    } catch (err) {
+      setError("Failed to send wave");
+    }
+  };
 
   // Check if user has social profile on component mount
   useEffect(() => {
@@ -859,44 +968,33 @@ const Social = () => {
       setIsLoading(false);
     }
   };
+
+  // NOTIFICATION SYSTEM: Updated hop in function using Socket.io
   const handleHopIn = async (user: UserSocialProfileWithRelations) => {
     setSelectedUser(user);
     setShowHopInModal(true);
   };
 
+  // NOTIFICATION SYSTEM: Updated send hop in request using Socket.io
   const sendHopInRequest = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !socket || !session?.user?.id) return;
 
     setIsSendingHopIn(true);
     try {
-      const response = await fetch("/api/social/hop-in", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          targetUserId: selectedUser.userId,
-          barId: selectedUser.currentBarId,
-          message: `Hey ${
-            selectedUser.user.name || "there"
-          }! I'd like to join you.`,
-        }),
+      socket.emit("send_hop_request", {
+        fromUserId: session.user.id,
+        toUserId: selectedUser.userId,
+        barId: selectedUser.currentBarId,
+        message: `Hey ${
+          selectedUser.user.name || "there"
+        }! I'd like to join you.`,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to send hop in request");
-      }
-
-      setSuccess(
-        `Hop in request sent to ${
-          selectedUser.user.name || "user"
-        }! They'll be notified.`
-      );
+      setSuccess(`Hop in request sent to ${selectedUser.user.name || "user"}!`);
       setShowHopInModal(false);
       setSelectedUser(null);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to send hop in request"
-      );
+      setError("Failed to send hop in request");
     } finally {
       setIsSendingHopIn(false);
     }
@@ -963,6 +1061,397 @@ const Social = () => {
     }
   };
 
+  // NOTIFICATION SYSTEM: Notification handlers
+  const handleMarkAsRead = async (notificationId: string) => {
+    try {
+      const response = await fetch("/api/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationId, read: true }),
+      });
+
+      if (response.ok) {
+        markAsRead(notificationId); // This will update the context state
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
+  const handleAcceptHop = async (notification: NotificationData) => {
+    if (!socket || !session?.user?.id) return;
+
+    try {
+      socket.emit("respond_hop_request", {
+        hopInId: notification.hopInId,
+        status: "ACCEPTED",
+        userId: session.user.id,
+      });
+
+      handleMarkAsRead(notification.id);
+      setSuccess(`You accepted the hop in request!`);
+    } catch (err) {
+      setError("Failed to accept hop request");
+    }
+  };
+
+  const handleDeclineHop = async (notification: NotificationData) => {
+    if (!socket || !session?.user?.id) return;
+
+    try {
+      socket.emit("respond_hop_request", {
+        hopInId: notification.hopInId,
+        status: "DECLINED",
+        userId: session.user.id,
+      });
+
+      handleMarkAsRead(notification.id);
+      setSuccess(`You declined the hop in request`);
+    } catch (err) {
+      setError("Failed to decline hop request");
+    }
+  };
+
+  // NOTIFICATION SYSTEM: Notifications Panel Component
+  // NOTIFICATION SYSTEM: Notifications Panel Component
+  const NotificationsPanel = () => {
+    const { notifications, unreadCount, markAsRead } = useSocket();
+
+    if (!showNotifications) return null;
+
+    return (
+      <ModalOverlay onClick={() => setShowNotifications(false)}>
+        <ModalContent
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: "500px",
+            maxHeight: "80vh",
+            background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
+            border: "1px solid rgba(139, 92, 246, 0.3)",
+            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)",
+          }}
+        >
+          <ModalHeader
+            style={{
+              background: "rgba(30, 41, 59, 0.8)",
+              borderBottom: "1px solid rgba(139, 92, 246, 0.2)",
+              padding: "1.5rem",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                }}
+              >
+                <div
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    background: "linear-gradient(135deg, #8b5cf6, #ec4899)",
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "16px",
+                  }}
+                >
+                  🔔
+                </div>
+                <div>
+                  <h3
+                    style={{
+                      margin: 0,
+                      color: "#f8fafc",
+                      fontSize: "1.25rem",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Notifications
+                  </h3>
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#94a3b8",
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    {unreadCount > 0
+                      ? `${unreadCount} unread ${
+                          unreadCount === 1 ? "message" : "messages"
+                        }`
+                      : "All caught up!"}
+                  </p>
+                </div>
+              </div>
+              <ModalButton
+                $variant="secondary"
+                onClick={() => setShowNotifications(false)}
+                style={{
+                  padding: "8px 12px",
+                  background: "rgba(139, 92, 246, 0.1)",
+                  border: "1px solid rgba(139, 92, 246, 0.3)",
+                }}
+              >
+                ✕
+              </ModalButton>
+            </div>
+          </ModalHeader>
+
+          <div
+            style={{
+              overflowY: "auto",
+              padding: "1rem",
+              background: "rgba(15, 23, 42, 0.5)",
+            }}
+          >
+            {notifications.length === 0 ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "#94a3b8",
+                  padding: "3rem 2rem",
+                  background: "rgba(30, 41, 59, 0.3)",
+                  borderRadius: "12px",
+                  border: "1px dashed rgba(139, 92, 246, 0.2)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "3rem",
+                    marginBottom: "1rem",
+                    opacity: 0.5,
+                  }}
+                >
+                  🔔
+                </div>
+                <h4
+                  style={{
+                    color: "#e2e8f0",
+                    marginBottom: "0.5rem",
+                    fontWeight: "500",
+                  }}
+                >
+                  No notifications yet
+                </h4>
+                <p style={{ margin: 0, fontSize: "0.875rem" }}>
+                  Notifications will appear here when you receive waves or
+                  hop-in requests
+                </p>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.75rem",
+                }}
+              >
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    style={{
+                      background: notification.read
+                        ? "rgba(30, 41, 59, 0.6)"
+                        : "linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.1) 100%)",
+                      border: notification.read
+                        ? "1px solid rgba(139, 92, 246, 0.1)"
+                        : "1px solid rgba(139, 92, 246, 0.3)",
+                      borderRadius: "12px",
+                      padding: "1.25rem",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                    onClick={() =>
+                      !notification.read && markAsRead(notification.id)
+                    }
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow =
+                        "0 8px 25px rgba(139, 92, 246, 0.15)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
+                  >
+                    {/* Unread indicator */}
+                    {!notification.read && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "12px",
+                          right: "12px",
+                          width: "8px",
+                          height: "8px",
+                          background: "#ec4899",
+                          borderRadius: "50%",
+                          animation: "pulse 2s infinite",
+                        }}
+                      ></div>
+                    )}
+
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "1rem",
+                      }}
+                    >
+                      <ModalUserImage
+                        $imageUrl={notification.fromUser?.image || undefined}
+                        style={{
+                          width: "44px",
+                          height: "44px",
+                          fontSize: "16px",
+                          border: notification.read
+                            ? "2px solid rgba(139, 92, 246, 0.3)"
+                            : "2px solid #8b5cf6",
+                        }}
+                      >
+                        {!notification.fromUser?.image &&
+                          (notification.fromUser?.name
+                            ?.charAt(0)
+                            .toUpperCase() ||
+                            "U")}
+                      </ModalUserImage>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p
+                          style={{
+                            margin: "0 0 0.5rem 0",
+                            color: "#f8fafc",
+                            fontWeight: notification.read ? "400" : "600",
+                            fontSize: "0.95rem",
+                            lineHeight: "1.4",
+                          }}
+                        >
+                          {notification.message}
+                        </p>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            flexWrap: "wrap",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          <small
+                            style={{
+                              color: notification.read ? "#64748b" : "#94a3b8",
+                              fontSize: "0.75rem",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.25rem",
+                            }}
+                          >
+                            <span>🕒</span>
+                            {new Date(
+                              notification.createdAt
+                            ).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </small>
+
+                          {notification.type === "HOP_REQUEST" &&
+                            notification.hopInId && (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "0.5rem",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <ModalButton
+                                  $variant="primary"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAcceptHop(notification);
+                                  }}
+                                  style={{
+                                    padding: "6px 12px",
+                                    fontSize: "12px",
+                                    background:
+                                      "linear-gradient(135deg, #10b981, #059669)",
+                                    border: "none",
+                                  }}
+                                >
+                                  ✅ Accept
+                                </ModalButton>
+                                <ModalButton
+                                  $variant="secondary"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeclineHop(notification);
+                                  }}
+                                  style={{
+                                    padding: "6px 12px",
+                                    fontSize: "12px",
+                                    background: "rgba(239, 68, 68, 0.1)",
+                                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                                    color: "#ef4444",
+                                  }}
+                                >
+                                  ❌ Decline
+                                </ModalButton>
+                              </div>
+                            )}
+
+                          {notification.type === "WAVE" && (
+                            <div
+                              style={{
+                                background: "rgba(34, 197, 94, 0.1)",
+                                color: "#22c55e",
+                                padding: "4px 8px",
+                                borderRadius: "6px",
+                                fontSize: "0.75rem",
+                                border: "1px solid rgba(34, 197, 94, 0.2)",
+                              }}
+                            >
+                              👋 Wave
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Add some custom styles for the pulse animation */}
+          <style jsx>{`
+            @keyframes pulse {
+              0% {
+                opacity: 1;
+              }
+              50% {
+                opacity: 0.5;
+              }
+              100% {
+                opacity: 1;
+              }
+            }
+          `}</style>
+        </ModalContent>
+      </ModalOverlay>
+    );
+  };
   // Update useEffect to use filteredUsers
   useEffect(() => {
     setActiveUsers(filteredUsers);
@@ -1081,15 +1570,51 @@ const Social = () => {
           See who&apos;s out tonight and connect with people nearby
         </Subtitle>
 
-        {/* Edit Profile Button - Only show when user has a profile and is not in setup mode */}
-        {hasSocialProfile && userSocialProfile && !showProfileSetup && (
-          <HeaderActions>
+        {/* NOTIFICATION SYSTEM: Notification Bell and Edit Profile Button */}
+        <HeaderActions>
+          {/* Notification Bell */}
+          {/* Notification Bell */}
+          <EditProfileButton
+            onClick={() => setShowNotifications(true)}
+            style={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+            }}
+          >
+            <span>🔔</span>
+            {unreadCount > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "-5px",
+                  right: "-5px",
+                  background: "#ec4899",
+                  color: "white",
+                  borderRadius: "50%",
+                  width: "20px",
+                  height: "20px",
+                  fontSize: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "bold",
+                }}
+              >
+                {unreadCount}
+              </span>
+            )}
+          </EditProfileButton>
+
+          {/* Edit Profile Button - Only show when user has a profile and is not in setup mode */}
+          {hasSocialProfile && userSocialProfile && !showProfileSetup && (
             <EditProfileButton onClick={handleEditProfile}>
               <span>⚙️</span>
               Edit
             </EditProfileButton>
-          </HeaderActions>
-        )}
+          )}
+        </HeaderActions>
       </SocialHeader>
 
       {success && <SuccessState>{success}</SuccessState>}
@@ -1261,11 +1786,15 @@ const Social = () => {
                               >
                                 Hop In
                               </ActionButton>
+                              {/* NOTIFICATION SYSTEM: Updated wave button */}
                               <ActionButton
                                 $variant="secondary"
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  sendWave(user);
+                                }}
                               >
-                                👋
+                                👋 Wave
                               </ActionButton>
                             </QuickActions>
                           </UserInfo>
@@ -1362,6 +1891,9 @@ const Social = () => {
           </ModalContent>
         </ModalOverlay>
       )}
+
+      {/* NOTIFICATION SYSTEM: Notifications Panel */}
+      <NotificationsPanel />
 
       {/* Debug Section (commented out) */}
       {/*

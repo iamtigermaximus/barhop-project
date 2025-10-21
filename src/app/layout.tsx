@@ -6,6 +6,7 @@ import Navbar from "@/components/common/navbar/Navbar";
 import StyledComponentsRegistry from "@/lib/registry";
 import Footer from "@/components/common/footer/Footer";
 import { AuthProvider } from "@/components/providers/Providers";
+import { SocketProvider } from "@/components/contexts/SocketContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -44,9 +45,11 @@ export default function RootLayout({
       >
         <StyledComponentsRegistry>
           <AuthProvider>
-            <Navbar />
-            {children}
-            <Footer />
+            <SocketProvider>
+              <Navbar />
+              {children}
+              <Footer />
+            </SocketProvider>
           </AuthProvider>
         </StyledComponentsRegistry>
       </body>

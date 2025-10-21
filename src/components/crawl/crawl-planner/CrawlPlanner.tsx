@@ -387,13 +387,17 @@ export const CheckboxLabel = styled.label`
   padding: 0.5rem;
   border-radius: 6px;
   transition: all 0.2s ease;
-  min-height: 44px;
+  min-height: 20px;
+
+  @media (max-width: 768px) {
+    min-height: 10px;
+  }
 
   @media (max-width: 480px) {
     font-size: 0.85rem;
     padding: 0.4rem;
     gap: 0.6rem;
-    min-height: 40px;
+    min-height: 10px;
   }
 
   &:hover {

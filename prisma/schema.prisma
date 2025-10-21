@@ -67,7 +67,12 @@ model User {
   meetupParticipants    MeetupParticipant[]
   socialChatMessages    SocialChatMessage[]
   socialStats           UserSocialStats?
-
+  
+  // NOTIFICATION SYSTEM RELATIONS
+  sentNotifications     Notification[] @relation("NotificationSender")
+  receivedNotifications Notification[] @relation("NotificationReceiver")
+  sentHopIns           HopIn[]         @relation("HopInSender")
+  receivedHopIns       HopIn[]         @relation("HopInReceiver")
   @@map("users")
 }
 
@@ -173,6 +178,9 @@ model Bar {
   socialProfiles UserSocialProfile[]
   socialMeetups  SocialMeetup[]
   socialActivity BarSocialActivity?
+
+  //Notification System Relations
+  hopIns  HopIn[]
 
   @@map("bars")
 }
@@ -448,6 +456,7 @@ model SocialMeetup {
   participants MeetupParticipant[]
   chatMessages SocialChatMessage[]
   interactions SocialInteraction[]
+  notifications Notification[]
 
   @@map("social_meetups")
 }
@@ -613,4 +622,64 @@ model BarSocialActivity {
 
   @@unique([barId])
   @@map("bar_social_activities")
+}
+
+
+// NOTIFICATION SYSTEM
+enum NotificationType {
+  HOP_REQUEST
+  WAVE
+  MESSAGE
+  SYSTEM
+  MEETUP_INVITE
+}
+
+enum HopInStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+  EXPIRED
+}
+
+model Notification {
+  id           String           @id @default(cuid())
+  userId       String
+  type         NotificationType
+  fromUserId   String
+  message      String?
+  barId        String?
+  read         Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  hopInId      String?
+  meetupId     String?
+
+  // Relations with proper bidirectional links
+  user      User        @relation("NotificationReceiver", fields: [userId], references: [id], onDelete: Cascade)
+  fromUser  User        @relation("NotificationSender", fields: [fromUserId], references: [id], onDelete: Cascade)
+  hopIn     HopIn?      @relation(fields: [hopInId], references: [id], onDelete: Cascade)
+  meetup    SocialMeetup? @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+model HopIn {
+  id          String      @id @default(cuid())
+  fromUserId  String
+  toUserId    String
+  barId       String?
+  message     String?
+  status      HopInStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  expiresAt   DateTime
+
+  // Relations with proper bidirectional links
+  fromUser      User         @relation("HopInSender", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser        User         @relation("HopInReceiver", fields: [toUserId], references: [id], onDelete: Cascade)
+  bar           Bar?         @relation(fields: [barId], references: [id], onDelete: Cascade)
+  notifications Notification[]
+
+  @@unique([fromUserId, toUserId, createdAt])
+  @@map("hop_ins")
 }
