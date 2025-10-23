@@ -100,10 +100,10 @@ const Home = () => {
           from casual hangouts to unforgettable nights out.
         </HeroDescription>
         <ButtonGroup>
-          <PrimaryButton href="/social">
+          <PrimaryButton href="/app/social">
             See Who&apos;s Out Tonight
           </PrimaryButton>
-          <SecondaryButton href="/bars">Explore Bars</SecondaryButton>
+          <SecondaryButton href="/app/bars">Explore Bars</SecondaryButton>
         </ButtonGroup>
       </HeroSection>
 
@@ -158,7 +158,7 @@ const Home = () => {
 
         {/* Plan a Crawl CTA */}
         <CtaSection>
-          <PrimaryButton href="/crawl-planner">
+          <PrimaryButton href="/app/crawl-planner">
             Start Planning Your Crawl
           </PrimaryButton>
         </CtaSection>
