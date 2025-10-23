@@ -1,12 +1,9 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
-import "./globals.css";
-import Navbar from "@/components/common/navbar/Navbar";
 import StyledComponentsRegistry from "@/lib/registry";
-import Footer from "@/components/common/footer/Footer";
-import { AuthProvider } from "@/components/providers/Providers";
-import { SocketProvider } from "@/components/contexts/SocketContext";
+import { AuthProvider } from "@/components/marketing/common/providers/Providers";
+import "./globals.css"; // Import your single global CSS here
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,24 +30,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
-      <body
-        style={{
-          background: "#0f172a",
-          margin: 0,
-          padding: 0,
-          minHeight: "100vh",
-          fontFamily: "var(--font-inter), sans-serif",
-          color: "white", // Add this to make text visible
-        }}
-      >
+      <body>
         <StyledComponentsRegistry>
-          <AuthProvider>
-            <SocketProvider>
-              <Navbar />
-              {children}
-              <Footer />
-            </SocketProvider>
-          </AuthProvider>
+          <AuthProvider>{children}</AuthProvider>
         </StyledComponentsRegistry>
       </body>
     </html>

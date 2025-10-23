@@ -1,0 +1,13 @@
+import AppHome from "@/components/app/home/AppHome";
+import Home from "@/components/app/home/Home";
+import React from "react";
+
+const HomePage = () => {
+  return (
+    <div>
+      <Home />
+    </div>
+  );
+};
+
+export default HomePage;
