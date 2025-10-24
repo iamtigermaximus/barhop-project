@@ -650,6 +650,7 @@ model Notification {
   message      String?
   barId        String?
   read         Boolean          @default(false)
+  readAt       DateTime?  
   createdAt    DateTime         @default(now())
   hopInId      String?
   meetupId     String?
