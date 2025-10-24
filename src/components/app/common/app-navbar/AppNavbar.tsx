@@ -153,7 +153,7 @@ const AppNavbar = () => {
   ];
 
   const handleLogout = () => {
-    signOut();
+    signOut({ callbackUrl: "/app" });
     setIsUserMenuOpen(false);
     setIsMobileMenuOpen(false);
   };

@@ -138,19 +138,19 @@ const Navbar = () => {
                 </UserInfo>
 
                 <DropdownItem
-                  href="/my-crawls"
+                  href="/app/my-crawls"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
                   My Crawls
                 </DropdownItem>
                 <DropdownItem
-                  href="/vip/wallet"
+                  href="/app/vip/wallet"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
                   My VIP Passes
                 </DropdownItem>
                 <DropdownItem
-                  href="/user-profile"
+                  href="/app/user-profile"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
                   Profile

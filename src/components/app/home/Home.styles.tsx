@@ -491,7 +491,7 @@ export const SafetyBadge = styled.span`
 `;
 
 export const CitiesSection = styled.section`
-  padding: 4rem 1rem;
+  padding: 4rem 1rem 10rem;
   background: linear-gradient(
     -45deg,
     rgb(24, 20, 31),
@@ -503,7 +503,7 @@ export const CitiesSection = styled.section`
   animation: gradientShift 10s ease infinite;
 
   @media (min-width: 768px) {
-    padding: 6rem 2rem;
+    padding: 6rem 2rem 10rem;
   }
 
   @keyframes gradientShift {

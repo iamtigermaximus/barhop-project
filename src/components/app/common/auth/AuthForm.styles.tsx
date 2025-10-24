@@ -2,7 +2,7 @@
 import styled from "styled-components";
 
 export const Page = styled.div`
-  padding: 2rem 1rem;
+  padding: 2rem 1rem 10rem;
   max-width: 500px;
   margin: 0 auto;
   background: linear-gradient(

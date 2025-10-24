@@ -87,7 +87,7 @@ export default function SignupForm() {
         } else {
           // Success! Redirect to home/dashboard
           setTimeout(() => {
-            router.push("/");
+            router.push("/app");
           }, 1000);
         }
       } else {
@@ -103,7 +103,7 @@ export default function SignupForm() {
   const handleGoogleSignUp = async () => {
     setGoogleLoading(true);
     try {
-      await signIn("google", { callbackUrl: "/" });
+      await signIn("google", { callbackUrl: "/app" });
     } catch (error) {
       setError("Failed to sign up with Google");
       setGoogleLoading(false);
@@ -117,7 +117,7 @@ export default function SignupForm() {
           <Title>Join Hoppr</Title>
           <Subtitle>
             Already have an account?{" "}
-            <StyledLink href="/login">Sign in here</StyledLink>
+            <StyledLink href="/app/auth/login">Sign in here</StyledLink>
           </Subtitle>
 
           <GoogleButton

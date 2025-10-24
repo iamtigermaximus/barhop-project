@@ -45,27 +45,27 @@ export const Container = styled.div`
   background: linear-gradient(-45deg, #0f172a, #1e1b4b, #0f172a, #1e1b4b);
   background-size: 400% 400%;
   animation: ${gradientShift} 15s ease infinite;
-  padding: 1rem;
+  padding: 1rem 1rem 10rem;
   position: relative;
   overflow-x: hidden;
 
   /* Mobile First Approach */
   @media (max-width: 480px) {
-    padding: 0.5rem;
+    padding: 1rem 1rem 10rem;
     align-items: flex-start;
     padding-top: 1.5rem;
   }
 
   @media (min-width: 481px) and (max-width: 768px) {
-    padding: 1.5rem;
+    padding: 1rem 1rem 10rem;
   }
 
   @media (min-width: 769px) and (max-width: 1024px) {
-    padding: 2rem;
+    padding: 1rem 1rem 10rem;
   }
 
   @media (min-width: 1025px) {
-    padding: 3rem;
+    padding: 1rem 1rem 10rem;
   }
 
   &::before {

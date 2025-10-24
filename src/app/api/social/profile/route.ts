@@ -106,7 +106,6 @@ export async function POST(request: NextRequest) {
     console.log("🚨 STARTING SAVE FOR USER:", session.user.id);
     console.log("📥 DATA:", { bio, vibe, interests });
 
-    // SIMPLE DIRECT APPROACH - Delete and recreate to avoid update issues
     try {
       // First, delete any existing profile
       await prisma.userSocialProfile.deleteMany({
@@ -115,12 +114,20 @@ export async function POST(request: NextRequest) {
 
       console.log("✅ DELETED EXISTING PROFILE");
 
+      // FIX: Properly handle the enum value
+      const vibeValue =
+        vibe && Object.values(SocialVibe).includes(vibe as SocialVibe)
+          ? (vibe as SocialVibe)
+          : SocialVibe.CASUAL; // Use the enum value, not string
+
+      console.log("🎭 PROCESSED VIBE:", vibeValue);
+
       // Then create fresh with ALL data
       const result = await prisma.userSocialProfile.create({
         data: {
           userId: session.user.id,
           bio: bio || "",
-          vibe: vibe || "CASUAL",
+          vibe: vibeValue, // Use the properly typed enum value
           interests: Array.isArray(interests) ? interests : [],
           isSocialMode: false,
           socialStatus: "OFFLINE",
@@ -145,6 +152,11 @@ export async function POST(request: NextRequest) {
       });
     } catch (dbError) {
       console.error("❌ DATABASE ERROR:", dbError);
+      // Add more specific error logging
+      if (dbError instanceof Error) {
+        console.error("❌ Error name:", dbError.name);
+        console.error("❌ Error message:", dbError.message);
+      }
       throw dbError;
     }
   } catch (error) {

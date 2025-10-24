@@ -399,7 +399,7 @@ const MyCrawls = () => {
 
   const handleJoinCrawl = async (crawlId: string, crawlName: string) => {
     if (!isAuthenticated) {
-      window.location.href = `/auth/signup?redirect=/crawls&crawl=${crawlId}`;
+      window.location.href = `/app/auth/signup?redirect=/crawls&crawl=${crawlId}`;
       return;
     }
 
@@ -710,13 +710,13 @@ const MyCrawls = () => {
             {/* Create Crawl Card - Only show for non-past tabs */}
             {!isPastTab &&
               (isAuthenticated ? (
-                <CreateCrawlCard href="/crawl-planner">
+                <CreateCrawlCard href="/app/crawl-planner">
                   <CreateIcon>🎯</CreateIcon>
                   <CreateText>Create New Crawl</CreateText>
                   <CreateSubtext>Plan your own bar adventure</CreateSubtext>
                 </CreateCrawlCard>
               ) : (
-                <CreateCrawlCard href="/auth/signup">
+                <CreateCrawlCard href="/app/auth/signup">
                   <CreateIcon>🔐</CreateIcon>
                   <CreateText>Sign Up to Create Crawls</CreateText>
                   <CreateSubtext>Join to start planning crawls</CreateSubtext>
@@ -786,7 +786,7 @@ const MyCrawls = () => {
                   </BarPreview>
 
                   <ActionButtons>
-                    <ViewButton href={`/crawls/${crawl.id}`}>
+                    <ViewButton href={`/app/crawls/${crawl.id}`}>
                       {isPastCrawl ? "View Details" : "View Details"}
                     </ViewButton>
 
@@ -869,7 +869,7 @@ const MyCrawls = () => {
 
                     {isPastCrawl && (
                       <ViewButton
-                        href={`/crawls/${crawl.id}`}
+                        href={`/app/crawls/${crawl.id}`}
                         style={{ flex: 1 }}
                       >
                         View Memories

@@ -287,7 +287,8 @@ const CreatedCrawlDetails = () => {
 
   const handleJoinCrawl = async () => {
     if (!session) {
-      router.push(`/auth/signin?redirect=/crawls/${crawlId}`);
+      // Use router to navigate to signin page
+      router.push("/app/auth/signin");
       return;
     }
 
@@ -323,7 +324,7 @@ const CreatedCrawlDetails = () => {
       });
 
       if (response.ok) {
-        router.push("/my-crawls");
+        router.push("/app/my-crawls");
         router.refresh();
       } else {
         const errorData = await response.json();
@@ -398,6 +399,70 @@ const CreatedCrawlDetails = () => {
     });
   };
 
+  // back button text and link based on authentication
+  const getBackButtonProps = () => {
+    if (session) {
+      return {
+        text: "Back to My Crawls",
+        href: "/app/my-crawls",
+      };
+    } else {
+      return {
+        text: "Back to Crawls",
+        href: "/app/crawls-dashboard",
+      };
+    }
+  };
+
+  const backButtonProps = getBackButtonProps();
+
+  // Check if user can see the Join button
+  const canSeeJoinButton = () => {
+    if (!crawl) return false;
+
+    // User cannot be the creator
+    if (isUserCreator) return false;
+
+    // User cannot be already in the crawl
+    if (isUserParticipant) return false;
+
+    // Crawl cannot be full
+    if (isCrawlFull) return false;
+
+    // Crawl must be in a joinable status
+    if (!(crawl.status === "PLANNING" || crawl.status === "UPCOMING"))
+      return false;
+
+    return true;
+  };
+
+  // Get the appropriate join button text and behavior
+  const getJoinButtonProps = () => {
+    if (!crawl) return { text: "Join Crawl", onClick: () => {} };
+
+    if (isJoining) {
+      return { text: "Joining...", onClick: () => {} };
+    }
+
+    // For non-logged-in users, show "Sign In to Join" that redirects to sign-in
+    if (!session) {
+      return {
+        text: "Login to Join",
+        onClick: () => {
+          router.push("/app/auth/login");
+        },
+      };
+    }
+
+    // For logged-in users who can join
+    return {
+      text: "Join Crawl",
+      onClick: handleJoinCrawl,
+    };
+  };
+
+  const joinButtonProps = getJoinButtonProps();
+
   if (isLoading) {
     return (
       <Page>
@@ -414,7 +479,9 @@ const CreatedCrawlDetails = () => {
           <p style={{ color: "#e2e8f0", marginBottom: "2rem" }}>
             {error || "The crawl you're looking for doesn't exist."}
           </p>
-          <BackButton href="/my-crawls">Back to My Crawls</BackButton>
+          <BackButton href={backButtonProps.href}>
+            {backButtonProps.text}
+          </BackButton>
         </CrawlContainer>
       </Page>
     );
@@ -610,17 +677,18 @@ const CreatedCrawlDetails = () => {
         </ParticipantsSection>
 
         <ActionButtons>
-          {/* Regular user actions */}
-          {!isUserCreator && !isUserParticipant && !isCrawlFull && (
+          {/* Show Join button for users who can join (including non-logged-in) */}
+          {canSeeJoinButton() && (
             <JoinButton
-              onClick={handleJoinCrawl}
+              onClick={joinButtonProps.onClick}
               $joined={false}
-              disabled={isJoining}
+              disabled={isJoining && !!session}
             >
-              {isJoining ? "Joining..." : "Join Crawl"}
+              {joinButtonProps.text}
             </JoinButton>
           )}
 
+          {/* Show appropriate state buttons */}
           {isUserParticipant && (
             <JoinButton $joined={true} disabled>
               Already Joined
@@ -650,7 +718,9 @@ const CreatedCrawlDetails = () => {
 
           <ShareButton onClick={handleShareCrawl}>Share Crawl</ShareButton>
 
-          <BackButton href="/my-crawls">Back to My Crawls</BackButton>
+          <BackButton href={backButtonProps.href}>
+            {backButtonProps.text}
+          </BackButton>
         </ActionButtons>
       </CrawlContainer>
 
@@ -678,4 +748,5 @@ const CreatedCrawlDetails = () => {
     </Page>
   );
 };
+
 export default CreatedCrawlDetails;

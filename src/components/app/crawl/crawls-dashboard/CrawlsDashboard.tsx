@@ -622,10 +622,10 @@ const JoinButton = styled.button<{
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
-  cursor: ${(props) => (props.$requiresAuth ? "not-allowed" : "pointer")};
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   transition: all 0.3s ease;
   flex: 1;
-  opacity: ${(props) => (props.$requiresAuth ? 0.6 : 1)};
+  opacity: ${(props) => (props.disabled ? 0.6 : 1)};
   min-height: 44px;
   border: none;
 
@@ -648,15 +648,14 @@ const JoinButton = styled.button<{
       props.$isLeaving
         ? "linear-gradient(45deg, #d97706, #b45309)"
         : props.$requiresAuth
-        ? "linear-gradient(45deg, #6b7280, #4b5563)"
+        ? "linear-gradient(45deg, #7c3aed, #2563eb)" // Hover effect for auth buttons
         : "linear-gradient(45deg, #059669, #047857)"};
-    transform: ${(props) =>
-      props.$requiresAuth ? "none" : "translateY(-1px)"};
+    transform: ${(props) => (props.disabled ? "none" : "translateY(-1px)")};
     box-shadow: ${(props) =>
       props.$isLeaving
         ? "0 4px 12px rgba(245, 158, 11, 0.3)"
         : props.$requiresAuth
-        ? "none"
+        ? "0 4px 12px rgba(139, 92, 246, 0.3)" // Shadow for auth buttons
         : "0 4px 12px rgba(16, 185, 129, 0.3)"};
   }
 
@@ -1117,10 +1116,8 @@ export default function CrawlsDashboard() {
   }, [activeTab, fetchActiveTabData, isInitialLoad]);
 
   const handleJoinCrawl = async (crawlId: string, crawlName: string) => {
-    if (!isAuthenticated) {
-      window.location.href = `/auth/signup?redirect=/crawls&crawl=${crawlId}`;
-      return;
-    }
+    // This function should only be called for authenticated users
+    if (!isAuthenticated) return;
 
     setIsJoining(crawlId);
 
@@ -1484,17 +1481,24 @@ export default function CrawlsDashboard() {
                     {!isPastCrawl && (
                       <JoinButtonWrapper>
                         <JoinButton
-                          onClick={() =>
-                            userInCrawl && canLeave
-                              ? handleLeaveCrawl(crawl.id, crawl.name)
-                              : handleJoinCrawl(crawl.id, crawl.name)
-                          }
-                          $requiresAuth={
-                            !isAuthenticated || (!canJoin && !canLeave)
-                          }
+                          onClick={() => {
+                            if (!isAuthenticated) {
+                              // Redirect to signup with crawl info
+                              window.location.href = `/app/auth/signup?redirect=/app/crawls-dashboard&crawl=${crawl.id}`;
+                              return;
+                            }
+
+                            // For authenticated users, handle join/leave
+                            if (userInCrawl && canLeave) {
+                              handleLeaveCrawl(crawl.id, crawl.name);
+                            } else {
+                              handleJoinCrawl(crawl.id, crawl.name);
+                            }
+                          }}
+                          $requiresAuth={!isAuthenticated}
                           $isLeaving={userInCrawl && canLeave}
                           disabled={
-                            (!canJoin && !canLeave) ||
+                            (isAuthenticated && !canJoin && !canLeave) ||
                             isJoining === crawl.id ||
                             isLeaving === crawl.id
                           }
@@ -1510,15 +1514,18 @@ export default function CrawlsDashboard() {
                             : crawlFull
                             ? "Full"
                             : !isAuthenticated
-                            ? "Sign Up to Join"
+                            ? "Login to Join"
                             : !canJoin
                             ? "Cannot Join"
                             : "Join Crawl"}
                         </JoinButton>
 
+                        {/* Update tooltips */}
                         {crawlFull && <Tooltip>This crawl is full</Tooltip>}
                         {!isAuthenticated && !crawlFull && (
-                          <Tooltip>Sign up to join this crawl</Tooltip>
+                          <Tooltip>
+                            Click to sign up and join this crawl
+                          </Tooltip>
                         )}
                         {isAuthenticated && userInCrawl && userIsCreator && (
                           <Tooltip>You created this crawl</Tooltip>

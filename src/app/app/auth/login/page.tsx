@@ -12,7 +12,7 @@
 // export default LoginPage;
 // src/app/auth/login/page.tsx
 // src/app/auth/login/page.tsx
-import LoginForm from "@/components/marketing/common/auth/login-form/LoginForm";
+import LoginForm from "@/components/app/common/auth/login-form/LoginForm";
 import React from "react";
 
 interface LoginPageProps {
