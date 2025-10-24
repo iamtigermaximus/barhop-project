@@ -39,7 +39,11 @@ import {
   FaCrown,
   FaUser,
   FaPlus,
+  FaBell,
 } from "react-icons/fa";
+import { useSocket } from "../../contexts/SocketContext";
+import NotificationsPanel from "../../notifications/notification-panel/NotificationPanel";
+// ADD THIS IMPORT
 
 const AppNavbar = () => {
   const pathname = usePathname();
@@ -49,19 +53,18 @@ const AppNavbar = () => {
   const { data: session } = useSession();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  // Get notification data from socket context
+  const [showNotifications, setShowNotifications] = useState(false);
+  const { unreadCount } = useSocket();
+
   // Check if mobile on mount and resize
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
 
-    // Initial check
     checkMobile();
-
-    // Add event listener
     window.addEventListener("resize", checkMobile);
-
-    // Cleanup
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
@@ -77,46 +80,25 @@ const AppNavbar = () => {
     }
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Improved isActive function with exact matching for specific routes
+  // Route active state check
   const isActive = (path: string) => {
-    // For home page, check exact match
-    if (path === "/app") {
-      return pathname === "/app" || pathname === "/app/";
-    }
-
-    // For VIP routes, we need exact matching to avoid conflicts
-    if (path === "/app/vip") {
-      // Only active for exact VIP marketplace, not wallet
+    if (path === "/app") return pathname === "/app" || pathname === "/app/";
+    if (path === "/app/vip")
       return pathname === "/app/vip" || pathname === "/app/vip/";
-    }
-
-    if (path === "/app/vip/wallet") {
-      // Only active for exact wallet route
+    if (path === "/app/vip/wallet")
       return (
         pathname === "/app/vip/wallet" ||
         pathname.startsWith("/app/vip/wallet/")
       );
-    }
-
-    // For other pages, check if the pathname starts with the path + "/"
-    // to avoid partial matches
-    if (pathname === path) {
-      return true;
-    }
-
-    if (pathname.startsWith(path + "/")) {
-      return true;
-    }
-
+    if (pathname === path) return true;
+    if (pathname.startsWith(path + "/")) return true;
     return false;
   };
 
-  // Desktop navigation (full list)
+  // Desktop navigation
   const desktopNavigation = [
     { name: "Home", href: "/app" },
     { name: "Social Map", href: "/app/social" },
@@ -128,21 +110,11 @@ const AppNavbar = () => {
     { name: "Discover Crawls", href: "/app/crawls-dashboard" },
   ];
 
-  // Handle profile click for unauthenticated users
-  const handleProfileClick = (e: React.MouseEvent) => {
-    if (!session) {
-      e.preventDefault();
-      window.location.href = "/app/auth/login";
-    }
-  };
-
-  // Mobile bottom navigation with React Icons
+  // Mobile bottom navigation
   const mobileNavigation = [
     { name: "Home", href: "/app", icon: FaHome },
     { name: "Social", href: "/app/social", icon: FaUsers },
-    // { name: "Bars", href: "/app/bars", icon: FaGlassMartiniAlt },
     { name: "Create", href: "/app/crawl-planner", icon: FaPlus },
-    // { name: "VIP", href: "/app/vip", icon: FaCrown },
     { name: "Discover", href: "/app/crawls-dashboard", icon: FaCompass },
     {
       name: "Profile",
@@ -152,23 +124,28 @@ const AppNavbar = () => {
     },
   ];
 
+  const handleProfileClick = (e: React.MouseEvent) => {
+    if (!session) {
+      e.preventDefault();
+      window.location.href = "/app/auth/login";
+    }
+  };
+
   const handleLogout = () => {
     signOut({ callbackUrl: "/app" });
     setIsUserMenuOpen(false);
     setIsMobileMenuOpen(false);
   };
 
-  const toggleUserMenu = () => {
-    setIsUserMenuOpen(!isUserMenuOpen);
-  };
+  const toggleUserMenu = () => setIsUserMenuOpen(!isUserMenuOpen);
 
   const isAuthenticated = !!session;
 
-  // Don't render nav on mobile - we'll use bottom nav instead
+  // ==================== MOBILE VIEW ====================
   if (isMobile) {
     return (
       <>
-        {/* Simplified Top Bar for Mobile */}
+        {/* Mobile Top Navbar - ONLY has Logo and Notification Bell */}
         <Nav $isMobile={true}>
           <NavContainer>
             <Logo href="/app">
@@ -176,53 +153,69 @@ const AppNavbar = () => {
               Hoppr
             </Logo>
 
-            {/* Mobile user menu or auth buttons */}
-            <AuthSection>
-              {isAuthenticated ? (
-                <UserMenu ref={userMenuRef} onClick={toggleUserMenu}>
-                  <UserAvatar $isMobile={true}>
-                    {session.user?.name?.charAt(0).toUpperCase() || "U"}
-                  </UserAvatar>
-                  <UserDropdown $isOpen={isUserMenuOpen} $isMobile={true}>
-                    <UserInfo>
-                      <UserName>{session.user?.name || "User"}</UserName>
-                      <UserEmail>{session.user?.email}</UserEmail>
-                    </UserInfo>
-                    <DropdownItem
-                      href="/app/my-crawls"
-                      onClick={() => setIsUserMenuOpen(false)}
+            {/* RIGHT SIDE: Use inline styles to avoid the hidden AuthSection */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
+              {/* NOTIFICATION BELL - ONLY ON MOBILE TOP NAVBAR */}
+              {isAuthenticated && (
+                <button
+                  onClick={() => setShowNotifications(true)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#e2e8f0",
+                    cursor: "pointer",
+                    padding: "0.5rem",
+                    borderRadius: "6px",
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <FaBell size={20} />
+                  {unreadCount > 0 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "0px",
+                        right: "0px",
+                        background: "#ec4899",
+                        color: "white",
+                        borderRadius: "50%",
+                        width: "18px",
+                        height: "18px",
+                        fontSize: "10px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: "bold",
+                        border: "2px solid rgba(15, 23, 42, 0.9)",
+                      }}
                     >
-                      My Crawls
-                    </DropdownItem>
-                    <DropdownItem
-                      href="/app/vip/wallet"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      My VIP Passes
-                    </DropdownItem>
-                    <DropdownItem
-                      href="/app/user-profile"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      Profile
-                    </DropdownItem>
-                    <DropdownDivider />
-                    <DropdownButton onClick={handleLogout}>
-                      Log out
-                    </DropdownButton>
-                  </UserDropdown>
-                </UserMenu>
-              ) : (
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+              )}
+
+              {/* For non-authenticated users on mobile, show menu button */}
+              {!isAuthenticated && (
                 <MobileMenuButton
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 >
                   ☰
                 </MobileMenuButton>
               )}
-            </AuthSection>
+            </div>
           </NavContainer>
 
-          {/* Mobile dropdown menu for non-authenticated users */}
+          {/* Mobile dropdown for non-authenticated users */}
           {!isAuthenticated && (
             <MobileMenu $isOpen={isMobileMenuOpen}>
               <MobileNavLink
@@ -257,7 +250,7 @@ const AppNavbar = () => {
           )}
         </Nav>
 
-        {/* Mobile Bottom Navigation with React Icons */}
+        {/* Mobile Bottom Navigation - This has the user menu items */}
         <MobileBottomNav>
           {mobileNavigation.map((item) => {
             const IconComponent = item.icon;
@@ -278,137 +271,147 @@ const AppNavbar = () => {
             );
           })}
         </MobileBottomNav>
+
+        {/* ADD NOTIFICATIONS PANEL HERE - Outside the main nav structure */}
+        <NotificationsPanel
+          isOpen={showNotifications}
+          onClose={() => setShowNotifications(false)}
+        />
       </>
     );
   }
 
-  // Original Desktop Navigation
+  // ==================== DESKTOP VIEW ====================
   return (
-    <Nav>
-      <NavContainer>
-        {/* Logo */}
-        <Logo href="/app">
-          <LogoIcon>🍻</LogoIcon>
-          Hoppr
-        </Logo>
+    <>
+      <Nav>
+        <NavContainer>
+          <Logo href="/app">
+            <LogoIcon>🍻</LogoIcon>
+            Hoppr
+          </Logo>
 
-        {/* Desktop Navigation */}
-        <NavLinks>
+          <NavLinks>
+            {desktopNavigation.map((item) => (
+              <NavLink
+                key={item.name}
+                href={item.href}
+                $isActive={isActive(item.href)}
+              >
+                {item.name}
+              </NavLink>
+            ))}
+          </NavLinks>
+
+          <AuthSection>
+            {isAuthenticated ? (
+              <UserMenu ref={userMenuRef} onClick={toggleUserMenu}>
+                <UserAvatar>
+                  {session.user?.name?.charAt(0).toUpperCase() || "U"}
+                </UserAvatar>
+                <UserDropdown $isOpen={isUserMenuOpen}>
+                  <UserInfo>
+                    <UserName>{session.user?.name || "User"}</UserName>
+                    <UserEmail>{session.user?.email}</UserEmail>
+                  </UserInfo>
+                  <DropdownItem
+                    href="/app/my-crawls"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  >
+                    My Crawls
+                  </DropdownItem>
+                  <DropdownItem
+                    href="/app/vip/wallet"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  >
+                    My VIP Passes
+                  </DropdownItem>
+                  <DropdownItem
+                    href="/app/user-profile"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  >
+                    Profile
+                  </DropdownItem>
+                  <DropdownDivider />
+                  <DropdownButton onClick={handleLogout}>
+                    Log out
+                  </DropdownButton>
+                </UserDropdown>
+              </UserMenu>
+            ) : (
+              <>
+                <SecondaryGradientButton href="/app/auth/login">
+                  Log in
+                </SecondaryGradientButton>
+                <GradientButton href="/app/auth/signup">Sign up</GradientButton>
+              </>
+            )}
+          </AuthSection>
+
+          <MobileMenuButton
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            ☰
+          </MobileMenuButton>
+        </NavContainer>
+
+        <MobileMenu $isOpen={isMobileMenuOpen}>
           {desktopNavigation.map((item) => (
-            <NavLink
+            <MobileNavLink
               key={item.name}
               href={item.href}
               $isActive={isActive(item.href)}
+              onClick={() => setIsMobileMenuOpen(false)}
             >
               {item.name}
-            </NavLink>
+            </MobileNavLink>
           ))}
-        </NavLinks>
 
-        {/* Desktop Auth Section */}
-        <AuthSection>
-          {isAuthenticated ? (
-            <UserMenu ref={userMenuRef} onClick={toggleUserMenu}>
-              <UserAvatar>
-                {session.user?.name?.charAt(0).toUpperCase() || "U"}
-              </UserAvatar>
-              <UserDropdown $isOpen={isUserMenuOpen}>
-                <UserInfo>
-                  <UserName>{session.user?.name || "User"}</UserName>
-                  <UserEmail>{session.user?.email}</UserEmail>
-                </UserInfo>
-
-                <DropdownItem
-                  href="/app/my-crawls"
-                  onClick={() => setIsUserMenuOpen(false)}
+          <MobileAuthSection>
+            {isAuthenticated ? (
+              <>
+                <div
+                  style={{
+                    padding: "0.5rem",
+                    color: "#e2e8f0",
+                    fontSize: "0.875rem",
+                  }}
                 >
-                  My Crawls
-                </DropdownItem>
-                <DropdownItem
-                  href="/app/vip/wallet"
-                  onClick={() => setIsUserMenuOpen(false)}
+                  Signed in as <strong>{session.user?.name}</strong>
+                </div>
+                <DropdownButton
+                  onClick={handleLogout}
+                  style={{ marginTop: "0.5rem" }}
                 >
-                  My VIP Passes
-                </DropdownItem>
-                <DropdownItem
-                  href="/app/user-profile"
-                  onClick={() => setIsUserMenuOpen(false)}
+                  Log out
+                </DropdownButton>
+              </>
+            ) : (
+              <>
+                <SecondaryGradientButton
+                  href="/app/auth/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Profile
-                </DropdownItem>
-                <DropdownDivider />
-                <DropdownButton onClick={handleLogout}>Log out</DropdownButton>
-              </UserDropdown>
-            </UserMenu>
-          ) : (
-            <>
-              <SecondaryGradientButton href="/app/auth/login">
-                Log in
-              </SecondaryGradientButton>
-              <GradientButton href="/app/auth/signup">Sign up</GradientButton>
-            </>
-          )}
-        </AuthSection>
+                  Log in
+                </SecondaryGradientButton>
+                <GradientButton
+                  href="/app/auth/signup"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Sign up
+                </GradientButton>
+              </>
+            )}
+          </MobileAuthSection>
+        </MobileMenu>
+      </Nav>
 
-        {/* Mobile Menu Button */}
-        <MobileMenuButton
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          ☰
-        </MobileMenuButton>
-      </NavContainer>
-
-      {/* Mobile Menu */}
-      <MobileMenu $isOpen={isMobileMenuOpen}>
-        {desktopNavigation.map((item) => (
-          <MobileNavLink
-            key={item.name}
-            href={item.href}
-            $isActive={isActive(item.href)}
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            {item.name}
-          </MobileNavLink>
-        ))}
-
-        <MobileAuthSection>
-          {isAuthenticated ? (
-            <>
-              <div
-                style={{
-                  padding: "0.5rem",
-                  color: "#e2e8f0",
-                  fontSize: "0.875rem",
-                }}
-              >
-                Signed in as <strong>{session.user?.name}</strong>
-              </div>
-              <DropdownButton
-                onClick={handleLogout}
-                style={{ marginTop: "0.5rem" }}
-              >
-                Log out
-              </DropdownButton>
-            </>
-          ) : (
-            <>
-              <SecondaryGradientButton
-                href="/app/auth/login"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Log in
-              </SecondaryGradientButton>
-              <GradientButton
-                href="/app/auth/signup"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Sign up
-              </GradientButton>
-            </>
-          )}
-        </MobileAuthSection>
-      </MobileMenu>
-    </Nav>
+      {/* ADD NOTIFICATIONS PANEL FOR DESKTOP TOO */}
+      <NotificationsPanel
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
+    </>
   );
 };
 

@@ -648,3 +648,9 @@ const DebugButtonGreen = styled(DebugButton)`
   }
 `;
 */
+// Add this to your Social.styles.ts file
+export const DesktopNotificationBell = styled(EditProfileButton)`
+  @media (max-width: 768px) {
+    display: none !important;
+  }
+`;

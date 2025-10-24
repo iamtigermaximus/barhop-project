@@ -409,9 +409,9 @@ export const Logo = styled(Link)`
   }
 `;
 
-export const LogoIcon = styled.span`
-  font-size: 1.75rem;
-`;
+// export const LogoIcon = styled.span`
+//   font-size: 1.75rem;
+// `;
 
 export const NavLinks = styled.div`
   display: flex;
@@ -847,4 +847,47 @@ export const PlanButtonIcon = styled.div`
   font-size: 1.75rem;
   margin-bottom: 0.1rem;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+`;
+export const LogoIcon = styled.span`
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+  display: flex;
+  align-items: center;
+`;
+
+export const NotificationBell = styled.button<{ $isMobile?: boolean }>`
+  background: none;
+  border: none;
+  color: #e2e8f0;
+  cursor: pointer;
+  padding: ${(props) => (props.$isMobile ? "0.5rem" : "0.5rem 0.75rem")};
+  border-radius: 6px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  margin-right: ${(props) => (props.$isMobile ? "0.5rem" : "0")};
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+  }
+`;
+
+export const NotificationBadge = styled.span<{ $isMobile?: boolean }>`
+  position: absolute;
+  top: ${(props) => (props.$isMobile ? "2px" : "4px")};
+  right: ${(props) => (props.$isMobile ? "2px" : "4px")};
+  background: #ec4899;
+  color: white;
+  border-radius: 50%;
+  width: ${(props) => (props.$isMobile ? "16px" : "18px")};
+  height: ${(props) => (props.$isMobile ? "16px" : "18px")};
+  font-size: ${(props) => (props.$isMobile ? "10px" : "11px")};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border: 2px solid rgba(15, 23, 42, 0.9);
 `;

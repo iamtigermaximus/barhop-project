@@ -3,7 +3,7 @@ import styled from "styled-components";
 import Link from "next/link";
 
 export const Page = styled.div`
-  padding: 2rem 1rem;
+  padding: 2rem 1rem 10rem;
   margin: 0 auto;
   background: linear-gradient(
     -45deg,
@@ -20,13 +20,13 @@ export const Page = styled.div`
 
   /* Mobile */
   @media (max-width: 768px) {
-    padding: 1rem 0.5rem;
+    padding: 1rem 0.5rem 10rem;
     min-height: calc(100dvh - 70px);
   }
 
   /* Small mobile */
   @media (max-width: 480px) {
-    padding: 0.75rem 0.25rem;
+    padding: 0.75rem 0.25rem 10rem;
   }
 
   @keyframes gradientShift {

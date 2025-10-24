@@ -33,7 +33,7 @@ interface UserVIPPass {
 }
 
 const WalletContainer = styled.div`
-  padding: 1rem;
+  padding: 1rem 1rem 10rem;
   background: #0f172a;
   min-height: 100vh;
   color: #e2e8f0;
@@ -42,6 +42,7 @@ const WalletContainer = styled.div`
 
   @media (max-width: 768px) {
     padding: 0.5rem;
+    padding: 1rem 1rem 10rem;
   }
 `;
 
