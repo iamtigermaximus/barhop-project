@@ -319,7 +319,7 @@ export default function UserProfile() {
   };
 
   const handleEditProfile = () => {
-    window.location.href = "/app/social";
+    router.push("/app/social?edit=true");
   };
 
   const handleNavigation = (path: string) => {

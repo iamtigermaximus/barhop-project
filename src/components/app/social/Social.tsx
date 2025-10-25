@@ -400,6 +400,22 @@ const Social = () => {
     }
   }, [session]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const editMode = urlParams.get("edit");
+
+      // If we came from UserProfile with ?edit=true, open edit mode
+      if (editMode === "true" && userSocialProfile) {
+        setShowProfileSetup(true);
+
+        // Clean the URL so we don't get stuck in edit mode
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, "", newUrl);
+      }
+    }
+  }, [userSocialProfile]);
+
   // NOTIFICATION SYSTEM: Socket connection and event listeners
   useEffect(() => {
     if (!socket || !session?.user?.id) return;
@@ -555,7 +571,8 @@ const Social = () => {
         setHasSocialProfile(!!data.socialProfile);
         setUserSocialProfile(data.socialProfile);
 
-        // ✅ Set social mode ONLY from database, remove localStorage
+        // Only update social mode if we have a fresh value from DB
+        // Don't reset it to false if it's already true locally
         if (data.socialProfile?.isSocialMode) {
           console.log("🎯 Setting social mode to ACTIVE from database");
           setIsSocialMode(true);
@@ -573,10 +590,9 @@ const Social = () => {
             await detectUserCity(location.lat, location.lng);
             await fetchNearbyUsers();
           }
-        } else {
-          console.log("🎯 Setting social mode to INACTIVE from database");
-          setIsSocialMode(false);
         }
+        // DON'T set to false automatically - preserve current state
+        // This prevents resetting social mode when just updating profile
       }
     } catch (error) {
       console.error("💥 Error checking social profile:", error);
@@ -831,7 +847,7 @@ const Social = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/social/create-profile", {
+      const response = await fetch("/api/social/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profileData),
@@ -846,6 +862,40 @@ const Social = () => {
       await toggleSocialMode(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save profile");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const handleProfileUpdate = async (profileData: {
+    bio: string;
+    vibe: SocialVibe;
+    interests: string[];
+  }) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/social/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profileData),
+      });
+
+      if (!response.ok) throw new Error("Failed to update profile");
+
+      const result = await response.json();
+
+      // 1. CLOSE THE EDIT MODAL
+      setShowProfileSetup(false);
+
+      // 2. Update the profile data
+      setUserSocialProfile(result.socialProfile);
+      setSuccess("Profile updated successfully!");
+
+      // 3. Refresh to make sure social mode is active
+      await checkSocialProfile();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update profile");
     } finally {
       setIsLoading(false);
     }
@@ -1367,7 +1417,9 @@ const Social = () => {
 
       {showProfileSetup && (
         <SetupSocialProfile
-          onComplete={handleProfileSetupComplete}
+          onComplete={
+            userSocialProfile ? handleProfileUpdate : handleProfileSetupComplete
+          }
           onSkip={() => setShowProfileSetup(false)}
           isLoading={isLoading}
           existingProfile={userSocialProfile}
