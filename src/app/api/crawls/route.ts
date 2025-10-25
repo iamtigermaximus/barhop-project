@@ -306,9 +306,80 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // 🆕 AUTO-CREATE CHATROOM FOR THE CRAWL
+    console.log("🆕 Creating chatroom for crawl:", crawl.id);
+    const chatroom = await prisma.chatroom.create({
+      data: {
+        name: `${name} Chat`,
+        description: `Group chat for ${name}`,
+        crawlId: crawl.id,
+        isGroupChat: true,
+      },
+    });
+
+    // 🆕 ADD CREATOR AS FIRST PARTICIPANT IN CHATROOM
+    await prisma.chatroomParticipant.create({
+      data: {
+        userId: user.id,
+        chatroomId: chatroom.id,
+        role: "ADMIN",
+      },
+    });
+
+    // 🆕 UPDATE CRAWL WITH CHATROOM ID
+    const updatedCrawl = await prisma.crawl.update({
+      where: { id: crawl.id },
+      data: { chatroomId: chatroom.id },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+        city: true,
+        participants: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
+            },
+          },
+        },
+        crawlBars: {
+          include: {
+            bar: true,
+          },
+          orderBy: {
+            orderIndex: "asc",
+          },
+        },
+        chatroom: {
+          // 🆕 INCLUDE CHATROOM IN RESPONSE
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        _count: {
+          select: {
+            participants: true,
+          },
+        },
+      },
+    });
+
+    console.log("✅ Chatroom created successfully:", chatroom.id);
+
     const responseData = {
       success: true,
-      crawl: crawl,
+      crawl: updatedCrawl, // 🆕 USE UPDATED CRAWL WITH CHATROOM
       redirectTo: `/crawls/${crawl.id}`,
       message: "Crawl created successfully!",
     };

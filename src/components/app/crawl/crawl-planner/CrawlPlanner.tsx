@@ -1638,7 +1638,7 @@ const CrawlPlanner = ({ editCrawlId }: CrawlPlannerProps) => {
 
   const handleViewCrawl = () => {
     if (crawlResult) {
-      router.push(`/crawls/${crawlResult.id}`);
+      router.push(`/app/crawls/${crawlResult.id}`);
     }
   };
 
@@ -1661,7 +1661,7 @@ const CrawlPlanner = ({ editCrawlId }: CrawlPlannerProps) => {
   const handleAutoRedirect = () => {
     if (crawlResult) {
       setTimeout(() => {
-        router.push(`/crawls/${crawlResult.id}`);
+        router.push(`/app/crawls/${crawlResult.id}`);
       }, 5000);
     }
   };

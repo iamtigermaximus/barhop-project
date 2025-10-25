@@ -73,8 +73,13 @@ model User {
   receivedNotifications Notification[] @relation("NotificationReceiver")
   sentHopIns           HopIn[]         @relation("HopInSender")
   receivedHopIns       HopIn[]         @relation("HopInReceiver")
-  @@map("users")
   CrawlJoinRequest CrawlJoinRequest[]
+
+  chatroomParticipants ChatroomParticipant[]
+  chatroomMessages     ChatroomMessage[]
+
+  @@map("users")
+
 }
 
 model PhoneVerification {
@@ -299,6 +304,8 @@ model Crawl {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
+  chatroomId      String?     @unique
+
   // Relations
   creator      User               @relation("CrawlCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   city         City               @relation(fields: [cityId], references: [id])
@@ -307,8 +314,11 @@ model Crawl {
   chats        CrawlChatMessage[]
   notifications Notification[] 
 
-  @@map("crawls")
+  chatroom     Chatroom?
   CrawlJoinRequest CrawlJoinRequest[]
+
+  @@map("crawls")
+
 }
 
 model CrawlParticipant {
@@ -717,4 +727,52 @@ model HopIn {
 
   @@unique([fromUserId, toUserId, createdAt])
   @@map("hop_ins")
+}
+
+//  MODELS FOR GROUP CHATROOMS
+model Chatroom {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  crawlId     String?  @unique
+  isGroupChat Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  crawl       Crawl?   @relation(fields: [crawlId], references: [id], onDelete: Cascade)
+  participants ChatroomParticipant[]
+  messages    ChatroomMessage[]
+
+  @@map("chatrooms")
+}
+
+model ChatroomParticipant {
+  id          String   @id @default(cuid())
+  userId      String
+  chatroomId  String
+  role        String   @default("MEMBER") // ADMIN, MODERATOR, MEMBER
+  joinedAt    DateTime @default(now())
+
+  // Relations
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chatroomId])
+  @@map("chatroom_participants")
+}
+
+model ChatroomMessage {
+  id          String   @id @default(cuid())
+  content     String
+  userId      String
+  chatroomId  String
+  messageType String   @default("TEXT") // TEXT, IMAGE, LOCATION, SYSTEM
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatroom   Chatroom @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
+
+  @@map("chatroom_messages")
 }

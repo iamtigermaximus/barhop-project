@@ -388,6 +388,47 @@ const Social = () => {
   // });
   const [isSocialMode, setIsSocialMode] = useState(false);
 
+  // Helper functions for user status display
+  const getUserStatusDisplay = (
+    user: UserSocialProfileWithRelations
+  ): string => {
+    // If user has a current bar, they're at a venue
+    if (user.currentBar) {
+      return "🍻 At a venue";
+    }
+
+    // If user has location but no bar, they're out exploring
+    if (user.locationLat && user.locationLng) {
+      return "📍 Out exploring";
+    }
+
+    // If user is in social mode but no specific location
+    if (user.isSocialMode) {
+      return "🔍 Looking for spots";
+    }
+
+    // Default fallback
+    return "📍 Nearby";
+  };
+
+  const getUserDetailedStatus = (
+    user: UserSocialProfileWithRelations
+  ): string => {
+    if (user.currentBar) {
+      return `🍻 At a venue in ${currentCity} (${calculateDistance(user)})`;
+    }
+
+    if (user.locationLat && user.locationLng) {
+      return `📍 Exploring ${currentCity} (${calculateDistance(user)})`;
+    }
+
+    if (user.isSocialMode) {
+      return `🔍 Looking for places in ${currentCity}`;
+    }
+
+    return `📍 In ${currentCity}`;
+  };
+
   // Add this useEffect to handle logout cleanup
   useEffect(() => {
     if (!session) {
@@ -1367,7 +1408,7 @@ const Social = () => {
   );
 
   // Determine when to show "How it works" section
-  const showHowItWorks = !session || !hasSocialProfile || !isSocialMode;
+  const showHowItWorks = !isSocialMode;
 
   return (
     <SocialContainer>
@@ -1624,9 +1665,7 @@ const Social = () => {
                                 📍 {calculateDistance(user)}
                               </DistanceBadge>
                               <LocationInfo>
-                                {user.currentBar
-                                  ? `🍻 ${user.currentBar.name}`
-                                  : "📍 Nearby"}
+                                {getUserStatusDisplay(user)}
                               </LocationInfo>
                             </UserDetails>
                             <QuickActions>
@@ -1716,13 +1755,20 @@ const Social = () => {
             )}
 
             <ModalSection>
-              <ModalSectionTitle>Current Location</ModalSectionTitle>
+              <ModalSectionTitle>Current Status</ModalSectionTitle>
               <p style={{ color: "#cbd5e1", margin: 0 }}>
-                {selectedUser.currentBar ? (
-                  <>🍻 {selectedUser.currentBar.name}</>
-                ) : (
-                  <>📍 Exploring nearby ({calculateDistance(selectedUser)})</>
-                )}
+                {getUserDetailedStatus(selectedUser)}
+              </p>
+              <p
+                style={{
+                  color: "#94a3b8",
+                  fontSize: "0.8rem",
+                  margin: "0.5rem 0 0 0",
+                }}
+              >
+                {selectedUser.currentBar
+                  ? "They're at a venue nearby"
+                  : "They're exploring the area"}
               </p>
             </ModalSection>
 

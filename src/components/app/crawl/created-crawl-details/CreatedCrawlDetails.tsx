@@ -53,6 +53,7 @@ import {
   UberButton,
   WeatherAlert,
 } from "./CreatedCrawlDetails.styles";
+import GroupChat from "@/components/app/chat/GroupChat";
 
 interface Bar {
   id: string;
@@ -92,6 +93,9 @@ interface Crawl {
     orderIndex: number;
     bar: Bar;
   }>;
+  chatroom?: {
+    id: string;
+  };
   _count: {
     participants: number;
   };
@@ -174,13 +178,14 @@ const CreatedCrawlDetails = () => {
     needsTransportation: false,
   });
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [showChat, setShowChat] = useState(false);
 
   const crawlId = params.id as string;
 
   useEffect(() => {
     const fetchCrawl = async () => {
       try {
-        const response = await fetch(`/api/crawls/${crawlId}`);
+        const response = await fetch(`/api/crawls/${crawlId}?includeChat=true`);
         if (response.ok) {
           const crawlData = await response.json();
           setCrawl(crawlData);
@@ -300,9 +305,9 @@ const CreatedCrawlDetails = () => {
 
       if (response.ok) {
         // Refresh crawl data to update participants
-        const updatedCrawl = await fetch(`/api/crawls/${crawlId}`).then((res) =>
-          res.json()
-        );
+        const updatedCrawl = await fetch(
+          `/api/crawls/${crawlId}?includeChat=true`
+        ).then((res) => res.json());
         setCrawl(updatedCrawl);
       } else {
         const errorData = await response.json();
@@ -716,6 +721,31 @@ const CreatedCrawlDetails = () => {
             </>
           )}
 
+          {/* 🆕 ADD CHAT BUTTON HERE - Only show if user is participant/creator AND crawl has chatroom */}
+          {(isUserParticipant || isUserCreator) && crawl?.chatroom && (
+            <button
+              onClick={() => setShowChat(true)}
+              style={{
+                background: "linear-gradient(45deg, #8b5cf6, #ec4899)",
+                border: "1px solid rgba(139, 92, 246, 0.3)",
+                color: "white",
+                padding: "1rem 2rem",
+                borderRadius: "8px",
+                fontWeight: "600",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                textDecoration: "none",
+                fontFamily: "inherit",
+                fontSize: "1rem",
+              }}
+            >
+              <span>💬</span>
+              Group Chat ({crawl._count.participants} people)
+            </button>
+          )}
+
           <ShareButton onClick={handleShareCrawl}>Share Crawl</ShareButton>
 
           <BackButton href={backButtonProps.href}>
@@ -744,6 +774,15 @@ const CreatedCrawlDetails = () => {
             </ModalButtons>
           </ModalContent>
         </ModalOverlay>
+      )}
+
+      {/* 🆕 ADD GROUP CHAT MODAL */}
+      {showChat && crawl?.chatroom && (
+        <GroupChat
+          crawlId={crawl.id}
+          chatroomId={crawl.chatroom.id}
+          onClose={() => setShowChat(false)}
+        />
       )}
     </Page>
   );

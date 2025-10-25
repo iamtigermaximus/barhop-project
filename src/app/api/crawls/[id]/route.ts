@@ -24,12 +24,17 @@ interface SelectedBarInput {
 }
 
 // GET /api/crawls/[id] - Get a specific crawl by ID
+// GET /api/crawls/[id] - Get a specific crawl by ID
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+
+    // Check if we should include chatroom
+    const { searchParams } = new URL(request.url);
+    const includeChat = searchParams.get("includeChat") === "true";
 
     const crawl = await prisma.crawl.findUnique({
       where: { id: id },
@@ -63,6 +68,15 @@ export async function GET(
             orderIndex: "asc",
           },
         },
+        // 🆕 INCLUDE CHATROOM IF REQUESTED
+        chatroom: includeChat
+          ? {
+              select: {
+                id: true,
+                name: true,
+              },
+            }
+          : false,
         _count: {
           select: {
             participants: true,
@@ -203,6 +217,13 @@ export async function PUT(
           crawlBars: {
             include: { bar: true },
             orderBy: { orderIndex: "asc" },
+          },
+          // 🆕 CHATROOM
+          chatroom: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
           _count: { select: { participants: true } },
         },
