@@ -2411,7 +2411,7 @@ const CrawlPlanner = ({ editCrawlId }: CrawlPlannerProps) => {
 
             <ActionButtons>
               <ViewCrawlButton
-                href={`/crawls/${crawlResult.id}`}
+                href={`/app/crawls/${crawlResult.id}`}
                 onClick={handleViewCrawl}
               >
                 View Crawl Details
