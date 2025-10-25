@@ -549,6 +549,7 @@ interface SystemNotificationData {
   barId?: string;
   hopInId?: string;
   meetupId?: string;
+  crawlId?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -589,6 +590,36 @@ interface HopRequestDeclinedResponse {
     name: string | null;
     image: string | null;
   };
+}
+
+// New types for crawl join requests
+interface CrawlJoinRequestData {
+  crawlId: string;
+  userId: string;
+  message?: string;
+}
+
+interface CrawlJoinResponseData {
+  requestId: string;
+  status: "APPROVED" | "REJECTED";
+  userId: string;
+}
+
+interface CrawlJoinRequestSentResponse {
+  requestId: string;
+  crawlName: string;
+  message: string;
+}
+
+interface CrawlJoinRequestRespondedResponse {
+  requestId: string;
+  status: "APPROVED" | "REJECTED";
+  userName: string;
+}
+
+interface UserJoinedCrawlData {
+  crawlId: string;
+  userId: string;
 }
 
 interface ErrorResponse {
@@ -644,6 +675,25 @@ export class SocketService {
 
       socket.on("respond_hop_request", (data: HopInResponseData) => {
         this.handleHopResponse(socket, data);
+      });
+
+      // New crawl join request events
+      socket.on("send_crawl_join_request", (data: CrawlJoinRequestData) => {
+        this.handleCrawlJoinRequest(socket, data);
+      });
+
+      socket.on("respond_crawl_join_request", (data: CrawlJoinResponseData) => {
+        this.handleCrawlJoinResponse(socket, data);
+      });
+
+      socket.on("user_joined_crawl", (data: UserJoinedCrawlData) => {
+        this.handleUserJoinedCrawl(socket, data);
+      });
+
+      // 🆕 ADD LEAVE EVENT HANDLER
+      socket.on("user_left_crawl", (data: UserJoinedCrawlData) => {
+        console.log("💨 User left crawl event received:", data);
+        this.handleUserLeftCrawl(socket, data);
       });
 
       // Handle notification read events
@@ -705,6 +755,12 @@ export class SocketService {
                   name: true,
                 },
               },
+            },
+          },
+          crawl: {
+            select: {
+              id: true,
+              name: true,
             },
           },
         },
@@ -932,7 +988,9 @@ export class SocketService {
             userId: hopIn.fromUserId, // Notify the person who sent the request
             fromUserId: userId, // The person who accepted
             type: "HOP_ACCEPTED",
-            message: `${hopIn.toUser.name} accepted your hop in request! 🎉`,
+            message: `${
+              hopIn.toUser.name || "Someone"
+            } accepted your hop in request! 🎉`,
             barId: hopIn.barId || undefined,
             hopInId: hopIn.id,
           },
@@ -985,6 +1043,526 @@ export class SocketService {
     }
   }
 
+  // Handle crawl join requests (for private crawls)
+  private async handleCrawlJoinRequest(
+    socket: import("socket.io").Socket,
+    data: CrawlJoinRequestData
+  ): Promise<void> {
+    try {
+      const { crawlId, userId, message } = data;
+
+      // Get crawl details with creator
+      const crawl = await prisma.crawl.findUnique({
+        where: { id: crawlId },
+        include: {
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          participants: {
+            select: {
+              userId: true,
+            },
+          },
+          _count: {
+            select: {
+              participants: true,
+            },
+          },
+        },
+      });
+
+      if (!crawl) {
+        socket.emit("error", {
+          message: "Crawl not found",
+          code: "CRAWL_NOT_FOUND",
+        });
+        return;
+      }
+
+      // Check if user is already a participant
+      const isAlreadyParticipant = crawl.participants.some(
+        (p) => p.userId === userId
+      );
+      if (isAlreadyParticipant) {
+        socket.emit("error", {
+          message: "You are already in this crawl",
+          code: "ALREADY_PARTICIPANT",
+        });
+        return;
+      }
+
+      // Check if user already has a pending request
+      const existingRequest = await prisma.crawlJoinRequest.findFirst({
+        where: {
+          crawlId,
+          userId,
+          status: "PENDING",
+        },
+      });
+
+      if (existingRequest) {
+        socket.emit("error", {
+          message: "You already have a pending request",
+          code: "DUPLICATE_REQUEST",
+        });
+        return;
+      }
+
+      // Check if crawl is full
+      if (crawl._count.participants >= crawl.maxParticipants) {
+        socket.emit("error", {
+          message: "This crawl is full",
+          code: "CRAWL_FULL",
+        });
+        return;
+      }
+
+      // Get user info for the notification
+      const requestingUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          image: true,
+        },
+      });
+
+      if (!requestingUser) {
+        socket.emit("error", {
+          message: "User not found",
+          code: "USER_NOT_FOUND",
+        });
+        return;
+      }
+
+      // Create join request
+      const joinRequest = await prisma.crawlJoinRequest.create({
+        data: {
+          crawlId,
+          userId,
+          message,
+          status: "PENDING",
+        },
+      });
+
+      // Create notification for crawl creator
+      const notification = await prisma.notification.create({
+        data: {
+          userId: crawl.creatorId, // Notify the crawl creator
+          fromUserId: userId, // The person requesting to join
+          type: "CRAWL_JOIN_REQUEST",
+          message: `${
+            requestingUser.name || "Someone"
+          } wants to join your crawl "${crawl.name}"!`,
+          crawlId: crawlId,
+          hopInId: null,
+          meetupId: null,
+        },
+        include: {
+          fromUser: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+          crawl: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      // Send real-time notification to crawl creator
+      this.io
+        ?.to(`user_${crawl.creatorId}`)
+        .emit("new_notification", notification);
+
+      // Confirm to requester
+      const sentResponse: CrawlJoinRequestSentResponse = {
+        requestId: joinRequest.id,
+        crawlName: crawl.name,
+        message: "Join request sent! Waiting for approval.",
+      };
+      socket.emit("crawl_join_request_sent", sentResponse);
+
+      console.log(
+        `📨 Crawl join request sent from ${userId} to crawl ${crawlId}`
+      );
+    } catch (error) {
+      console.error("Error sending crawl join request:", error);
+      socket.emit("error", {
+        message: "Failed to send join request",
+        code: "JOIN_REQUEST_ERROR",
+      });
+    }
+  }
+
+  // Handle crawl join request responses (approve/reject)
+  private async handleCrawlJoinResponse(
+    socket: import("socket.io").Socket,
+    data: CrawlJoinResponseData
+  ): Promise<void> {
+    try {
+      const { requestId, status, userId } = data;
+
+      // Get the join request with crawl and user details
+      const joinRequest = await prisma.crawlJoinRequest.findUnique({
+        where: { id: requestId },
+        include: {
+          crawl: {
+            include: {
+              creator: true,
+              participants: {
+                select: {
+                  userId: true,
+                },
+              },
+              _count: {
+                select: {
+                  participants: true,
+                },
+              },
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
+
+      if (!joinRequest) {
+        socket.emit("error", {
+          message: "Join request not found",
+          code: "REQUEST_NOT_FOUND",
+        });
+        return;
+      }
+
+      // Verify the user responding is the crawl creator
+      if (joinRequest.crawl.creatorId !== userId) {
+        socket.emit("error", {
+          message: "Only crawl creator can respond to join requests",
+          code: "UNAUTHORIZED",
+        });
+        return;
+      }
+
+      // Check if crawl is now full
+      if (
+        status === "APPROVED" &&
+        joinRequest.crawl._count.participants >=
+          joinRequest.crawl.maxParticipants
+      ) {
+        socket.emit("error", {
+          message: "Crawl is now full",
+          code: "CRAWL_FULL",
+        });
+        return;
+      }
+
+      // Update the join request status
+      const updatedRequest = await prisma.crawlJoinRequest.update({
+        where: { id: requestId },
+        data: {
+          status,
+          respondedAt: new Date(),
+        },
+      });
+
+      if (status === "APPROVED") {
+        // Add user to crawl participants
+        await prisma.crawlParticipant.create({
+          data: {
+            crawlId: joinRequest.crawlId,
+            userId: joinRequest.userId,
+          },
+        });
+
+        // Create approval notification for the requester
+        const approvalNotification = await prisma.notification.create({
+          data: {
+            userId: joinRequest.userId, // Notify the person who requested
+            fromUserId: userId, // The crawl creator
+            type: "CRAWL_JOIN_APPROVED",
+            message: `Your request to join "${joinRequest.crawl.name}" was approved! 🎉`,
+            crawlId: joinRequest.crawlId,
+            hopInId: null,
+            meetupId: null,
+          },
+          include: {
+            fromUser: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+        });
+
+        // Send notification to requester
+        this.io
+          ?.to(`user_${joinRequest.userId}`)
+          .emit("new_notification", approvalNotification);
+      } else {
+        // Create rejection notification for the requester
+        const rejectionNotification = await prisma.notification.create({
+          data: {
+            userId: joinRequest.userId, // Notify the person who requested
+            fromUserId: userId, // The crawl creator
+            type: "CRAWL_JOIN_REJECTED",
+            message: `Your request to join "${joinRequest.crawl.name}" was not approved.`,
+            crawlId: joinRequest.crawlId,
+            hopInId: null,
+            meetupId: null,
+          },
+          include: {
+            fromUser: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+        });
+
+        // Send notification to requester
+        this.io
+          ?.to(`user_${joinRequest.userId}`)
+          .emit("new_notification", rejectionNotification);
+      }
+
+      // Notify the creator that their action was successful
+      const respondedResponse: CrawlJoinRequestRespondedResponse = {
+        requestId,
+        status,
+        userName: joinRequest.user.name || "User",
+      };
+      socket.emit("crawl_join_request_responded", respondedResponse);
+
+      console.log(
+        `✅ Crawl join request ${status.toLowerCase()} for request ${requestId}`
+      );
+    } catch (error) {
+      console.error("Error responding to crawl join request:", error);
+      socket.emit("error", {
+        message: "Failed to respond to join request",
+        code: "JOIN_RESPONSE_ERROR",
+      });
+    }
+  }
+
+  // Handle direct crawl joins (for public crawls)
+  private async handleUserJoinedCrawl(
+    socket: import("socket.io").Socket,
+    data: UserJoinedCrawlData
+  ): Promise<void> {
+    try {
+      const { crawlId, userId } = data;
+
+      console.log(`🎯 [DEBUG] Handling user joined crawl:`, {
+        crawlId,
+        userId,
+      });
+
+      // Get crawl details with creator
+      const crawl = await prisma.crawl.findUnique({
+        where: { id: crawlId },
+        include: {
+          creator: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      if (!crawl) {
+        console.error("❌ [DEBUG] Crawl not found for ID:", crawlId);
+        socket.emit("error", {
+          message: "Crawl not found",
+          code: "CRAWL_NOT_FOUND",
+        });
+        return;
+      }
+
+      // Get user who joined
+      const joiningUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          image: true,
+        },
+      });
+
+      if (!joiningUser) {
+        console.error("❌ [DEBUG] Joining user not found for ID:", userId);
+        socket.emit("error", {
+          message: "User not found",
+          code: "USER_NOT_FOUND",
+        });
+        return;
+      }
+
+      console.log(
+        `🎯 [DEBUG] Creating join notification for crawl creator: ${crawl.creator.id}`
+      );
+
+      // Create notification for crawl creator
+      const notification = await prisma.notification.create({
+        data: {
+          userId: crawl.creatorId, // Notify the crawl creator
+          fromUserId: userId, // The person who joined
+          type: "SYSTEM",
+          message: `${joiningUser.name || "Someone"} joined your crawl "${
+            crawl.name
+          }"!`,
+          crawlId: crawlId,
+          hopInId: null,
+          meetupId: null,
+        },
+        include: {
+          fromUser: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+      });
+
+      console.log(`✅ [DEBUG] Join notification created:`, notification.id);
+
+      // Send real-time notification to crawl creator
+      this.io
+        ?.to(`user_${crawl.creatorId}`)
+        .emit("new_notification", notification);
+
+      console.log(
+        `🎉 [DEBUG] Join notification sent to creator: ${crawl.creator.id}`
+      );
+    } catch (error) {
+      console.error("💥 [DEBUG] Error handling user joined crawl:", error);
+      socket.emit("error", {
+        message: "Failed to send join notification",
+        code: "JOIN_NOTIFICATION_ERROR",
+      });
+    }
+  }
+
+  // 🆕 ADD THIS METHOD: Handle user leaving crawl
+  private async handleUserLeftCrawl(
+    socket: import("socket.io").Socket,
+    data: UserJoinedCrawlData
+  ): Promise<void> {
+    try {
+      const { crawlId, userId } = data;
+
+      console.log(`💨 [DEBUG] Handling user left crawl:`, { crawlId, userId });
+
+      // Get crawl details with creator
+      const crawl = await prisma.crawl.findUnique({
+        where: { id: crawlId },
+        include: {
+          creator: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      if (!crawl) {
+        console.error("❌ [DEBUG] Crawl not found for ID:", crawlId);
+        socket.emit("error", {
+          message: "Crawl not found",
+          code: "CRAWL_NOT_FOUND",
+        });
+        return;
+      }
+
+      // Get user who left
+      const leavingUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          image: true,
+        },
+      });
+
+      if (!leavingUser) {
+        console.error("❌ [DEBUG] Leaving user not found for ID:", userId);
+        socket.emit("error", {
+          message: "User not found",
+          code: "USER_NOT_FOUND",
+        });
+        return;
+      }
+
+      console.log(
+        `🎯 [DEBUG] Creating leave notification for crawl creator: ${crawl.creator.id}`
+      );
+
+      // Create notification for crawl creator
+      const notification = await prisma.notification.create({
+        data: {
+          userId: crawl.creatorId, // Notify the crawl creator
+          fromUserId: userId, // The person who left
+          type: "SYSTEM",
+          message: `${leavingUser.name || "Someone"} left your crawl "${
+            crawl.name
+          }"`,
+          crawlId: crawlId,
+          hopInId: null,
+          meetupId: null,
+        },
+        include: {
+          fromUser: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+      });
+
+      console.log(`✅ [DEBUG] Leave notification created:`, notification.id);
+
+      // Send real-time notification to crawl creator
+      this.io
+        ?.to(`user_${crawl.creatorId}`)
+        .emit("new_notification", notification);
+
+      console.log(
+        `💨 [DEBUG] Leave notification sent to creator: ${crawl.creator.id}`
+      );
+    } catch (error) {
+      console.error("💥 [DEBUG] Error handling user left crawl:", error);
+      socket.emit("error", {
+        message: "Failed to send leave notification",
+        code: "LEAVE_NOTIFICATION_ERROR",
+      });
+    }
+  }
+
   // Helper method to send system notifications
   public async sendSystemNotification(
     userId: string,
@@ -1001,6 +1579,7 @@ export class SocketService {
           barId: data?.barId,
           hopInId: data?.hopInId,
           meetupId: data?.meetupId,
+          crawlId: data?.crawlId,
         },
         include: {
           fromUser: {

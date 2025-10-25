@@ -74,6 +74,7 @@ model User {
   sentHopIns           HopIn[]         @relation("HopInSender")
   receivedHopIns       HopIn[]         @relation("HopInReceiver")
   @@map("users")
+  CrawlJoinRequest CrawlJoinRequest[]
 }
 
 model PhoneVerification {
@@ -304,8 +305,10 @@ model Crawl {
   participants CrawlParticipant[]
   crawlBars    CrawlBar[]
   chats        CrawlChatMessage[]
+  notifications Notification[] 
 
   @@map("crawls")
+  CrawlJoinRequest CrawlJoinRequest[]
 }
 
 model CrawlParticipant {
@@ -634,6 +637,33 @@ enum NotificationType {
   MESSAGE
   SYSTEM
   MEETUP_INVITE
+  CRAWL_JOIN_REQUEST    
+  CRAWL_JOIN_APPROVED   
+  CRAWL_JOIN_REJECTED   
+}
+
+enum CrawlJoinStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model CrawlJoinRequest {
+  id          String         @id @default(cuid())
+  crawlId     String
+  userId      String
+  status      CrawlJoinStatus @default(PENDING)
+  message     String?
+  createdAt   DateTime       @default(now())
+  respondedAt DateTime?
+
+  // Relations
+  crawl Crawl @relation(fields: [crawlId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([crawlId, userId])
+  @@map("crawl_join_requests")
 }
 
 enum HopInStatus {
@@ -651,6 +681,7 @@ model Notification {
   fromUserId   String
   message      String?
   barId        String?
+  crawlId      String?  
   read         Boolean          @default(false)
   readAt       DateTime?  
   createdAt    DateTime         @default(now())
@@ -662,6 +693,7 @@ model Notification {
   fromUser  User        @relation("NotificationSender", fields: [fromUserId], references: [id], onDelete: Cascade)
   hopIn     HopIn?      @relation(fields: [hopInId], references: [id], onDelete: Cascade)
   meetup    SocialMeetup? @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  crawl     Crawl?      @relation(fields: [crawlId], references: [id], onDelete: Cascade) 
 
   @@index([userId, read])
   @@map("notifications")
