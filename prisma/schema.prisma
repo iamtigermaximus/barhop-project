@@ -628,6 +628,8 @@ model BarSocialActivity {
 // NOTIFICATION SYSTEM
 enum NotificationType {
   HOP_REQUEST
+  HOP_ACCEPTED   
+  HOP_DECLINED  
   WAVE
   MESSAGE
   SYSTEM

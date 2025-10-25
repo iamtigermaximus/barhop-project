@@ -417,6 +417,7 @@ const Social = () => {
   }, [userSocialProfile]);
 
   // NOTIFICATION SYSTEM: Socket connection and event listeners
+  // In your Social component, update the socket useEffect to only handle accepts:
   useEffect(() => {
     if (!socket || !session?.user?.id) return;
 
@@ -424,24 +425,35 @@ const Social = () => {
     socket.emit("join_user_room", session.user.id);
 
     // Listen for new notifications
-    socket.on("new_notification", (notification) => {
+    socket.on("new_notification", (notification: NotificationData) => {
+      console.log("📨 New notification received:", notification);
       addNotification(notification);
       setSuccess(`New notification: ${notification.message}`);
     });
 
-    // Listen for hop request responses
-    socket.on("hop_request_accepted", (hopIn) => {
-      setSuccess(`${hopIn.toUser.name} accepted your hop in request! 🎉`);
+    // Listen for hop request responses (when someone accepts YOUR request)
+    socket.on("hop_request_accepted", (data) => {
+      console.log("✅ Your hop request was accepted:", data);
+      setSuccess(
+        `${data.toUser?.name || "Someone"} accepted your hop in request! 🎉`
+      );
     });
+
+    // REMOVE decline notifications - silent declines
+    // socket.on("hop_request_declined", (data) => {
+    //   setSuccess(`${data.toUser?.name || 'Someone'} declined your hop in request`);
+    // });
 
     // Listen for errors
     socket.on("error", (error) => {
+      console.error("Socket error:", error);
       setError(error);
     });
 
     return () => {
       socket.off("new_notification");
       socket.off("hop_request_accepted");
+      // socket.off("hop_request_declined"); // Remove this
       socket.off("error");
     };
   }, [socket, session, addNotification]);
@@ -1364,48 +1376,93 @@ const Social = () => {
         <Subtitle>
           See who&apos;s out tonight and connect with people nearby
         </Subtitle>
-
         {/* NOTIFICATION SYSTEM: Header Actions - Only show notification bell on desktop */}
         <HeaderActions>
-          {/* Desktop Notification Bell - Hidden on mobile */}
-          <DesktopNotificationBell
-            onClick={() => setShowNotifications(true)}
-            style={{
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-            }}
-          >
-            <span>🔔</span>
-            {unreadCount > 0 && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: "-5px",
-                  right: "-5px",
-                  background: "#ec4899",
-                  color: "white",
-                  borderRadius: "50%",
-                  width: "20px",
-                  height: "20px",
-                  fontSize: "12px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "bold",
-                }}
-              >
-                {unreadCount}
-              </span>
-            )}
-          </DesktopNotificationBell>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            {/* Connection Status */}
 
-          {/* Edit Profile Button - Only show when user has a profile and is not in setup mode */}
+            {/* <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                fontSize: "0.8rem",
+                color: isConnected ? "#22c55e" : "#ef4444",
+                background: "rgba(30, 41, 59, 0.6)",
+                padding: "0.4rem 0.8rem",
+                borderRadius: "20px",
+                border: `1px solid ${
+                  isConnected
+                    ? "rgba(34, 197, 94, 0.3)"
+                    : "rgba(239, 68, 68, 0.3)"
+                }`,
+              }}
+            >
+              <div
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  background: isConnected ? "#22c55e" : "#ef4444",
+                  animation: isConnected ? "pulse 2s infinite" : "none",
+                }}
+              />
+              {isConnected ? "Connected" : "Disconnected"}
+            </div> */}
+            {/* Notification Bell */}
+            <DesktopNotificationBell
+              onClick={() => setShowNotifications(true)}
+              style={{
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                cursor: "pointer",
+                padding: "0.5rem 1rem",
+                background: "rgba(139, 92, 246, 0.1)",
+                border: "1px solid rgba(139, 92, 246, 0.3)",
+                borderRadius: "8px",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(139, 92, 246, 0.2)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(139, 92, 246, 0.1)";
+              }}
+            >
+              <span>🔔</span>
+              Notifications
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "-8px",
+                    right: "-8px",
+                    background: "#ec4899",
+                    color: "white",
+                    borderRadius: "50%",
+                    width: "20px",
+                    height: "20px",
+                    fontSize: "12px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: "bold",
+                    border: "2px solid #0f172a",
+                  }}
+                >
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </DesktopNotificationBell>
+          </div>
+
+          {/* Edit Profile Button */}
           {hasSocialProfile && userSocialProfile && !showProfileSetup && (
             <EditProfileButton onClick={handleEditProfile}>
               <span>⚙️</span>
-              Edit
+              Edit Profile
             </EditProfileButton>
           )}
         </HeaderActions>

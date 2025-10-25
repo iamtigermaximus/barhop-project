@@ -364,6 +364,7 @@
 // };
 
 // export default NotificationsPanel;
+// components/notifications/NotificationPanel.tsx
 "use client";
 import { NotificationData } from "@/types/socket";
 import { useSocket } from "../../contexts/SocketContext";
@@ -374,6 +375,7 @@ import {
   ModalOverlay,
   ModalUserImage,
 } from "../../social/Social.styles";
+import { useSession } from "next-auth/react";
 
 interface NotificationsPanelProps {
   isOpen: boolean;
@@ -381,18 +383,83 @@ interface NotificationsPanelProps {
 }
 
 const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps) => {
-  const { notifications, unreadCount, markAsRead } = useSocket();
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    socket,
+    isConnected,
+    markAllAsRead,
+  } = useSocket();
+
+  const { data: session } = useSession();
 
   if (!isOpen) return null;
 
+  // ✅ REAL: Handle accepting hop requests
   const handleAcceptHop = async (notification: NotificationData) => {
-    console.log("Accept hop:", notification);
-    // TODO: Implement socket emit for accepting hop requests
+    if (!socket || !isConnected || !notification.hopInId) {
+      console.error(
+        "❌ Cannot accept hop: socket not connected or missing hopInId"
+      );
+      return;
+    }
+
+    if (!session?.user?.id) {
+      console.error("❌ Cannot accept hop: no user session");
+      return;
+    }
+
+    try {
+      console.log("✅ Accepting hop request:", notification.hopInId);
+
+      // Emit socket event to accept the hop request
+      socket.emit("respond_hop_request", {
+        hopInId: notification.hopInId,
+        status: "ACCEPTED",
+        userId: session.user.id, // Current user accepting the request
+      });
+
+      // Mark the notification as read
+      await markAsRead(notification.id);
+
+      console.log("🎉 Hop request accepted successfully");
+    } catch (err) {
+      console.error("💥 Error accepting hop request:", err);
+    }
   };
 
+  // ✅ REAL: Handle declining hop requests (SILENT)
   const handleDeclineHop = async (notification: NotificationData) => {
-    console.log("Decline hop:", notification);
-    // TODO: Implement socket emit for declining hop requests
+    if (!socket || !isConnected || !notification.hopInId) {
+      console.error(
+        "❌ Cannot decline hop: socket not connected or missing hopInId"
+      );
+      return;
+    }
+
+    if (!session?.user?.id) {
+      console.error("❌ Cannot decline hop: no user session");
+      return;
+    }
+
+    try {
+      console.log("❌ Declining hop request:", notification.hopInId);
+
+      // Emit socket event to decline the hop request
+      socket.emit("respond_hop_request", {
+        hopInId: notification.hopInId,
+        status: "DECLINED",
+        userId: session.user.id, // Current user declining the request
+      });
+
+      // Just mark as read locally - no success message (SILENT DECLINE)
+      await markAsRead(notification.id);
+
+      console.log("🗑️ Hop request declined silently");
+    } catch (err) {
+      console.error("💥 Error declining hop request:", err);
+    }
   };
 
   const formatTime = (date: Date) => {
@@ -450,6 +517,7 @@ const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps) => {
                 display: "flex",
                 alignItems: "center",
                 gap: "0.75rem",
+                flex: 1,
               }}
             >
               <div
@@ -466,20 +534,58 @@ const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps) => {
               >
                 🔔
               </div>
-              <div>
-                <h3
+              <div style={{ flex: 1 }}>
+                <div
                   style={{
-                    margin: 0,
-                    color: "#f8fafc",
-                    fontSize: "1.1rem",
-                    fontWeight: "600",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
                   }}
                 >
-                  Notifications
-                </h3>
+                  <h3
+                    style={{
+                      margin: 0,
+                      color: "#f8fafc",
+                      fontSize: "1.1rem",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Notifications
+                  </h3>
+                  <div
+                    style={{
+                      padding: "0.25rem 0.5rem",
+                      background: isConnected
+                        ? "rgba(34, 197, 94, 0.1)"
+                        : "rgba(239, 68, 68, 0.1)",
+                      border: `1px solid ${
+                        isConnected
+                          ? "rgba(34, 197, 94, 0.3)"
+                          : "rgba(239, 68, 68, 0.3)"
+                      }`,
+                      borderRadius: "6px",
+                      fontSize: "0.7rem",
+                      color: isConnected ? "#22c55e" : "#ef4444",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.25rem",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        background: isConnected ? "#22c55e" : "#ef4444",
+                        animation: isConnected ? "pulse 1s infinite" : "none",
+                      }}
+                    />
+                    {isConnected ? "Live" : "Offline"}
+                  </div>
+                </div>
                 <p
                   style={{
-                    margin: 0,
+                    margin: "0.25rem 0 0 0",
                     color: "#94a3b8",
                     fontSize: "0.8rem",
                   }}
@@ -545,8 +651,9 @@ const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps) => {
                 No notifications yet
               </h4>
               <p style={{ margin: 0, fontSize: "0.8rem", lineHeight: "1.4" }}>
-                Notifications will appear here when you receive waves or hop-in
-                requests
+                {!isConnected
+                  ? "Connecting to notifications..."
+                  : "Notifications will appear here when you receive waves or hop-in requests"}
               </p>
             </div>
           ) : (
@@ -657,7 +764,7 @@ const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps) => {
                           {formatTime(new Date(notification.createdAt))}
                         </small>
 
-                        {/* Action Buttons */}
+                        {/* Action Buttons - Only show for HOP_REQUEST with hopInId */}
                         {notification.type === "HOP_REQUEST" &&
                           notification.hopInId && (
                             <div
@@ -729,7 +836,7 @@ const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps) => {
         </div>
 
         {/* Clear All Button */}
-        {notifications.length > 0 && (
+        {notifications.length > 0 && unreadCount > 0 && (
           <div
             style={{
               padding: "0.75rem 1rem",
@@ -739,14 +846,7 @@ const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps) => {
           >
             <ModalButton
               $variant="secondary"
-              onClick={() => {
-                // Mark all as read
-                notifications.forEach((notification) => {
-                  if (!notification.read) {
-                    markAsRead(notification.id);
-                  }
-                });
-              }}
+              onClick={markAllAsRead}
               style={{
                 width: "100%",
                 padding: "0.5rem",
@@ -755,7 +855,7 @@ const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps) => {
                 border: "1px solid rgba(139, 92, 246, 0.3)",
               }}
             >
-              Mark all as read
+              Mark all as read ({unreadCount})
             </ModalButton>
           </div>
         )}

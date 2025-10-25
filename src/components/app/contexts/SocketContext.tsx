@@ -201,12 +201,15 @@
 //     </SocketContext.Provider>
 //   );
 // };
+// contexts/SocketContext.tsx
+// contexts/SocketContext.tsx
 "use client";
 import React, {
   createContext,
   useContext,
   useEffect,
   useState,
+  useCallback,
   ReactNode,
 } from "react";
 import { useSession } from "next-auth/react";
@@ -222,6 +225,9 @@ interface SocketContextType {
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   fetchNotifications: () => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+  connectionStatus: "connected" | "disconnected" | "connecting" | "error";
 }
 
 const SocketContext = createContext<SocketContextType>({
@@ -233,6 +239,9 @@ const SocketContext = createContext<SocketContextType>({
   markAsRead: async () => {},
   markAllAsRead: async () => {},
   fetchNotifications: async () => {},
+  isLoading: false,
+  error: null,
+  connectionStatus: "disconnected",
 });
 
 export const useSocket = () => useContext(SocketContext);
@@ -244,63 +253,95 @@ interface SocketProviderProps {
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<
+    "connected" | "disconnected" | "connecting" | "error"
+  >("disconnected");
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
-  const { data: session } = useSession();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { data: session, status: sessionStatus } = useSession();
 
   const unreadCount = notifications.filter(
     (notification) => !notification.read
   ).length;
 
-  // Add notification to state
-  const addNotification = (notification: NotificationData) => {
+  // Add notification to state with deduplication
+  const addNotification = useCallback((notification: NotificationData) => {
+    console.log("📨 Adding notification to state:", notification);
     setNotifications((prev) => {
-      // Check if notification already exists to avoid duplicates
       const exists = prev.find((n) => n.id === notification.id);
-      if (exists) return prev;
+      if (exists) {
+        console.log(
+          "⚠️ Notification already exists, skipping:",
+          notification.id
+        );
+        return prev;
+      }
+      console.log("✅ New notification added:", notification.id);
       return [notification, ...prev];
     });
-  };
+  }, []);
 
   // Mark single notification as read
-  const markAsRead = async (notificationId: string) => {
-    try {
-      // Update locally first for immediate feedback
-      setNotifications((prev) =>
-        prev.map((notif) =>
-          notif.id === notificationId ? { ...notif, read: true } : notif
-        )
-      );
+  const markAsRead = useCallback(
+    async (notificationId: string) => {
+      try {
+        setError(null);
 
-      // Sync with database
-      const response = await fetch("/api/notifications/mark-read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notificationId }),
-      });
+        // Optimistic update
+        setNotifications((prev) =>
+          prev.map((notif) =>
+            notif.id === notificationId
+              ? { ...notif, read: true, readAt: new Date() }
+              : notif
+          )
+        );
 
-      if (!response.ok) {
-        throw new Error("Failed to mark notification as read");
+        const response = await fetch("/api/notifications/mark-read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notificationId }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to mark notification as read");
+        }
+
+        // If socket is connected, notify other devices
+        if (socket && isConnected) {
+          socket.emit("mark_notification_read", {
+            notificationId,
+            userId: session?.user?.id,
+          });
+        }
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+        setError("Failed to mark notification as read");
+
+        // Revert optimistic update
+        setNotifications((prev) =>
+          prev.map((notif) =>
+            notif.id === notificationId
+              ? { ...notif, read: false, readAt: undefined }
+              : notif
+          )
+        );
       }
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-      // Revert local change if API call fails
-      setNotifications((prev) =>
-        prev.map((notif) =>
-          notif.id === notificationId ? { ...notif, read: false } : notif
-        )
-      );
-    }
-  };
+    },
+    [socket, isConnected, session]
+  );
 
   // Mark all notifications as read
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     try {
-      // Update locally first
+      setError(null);
+
+      // Optimistic update
+      const now = new Date();
       setNotifications((prev) =>
-        prev.map((notif) => ({ ...notif, read: true }))
+        prev.map((notif) => ({ ...notif, read: true, readAt: now }))
       );
 
-      // Sync with database
       const response = await fetch("/api/notifications/mark-all-read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -311,47 +352,127 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       }
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
+      setError("Failed to mark all notifications as read");
     }
-  };
+  }, []);
 
   // Fetch notifications from API
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
+      setIsLoading(true);
+      setError(null);
+      console.log("📡 Fetching notifications from API...");
+
       const response = await fetch("/api/notifications");
+      console.log("📨 Notifications API response status:", response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log(
+          "✅ Notifications fetched:",
+          data.notifications?.length || 0
+        );
         setNotifications(data.notifications || []);
+      } else {
+        throw new Error(`Failed to fetch notifications: ${response.status}`);
       }
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      console.error("💥 Error fetching notifications:", error);
+      setError("Failed to fetch notifications");
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, []);
 
   // Socket connection and event listeners
   useEffect(() => {
-    if (!session?.user?.id) return;
+    // Don't connect if no session or session is loading
+    if (sessionStatus === "loading") {
+      console.log("🔄 Session loading, waiting...");
+      return;
+    }
 
-    const newSocket = io(
-      process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001",
-      {
-        query: {
-          userId: session.user.id,
-        },
-      }
-    );
+    if (!session?.user?.id) {
+      console.log("🚫 No user session, skipping socket connection");
+      return;
+    }
 
-    newSocket.on("connect", () => {
-      setIsConnected(true);
-      console.log("Connected to socket server");
+    console.log("🚀 Initializing socket connection for user:", session.user.id);
+    setConnectionStatus("connecting");
+    setError(null);
+
+    // Use the correct Socket.io URL
+    const socketUrl =
+      process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3000";
+    console.log("🔗 Connecting to socket server:", socketUrl);
+
+    const newSocket = io(socketUrl, {
+      path: "/api/socket/io",
+      query: {
+        userId: session.user.id,
+      },
+      transports: ["websocket", "polling"],
+      timeout: 10000,
+      forceNew: true,
     });
 
-    newSocket.on("disconnect", () => {
+    newSocket.on("connect", () => {
+      console.log("✅ Socket connected successfully:", newSocket.id);
+      setIsConnected(true);
+      setConnectionStatus("connected");
+      setError(null);
+
+      // Join user's personal room for targeted notifications
+      newSocket.emit("join_user_room", session.user.id);
+      console.log("🎯 Joined user room:", `user_${session.user.id}`);
+    });
+
+    newSocket.on("disconnect", (reason) => {
+      console.log("❌ Socket disconnected:", reason);
       setIsConnected(false);
-      console.log("Disconnected from socket server");
+      setConnectionStatus("disconnected");
+    });
+
+    newSocket.on("connect_error", (error) => {
+      console.error("💥 Socket connection error:", error.message);
+      setIsConnected(false);
+      setConnectionStatus("error");
+      setError(`Connection failed: ${error.message}`);
     });
 
     newSocket.on("new_notification", (notification: NotificationData) => {
+      console.log("📢 New notification received via socket:", notification);
       addNotification(notification);
+    });
+
+    // Handle notification updates (like when marked as read on other devices)
+    newSocket.on(
+      "notification_updated",
+      (updatedNotification: NotificationData) => {
+        console.log("🔄 Notification updated via socket:", updatedNotification);
+        setNotifications((prev) =>
+          prev.map((notif) =>
+            notif.id === updatedNotification.id ? updatedNotification : notif
+          )
+        );
+      }
+    );
+
+    newSocket.on("reconnect", (attemptNumber) => {
+      console.log("🔄 Socket reconnected after", attemptNumber, "attempts");
+      setIsConnected(true);
+      setConnectionStatus("connected");
+      setError(null);
+    });
+
+    newSocket.on("reconnect_attempt", (attemptNumber) => {
+      console.log("🔄 Reconnection attempt:", attemptNumber);
+      setConnectionStatus("connecting");
+    });
+
+    newSocket.on("reconnect_error", (error) => {
+      console.error("💥 Reconnection error:", error);
+      setConnectionStatus("error");
     });
 
     setSocket(newSocket);
@@ -360,9 +481,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     fetchNotifications();
 
     return () => {
+      console.log("🧹 Cleaning up socket connection");
       newSocket.disconnect();
     };
-  }, [session]);
+  }, [session, sessionStatus, addNotification, fetchNotifications]);
 
   return (
     <SocketContext.Provider
@@ -375,6 +497,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         markAsRead,
         markAllAsRead,
         fetchNotifications,
+        isLoading,
+        error,
+        connectionStatus,
       }}
     >
       {children}
