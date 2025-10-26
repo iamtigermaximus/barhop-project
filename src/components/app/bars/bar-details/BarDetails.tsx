@@ -357,13 +357,13 @@ interface EnhancedBar {
 const Container = styled.div`
   margin: 0 auto;
   padding: 2rem 1rem;
-  background: linear-gradient(
+  /* background: linear-gradient(
     -45deg,
     rgb(9, 9, 11),
     rgb(24, 20, 31),
     rgb(9, 9, 11),
     rgb(21, 17, 23)
-  );
+  ); */
   min-height: 100vh;
   animation: gradientShift 8s ease infinite;
 
@@ -374,7 +374,7 @@ const Container = styled.div`
   @media (max-width: 480px) {
     padding: 1rem 2rem 10rem;
   }
-  @keyframes gradientShift {
+  /* @keyframes gradientShift {
     0% {
       background-position: 0% 50%;
     }
@@ -404,7 +404,7 @@ const Container = styled.div`
         transparent 50%
       );
     pointer-events: none;
-  }
+  } */
 `;
 
 const BackButton = styled(Link)`

@@ -4,17 +4,17 @@ import { getVibeColor } from "./Social";
 
 export const SocialContainer = styled.div`
   padding: 1rem 1rem 10rem;
-  background: linear-gradient(
+  /* background: linear-gradient(
     -45deg,
     rgb(9, 9, 11),
     rgb(24, 20, 31),
     rgb(9, 9, 11),
     rgb(21, 17, 23)
-  );
+  ); */
   height: 100%;
   animation: gradientShift 8s ease infinite;
 
-  @keyframes gradientShift {
+  /* @keyframes gradientShift {
     0% {
       background-position: 0% 50%;
     }
@@ -44,7 +44,7 @@ export const SocialContainer = styled.div`
         transparent 50%
       );
     pointer-events: none;
-  }
+  } */
 `;
 
 export const SocialHeader = styled.div`

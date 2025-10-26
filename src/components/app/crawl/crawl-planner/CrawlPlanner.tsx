@@ -9,13 +9,13 @@ import { HopprLoader } from "@/components/app/common/Loader/HopprLoader";
 export const Page = styled.div`
   padding: 2rem 1rem 10rem;
   margin: 0 auto;
-  background: linear-gradient(
+  /* background: linear-gradient(
     -45deg,
     rgb(9, 9, 11),
     rgb(24, 20, 31),
     rgb(9, 9, 11),
     rgb(21, 17, 23)
-  );
+  ); */
   background-size: 400% 400%;
   animation: gradientShift 10s ease infinite;
   min-height: calc(100vh - 70px);
@@ -31,7 +31,7 @@ export const Page = styled.div`
     padding: 0.75rem 0.25rem 10rem;
   }
 
-  @keyframes gradientShift {
+  /* @keyframes gradientShift {
     0% {
       background-position: 0% 50%;
     }
@@ -61,7 +61,7 @@ export const Page = styled.div`
         transparent 50%
       );
     pointer-events: none;
-  }
+  } */
 `;
 
 export const Title = styled.h1`

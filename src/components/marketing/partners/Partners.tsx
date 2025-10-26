@@ -576,7 +576,7 @@ export default function Partners() {
           <CategorySection key={category}>
             <CategoryHeader>
               <CategoryTitleWrapper>
-                <CategoryIcon>{categoryIcons[category] || "🍻"}</CategoryIcon>
+                {/* <CategoryIcon>{categoryIcons[category] || "🍻"}</CategoryIcon> */}
                 <div>
                   <CategoryTitle>
                     {category.replace(/_/g, " ")}

@@ -4,6 +4,415 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSocket } from "../contexts/SocketContext";
+import styled from "styled-components";
+
+// Styled Components
+const PageContainer = styled.div`
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  padding: 1rem 0.5rem 10rem;
+
+  @media (min-width: 768px) {
+    padding: 2rem 1rem;
+  }
+`;
+
+const ContentWrapper = styled.div`
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  @media (min-width: 768px) {
+    gap: 1.5rem;
+  }
+`;
+
+const Header = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+`;
+
+const HeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  @media (min-width: 768px) {
+    gap: 1rem;
+  }
+`;
+
+const NotificationIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+
+  @media (min-width: 768px) {
+    width: 48px;
+    height: 48px;
+    font-size: 1.5rem;
+    border-radius: 12px;
+  }
+`;
+
+const HeaderText = styled.div`
+  flex: 1;
+`;
+
+const Title = styled.h1`
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+
+  @media (min-width: 768px) {
+    font-size: 1.75rem;
+  }
+`;
+
+const Subtitle = styled.p`
+  margin: 0.25rem 0 0 0;
+  color: #94a3b8;
+  font-size: 0.875rem;
+
+  @media (min-width: 768px) {
+    font-size: 1rem;
+  }
+`;
+
+const HeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  @media (min-width: 768px) {
+    gap: 1rem;
+  }
+`;
+
+const ConnectionStatus = styled.div<{ $isConnected: boolean }>`
+  padding: 0.4rem 0.6rem;
+  background: ${(props) =>
+    props.$isConnected ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)"};
+  border: 1px solid
+    ${(props) =>
+      props.$isConnected ? "rgba(34, 197, 94, 0.3)" : "rgba(239, 68, 68, 0.3)"};
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: ${(props) => (props.$isConnected ? "#22c55e" : "#ef4444")};
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+
+  @media (min-width: 768px) {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    gap: 0.5rem;
+  }
+`;
+
+const StatusDot = styled.div<{ $isConnected: boolean }>`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: ${(props) => (props.$isConnected ? "#22c55e" : "#ef4444")};
+
+  @media (min-width: 768px) {
+    width: 8px;
+    height: 8px;
+  }
+`;
+
+const BackButton = styled.button`
+  padding: 0.6rem 0.8rem;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 6px;
+  color: #8b5cf6;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+
+  @media (min-width: 768px) {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+`;
+
+const ClearAllButton = styled.button`
+  padding: 0.6rem 1rem;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 6px;
+  color: #8b5cf6;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+
+  @media (min-width: 768px) {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+`;
+
+const NotificationsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  @media (min-width: 768px) {
+    gap: 1rem;
+  }
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  color: #94a3b8;
+  padding: 2rem 1rem;
+  background: rgba(30, 41, 59, 0.3);
+  border-radius: 12px;
+  border: 2px dashed rgba(139, 92, 246, 0.2);
+
+  @media (min-width: 768px) {
+    padding: 4rem 2rem;
+    border-radius: 16px;
+  }
+`;
+
+const EmptyIcon = styled.div`
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+
+  @media (min-width: 768px) {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+  }
+`;
+
+const EmptyTitle = styled.h3`
+  color: #e2e8f0;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 1.125rem;
+
+  @media (min-width: 768px) {
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+`;
+
+const EmptyText = styled.p`
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+
+  @media (min-width: 768px) {
+    font-size: 1rem;
+    line-height: 1.5;
+    max-width: 300px;
+  }
+`;
+
+const NotificationItem = styled.div<{ $read: boolean }>`
+  background: ${(props) =>
+    props.$read
+      ? "rgba(30, 41, 59, 0.6)"
+      : "linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.1) 100%)"};
+  border: ${(props) =>
+    props.$read
+      ? "1px solid rgba(139, 92, 246, 0.1)"
+      : "1px solid rgba(139, 92, 246, 0.3)"};
+  border-radius: 10px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  backdrop-filter: blur(10px);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  @media (min-width: 768px) {
+    padding: 1.5rem;
+    border-radius: 12px;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+  }
+`;
+
+const UnreadIndicator = styled.div`
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 8px;
+  height: 8px;
+  background: #ec4899;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.2);
+
+  @media (min-width: 768px) {
+    top: 1rem;
+    right: 1rem;
+    width: 12px;
+    height: 12px;
+  }
+`;
+
+const NotificationContent = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+
+  @media (min-width: 768px) {
+    gap: 1.25rem;
+  }
+`;
+
+const ItemIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+
+  @media (min-width: 768px) {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    font-size: 1.25rem;
+  }
+`;
+
+const ItemContent = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const Message = styled.p<{ $read: boolean }>`
+  margin: 0 0 0.75rem 0;
+  color: #f8fafc;
+  font-weight: ${(props) => (props.$read ? "400" : "600")};
+  font-size: 0.875rem;
+  line-height: 1.4;
+  word-wrap: break-word;
+
+  @media (min-width: 768px) {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+`;
+
+const MetaInfo = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`;
+
+const LeftMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+`;
+
+const Time = styled.small<{ $read: boolean }>`
+  color: ${(props) => (props.$read ? "#64748b" : "#94a3b8")};
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+`;
+
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+`;
+
+const AcceptButton = styled.button`
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+
+  @media (min-width: 768px) {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+  }
+`;
+
+const DeclineButton = styled.button`
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 4px;
+  color: #ef4444;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+
+  @media (min-width: 768px) {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+  }
+`;
+
+const TypeBadge = styled.div`
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  font-weight: 500;
+  white-space: nowrap;
+
+  @media (min-width: 768px) {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    border-radius: 6px;
+  }
+`;
 
 export default function Notifications() {
   const {
@@ -166,415 +575,149 @@ export default function Notifications() {
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#94a3b8",
-        }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔔</div>
-          <p>Loading notifications...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-        padding: "2rem 1rem",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "600px",
-          margin: "0 auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: "1.5rem",
-        }}
-      >
-        {/* Header */}
+      <PageContainer>
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            gap: "1rem",
-            flexWrap: "wrap",
+            justifyContent: "center",
+            minHeight: "60vh",
+            textAlign: "center",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div>
             <div
-              style={{
-                width: "48px",
-                height: "48px",
-                background: "linear-gradient(135deg, #8b5cf6, #ec4899)",
-                borderRadius: "12px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "1.5rem",
-              }}
+              style={{ fontSize: "2.5rem", marginBottom: "1rem", opacity: 0.5 }}
             >
               🔔
             </div>
-            <div>
-              <h1
-                style={{
-                  margin: 0,
-                  color: "#f8fafc",
-                  fontSize: "1.75rem",
-                  fontWeight: "700",
-                }}
-              >
-                Notifications
-              </h1>
-              <p
-                style={{
-                  margin: "0.25rem 0 0 0",
-                  color: "#94a3b8",
-                  fontSize: "1rem",
-                }}
-              >
-                {unreadCount > 0 ? `${unreadCount} unread` : "All caught up!"}
-              </p>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-            {/* Connection Status */}
-            <div
-              style={{
-                padding: "0.5rem 0.75rem",
-                background: isConnected
-                  ? "rgba(34, 197, 94, 0.1)"
-                  : "rgba(239, 68, 68, 0.1)",
-                border: `1px solid ${
-                  isConnected
-                    ? "rgba(34, 197, 94, 0.3)"
-                    : "rgba(239, 68, 68, 0.3)"
-                }`,
-                borderRadius: "8px",
-                fontSize: "0.8rem",
-                color: isConnected ? "#22c55e" : "#ef4444",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-              }}
-            >
-              <div
-                style={{
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  background: isConnected ? "#22c55e" : "#ef4444",
-                }}
-              />
-              {isConnected ? "Live" : "Offline"}
-            </div>
-
-            {/* Back Button */}
-            <button
-              onClick={() => router.back()}
-              style={{
-                padding: "0.75rem 1rem",
-                background: "rgba(139, 92, 246, 0.1)",
-                border: "1px solid rgba(139, 92, 246, 0.3)",
-                borderRadius: "8px",
-                color: "#8b5cf6",
-                cursor: "pointer",
-                fontSize: "0.9rem",
-                fontWeight: "500",
-              }}
-            >
-              ← Back
-            </button>
+            <p style={{ color: "#94a3b8", fontSize: "0.875rem" }}>
+              Loading notifications...
+            </p>
           </div>
         </div>
+      </PageContainer>
+    );
+  }
+
+  return (
+    <PageContainer>
+      <ContentWrapper>
+        {/* Header */}
+        <Header>
+          <HeaderLeft>
+            <NotificationIcon>🔔</NotificationIcon>
+            <HeaderText>
+              <Title>Notifications</Title>
+              <Subtitle>
+                {unreadCount > 0 ? `${unreadCount} unread` : "All caught up!"}
+              </Subtitle>
+            </HeaderText>
+          </HeaderLeft>
+
+          <HeaderRight>
+            <ConnectionStatus $isConnected={isConnected}>
+              <StatusDot $isConnected={isConnected} />
+              {isConnected ? "Live" : "Offline"}
+            </ConnectionStatus>
+
+            <BackButton onClick={() => router.back()}>← Back</BackButton>
+          </HeaderRight>
+        </Header>
 
         {/* Clear All Button */}
         {notifications.length > 0 && unreadCount > 0 && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-            }}
-          >
-            <button
-              onClick={markAllAsRead}
-              style={{
-                padding: "0.75rem 1.5rem",
-                background: "rgba(139, 92, 246, 0.1)",
-                border: "1px solid rgba(139, 92, 246, 0.3)",
-                borderRadius: "8px",
-                color: "#8b5cf6",
-                cursor: "pointer",
-                fontSize: "0.9rem",
-                fontWeight: "500",
-              }}
-            >
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <ClearAllButton onClick={markAllAsRead}>
               Mark all as read ({unreadCount})
-            </button>
+            </ClearAllButton>
           </div>
         )}
 
         {/* Notifications List */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
-          }}
-        >
+        <NotificationsList>
           {notifications.length === 0 ? (
-            <div
-              style={{
-                textAlign: "center",
-                color: "#94a3b8",
-                padding: "4rem 2rem",
-                background: "rgba(30, 41, 59, 0.3)",
-                borderRadius: "16px",
-                border: "2px dashed rgba(139, 92, 246, 0.2)",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "4rem",
-                  marginBottom: "1.5rem",
-                  opacity: 0.5,
-                }}
-              >
-                🔔
-              </div>
-              <h3
-                style={{
-                  color: "#e2e8f0",
-                  marginBottom: "0.75rem",
-                  fontWeight: "600",
-                  fontSize: "1.25rem",
-                }}
-              >
-                No notifications yet
-              </h3>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "1rem",
-                  lineHeight: "1.5",
-                  maxWidth: "300px",
-                  marginLeft: "auto",
-                  marginRight: "auto",
-                }}
-              >
+            <EmptyState>
+              <EmptyIcon>🔔</EmptyIcon>
+              <EmptyTitle>No notifications yet</EmptyTitle>
+              <EmptyText>
                 {!isConnected
                   ? "Connecting to notifications..."
                   : "You're all caught up! Notifications will appear here when you receive messages or requests."}
-              </p>
-            </div>
+              </EmptyText>
+            </EmptyState>
           ) : (
             notifications.map((notification) => (
-              <div
+              <NotificationItem
                 key={notification.id}
-                style={{
-                  background: notification.read
-                    ? "rgba(30, 41, 59, 0.6)"
-                    : "linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.1) 100%)",
-                  border: notification.read
-                    ? "1px solid rgba(139, 92, 246, 0.1)"
-                    : "1px solid rgba(139, 92, 246, 0.3)",
-                  borderRadius: "12px",
-                  padding: "1.5rem",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                  position: "relative",
-                  backdropFilter: "blur(10px)",
-                }}
+                $read={notification.read}
                 onClick={(e) => {
                   console.log("🖱️ Notification item clicked");
                   e.stopPropagation();
                   e.preventDefault();
                   handleNotificationClick(notification);
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 8px 25px rgba(0, 0, 0, 0.15)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
               >
                 {/* Unread indicator */}
-                {!notification.read && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "1rem",
-                      right: "1rem",
-                      width: "12px",
-                      height: "12px",
-                      background: "#ec4899",
-                      borderRadius: "50%",
-                      boxShadow: "0 0 0 2px rgba(236, 72, 153, 0.2)",
-                    }}
-                  />
-                )}
+                {!notification.read && <UnreadIndicator />}
 
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "1.25rem",
-                  }}
-                >
-                  {/* Notification Icon */}
-                  <div
-                    style={{
-                      width: "50px",
-                      height: "50px",
-                      borderRadius: "12px",
-                      background: "linear-gradient(135deg, #8b5cf6, #ec4899)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "1.25rem",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {getNotificationIcon(notification.type)}
-                  </div>
+                <NotificationContent>
+                  <ItemIcon>{getNotificationIcon(notification.type)}</ItemIcon>
 
-                  {/* Notification Content */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p
-                      style={{
-                        margin: "0 0 1rem 0",
-                        color: "#f8fafc",
-                        fontWeight: notification.read ? "400" : "600",
-                        fontSize: "1rem",
-                        lineHeight: "1.5",
-                      }}
-                    >
+                  <ItemContent>
+                    <Message $read={notification.read}>
                       {notification.message}
-                    </p>
+                    </Message>
 
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                        gap: "1rem",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.75rem",
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <small
-                          style={{
-                            color: notification.read ? "#64748b" : "#94a3b8",
-                            fontSize: "0.8rem",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                          }}
-                        >
+                    <MetaInfo>
+                      <LeftMeta>
+                        <Time $read={notification.read}>
                           <span>🕒</span>
                           {formatTime(new Date(notification.createdAt))}
-                        </small>
+                        </Time>
 
                         {/* Action Buttons for HOP_REQUEST */}
                         {notification.type === "HOP_REQUEST" &&
                           notification.hopInId && (
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: "0.75rem",
-                                flexShrink: 0,
-                              }}
+                            <ActionButtons
                               onClick={(e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
                               }}
                             >
-                              <button
+                              <AcceptButton
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   e.preventDefault();
                                   handleAcceptHop(notification);
                                 }}
-                                style={{
-                                  padding: "0.5rem 1rem",
-                                  fontSize: "0.8rem",
-                                  background:
-                                    "linear-gradient(135deg, #10b981, #059669)",
-                                  border: "none",
-                                  borderRadius: "6px",
-                                  color: "white",
-                                  cursor: "pointer",
-                                  fontWeight: "500",
-                                }}
                               >
                                 Accept
-                              </button>
-                              <button
+                              </AcceptButton>
+                              <DeclineButton
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   e.preventDefault();
                                   handleDeclineHop(notification);
                                 }}
-                                style={{
-                                  padding: "0.5rem 1rem",
-                                  fontSize: "0.8rem",
-                                  background: "rgba(239, 68, 68, 0.1)",
-                                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                                  borderRadius: "6px",
-                                  color: "#ef4444",
-                                  cursor: "pointer",
-                                  fontWeight: "500",
-                                }}
                               >
                                 Decline
-                              </button>
-                            </div>
+                              </DeclineButton>
+                            </ActionButtons>
                           )}
-                      </div>
+                      </LeftMeta>
 
-                      <div
-                        style={{
-                          background: "rgba(139, 92, 246, 0.1)",
-                          color: "#8b5cf6",
-                          padding: "0.4rem 0.8rem",
-                          borderRadius: "6px",
-                          fontSize: "0.75rem",
-                          border: "1px solid rgba(139, 92, 246, 0.2)",
-                          fontWeight: "500",
-                        }}
-                      >
+                      <TypeBadge>
                         {notification.type.replace(/_/g, " ").toLowerCase()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                      </TypeBadge>
+                    </MetaInfo>
+                  </ItemContent>
+                </NotificationContent>
+              </NotificationItem>
             ))
           )}
-        </div>
-      </div>
-    </div>
+        </NotificationsList>
+      </ContentWrapper>
+    </PageContainer>
   );
 }

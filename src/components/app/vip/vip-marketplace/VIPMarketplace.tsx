@@ -4879,19 +4879,19 @@ import styled from "styled-components";
 
 const MarketplaceContainer = styled.div`
   padding: 1rem 1rem 10rem;
-  background: linear-gradient(
+  /* background: linear-gradient(
     -45deg,
     rgb(9, 9, 11),
     rgb(24, 20, 31),
     rgb(9, 9, 11),
     rgb(21, 17, 23)
-  );
+  ); */
   min-height: 100vh;
   color: #e2e8f0;
   max-width: 1200px;
   margin: 0 auto;
   animation: gradientShift 8s ease infinite;
-
+  /* 
   @keyframes gradientShift {
     0% {
       background-position: 0% 50%;
@@ -4922,7 +4922,7 @@ const MarketplaceContainer = styled.div`
         transparent 50%
       );
     pointer-events: none;
-  }
+  } */
 `;
 
 const Title = styled.h1`

@@ -340,9 +340,10 @@ const Social = () => {
     markAsRead,
     notifications,
     unreadCount,
-  } = useSocket(); // const [notifications, setNotifications] = useState<NotificationData[]>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-  // const [unreadCount, setUnreadCount] = useState(0);
+  } = useSocket();
+
+  // Remove showNotifications state since we're navigating to page instead
+  // const [showNotifications, setShowNotifications] = useState(false);
 
   // const [isSocialMode, setIsSocialMode] = useState(false);
   const [activeUsers, setActiveUsers] = useState<
@@ -1038,344 +1039,9 @@ const Social = () => {
     }
   };
 
-  // NOTIFICATION SYSTEM: Notifications Panel Component
-  const NotificationsPanel = () => {
-    const { notifications, unreadCount, markAsRead } = useSocket();
-
-    if (!showNotifications) return null;
-
-    return (
-      <ModalOverlay onClick={() => setShowNotifications(false)}>
-        <ModalContent
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            maxWidth: "500px",
-            maxHeight: "80vh",
-            background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
-            border: "1px solid rgba(139, 92, 246, 0.3)",
-            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)",
-          }}
-        >
-          <ModalHeader
-            style={{
-              background: "rgba(30, 41, 59, 0.8)",
-              borderBottom: "1px solid rgba(139, 92, 246, 0.2)",
-              padding: "1.5rem",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                width: "100%",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                }}
-              >
-                <div
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    background: "linear-gradient(135deg, #8b5cf6, #ec4899)",
-                    borderRadius: "8px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "16px",
-                  }}
-                >
-                  🔔
-                </div>
-                <div>
-                  <h3
-                    style={{
-                      margin: 0,
-                      color: "#f8fafc",
-                      fontSize: "1.25rem",
-                      fontWeight: "600",
-                    }}
-                  >
-                    Notifications
-                  </h3>
-                  <p
-                    style={{
-                      margin: 0,
-                      color: "#94a3b8",
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    {unreadCount > 0
-                      ? `${unreadCount} unread ${
-                          unreadCount === 1 ? "message" : "messages"
-                        }`
-                      : "All caught up!"}
-                  </p>
-                </div>
-              </div>
-              <ModalButton
-                $variant="secondary"
-                onClick={() => setShowNotifications(false)}
-                style={{
-                  padding: "8px 12px",
-                  background: "rgba(139, 92, 246, 0.1)",
-                  border: "1px solid rgba(139, 92, 246, 0.3)",
-                }}
-              >
-                ✕
-              </ModalButton>
-            </div>
-          </ModalHeader>
-
-          <div
-            style={{
-              overflowY: "auto",
-              padding: "1rem",
-              background: "rgba(15, 23, 42, 0.5)",
-            }}
-          >
-            {notifications.length === 0 ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  color: "#94a3b8",
-                  padding: "3rem 2rem",
-                  background: "rgba(30, 41, 59, 0.3)",
-                  borderRadius: "12px",
-                  border: "1px dashed rgba(139, 92, 246, 0.2)",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "3rem",
-                    marginBottom: "1rem",
-                    opacity: 0.5,
-                  }}
-                >
-                  🔔
-                </div>
-                <h4
-                  style={{
-                    color: "#e2e8f0",
-                    marginBottom: "0.5rem",
-                    fontWeight: "500",
-                  }}
-                >
-                  No notifications yet
-                </h4>
-                <p style={{ margin: 0, fontSize: "0.875rem" }}>
-                  Notifications will appear here when you receive waves or
-                  hop-in requests
-                </p>
-              </div>
-            ) : (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.75rem",
-                }}
-              >
-                {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    style={{
-                      background: notification.read
-                        ? "rgba(30, 41, 59, 0.6)"
-                        : "linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.1) 100%)",
-                      border: notification.read
-                        ? "1px solid rgba(139, 92, 246, 0.1)"
-                        : "1px solid rgba(139, 92, 246, 0.3)",
-                      borderRadius: "12px",
-                      padding: "1.25rem",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      position: "relative",
-                      overflow: "hidden",
-                    }}
-                    onClick={() =>
-                      !notification.read && markAsRead(notification.id)
-                    }
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                      e.currentTarget.style.boxShadow =
-                        "0 8px 25px rgba(139, 92, 246, 0.15)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
-                  >
-                    {/* Unread indicator */}
-                    {!notification.read && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "12px",
-                          right: "12px",
-                          width: "8px",
-                          height: "8px",
-                          background: "#ec4899",
-                          borderRadius: "50%",
-                          animation: "pulse 2s infinite",
-                        }}
-                      ></div>
-                    )}
-
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: "1rem",
-                      }}
-                    >
-                      <ModalUserImage
-                        $imageUrl={notification.fromUser?.image || undefined}
-                        style={{
-                          width: "44px",
-                          height: "44px",
-                          fontSize: "16px",
-                          border: notification.read
-                            ? "2px solid rgba(139, 92, 246, 0.3)"
-                            : "2px solid #8b5cf6",
-                        }}
-                      >
-                        {!notification.fromUser?.image &&
-                          (notification.fromUser?.name
-                            ?.charAt(0)
-                            .toUpperCase() ||
-                            "U")}
-                      </ModalUserImage>
-
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p
-                          style={{
-                            margin: "0 0 0.5rem 0",
-                            color: "#f8fafc",
-                            fontWeight: notification.read ? "400" : "600",
-                            fontSize: "0.95rem",
-                            lineHeight: "1.4",
-                          }}
-                        >
-                          {notification.message}
-                        </p>
-
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            flexWrap: "wrap",
-                            gap: "0.5rem",
-                          }}
-                        >
-                          <small
-                            style={{
-                              color: notification.read ? "#64748b" : "#94a3b8",
-                              fontSize: "0.75rem",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "0.25rem",
-                            }}
-                          >
-                            <span>🕒</span>
-                            {new Date(
-                              notification.createdAt
-                            ).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </small>
-
-                          {notification.type === "HOP_REQUEST" &&
-                            notification.hopInId && (
-                              <div
-                                style={{
-                                  display: "flex",
-                                  gap: "0.5rem",
-                                  flexShrink: 0,
-                                }}
-                              >
-                                <ModalButton
-                                  $variant="primary"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleAcceptHop(notification);
-                                  }}
-                                  style={{
-                                    padding: "6px 12px",
-                                    fontSize: "12px",
-                                    background:
-                                      "linear-gradient(135deg, #10b981, #059669)",
-                                    border: "none",
-                                  }}
-                                >
-                                  ✅ Accept
-                                </ModalButton>
-                                <ModalButton
-                                  $variant="secondary"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeclineHop(notification);
-                                  }}
-                                  style={{
-                                    padding: "6px 12px",
-                                    fontSize: "12px",
-                                    background: "rgba(239, 68, 68, 0.1)",
-                                    border: "1px solid rgba(239, 68, 68, 0.3)",
-                                    color: "#ef4444",
-                                  }}
-                                >
-                                  ❌ Decline
-                                </ModalButton>
-                              </div>
-                            )}
-
-                          {notification.type === "WAVE" && (
-                            <div
-                              style={{
-                                background: "rgba(34, 197, 94, 0.1)",
-                                color: "#22c55e",
-                                padding: "4px 8px",
-                                borderRadius: "6px",
-                                fontSize: "0.75rem",
-                                border: "1px solid rgba(34, 197, 94, 0.2)",
-                              }}
-                            >
-                              👋 Wave
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Add some custom styles for the pulse animation */}
-          <style jsx>{`
-            @keyframes pulse {
-              0% {
-                opacity: 1;
-              }
-              50% {
-                opacity: 0.5;
-              }
-              100% {
-                opacity: 1;
-              }
-            }
-          `}</style>
-        </ModalContent>
-      </ModalOverlay>
-    );
+  // NOTIFICATION SYSTEM: Replace modal with page navigation
+  const handleNotificationsClick = () => {
+    router.push("/app/notifications");
   };
 
   // Update useEffect to use filteredUsers
@@ -1450,22 +1116,9 @@ const Social = () => {
               />
               {isConnected ? "Connected" : "Disconnected"}
             </div> */}
-            {/* Notification Bell */}
+            {/* Notification Bell - Updated to navigate to notifications page */}
             <DesktopNotificationBell
-              onClick={() => setShowNotifications(true)}
-              // style={{
-              //   position: "relative",
-              //   display: "flex",
-              //   alignItems: "center",
-              //   gap: "0.5rem",
-              //   cursor: "pointer",
-              //   padding: "0.5rem 1rem",
-              //   background: "rgba(139, 92, 246, 0.1)",
-              //   border: "1px solid rgba(139, 92, 246, 0.3)",
-              //   borderRadius: "8px",
-              //   transition: "all 0.2s ease",
-              //   backgroundColor: "transparent !important",
-              // }}
+              onClick={handleNotificationsClick}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "rgba(139, 92, 246, 0.2)";
               }}
@@ -1474,7 +1127,6 @@ const Social = () => {
               }}
             >
               <span>🔔</span>
-              {/* Notifications */}
               {unreadCount > 0 && (
                 <span
                   style={{
@@ -1792,14 +1444,12 @@ const Social = () => {
           </ModalContent>
         </ModalOverlay>
       )}
-
-      {/* NOTIFICATION SYSTEM: Notifications Panel */}
-      <NotificationsPanel />
     </SocialContainer>
   );
 };
 
-export default Social; // "use client";
+export default Social;
+// "use client";
 // import { useState, useEffect } from "react";
 // import { useSession } from "next-auth/react";
 // import { useRouter } from "next/navigation";

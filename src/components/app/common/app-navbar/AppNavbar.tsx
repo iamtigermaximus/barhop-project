@@ -42,8 +42,7 @@ import {
   FaBell,
 } from "react-icons/fa";
 import { useSocket } from "../../contexts/SocketContext";
-import NotificationsPanel from "../../notifications/notification-panel/NotificationPanel";
-// ADD THIS IMPORT
+import Link from "next/link";
 
 const AppNavbar = () => {
   const pathname = usePathname();
@@ -54,7 +53,6 @@ const AppNavbar = () => {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Get notification data from socket context
-  const [showNotifications, setShowNotifications] = useState(false);
   const { unreadCount } = useSocket();
 
   // Check if mobile on mount and resize
@@ -101,7 +99,7 @@ const AppNavbar = () => {
   // Desktop navigation
   const desktopNavigation = [
     { name: "Home", href: "/app" },
-    { name: "Social Map", href: "/app/social" },
+    { name: "Social", href: "/app/social" },
     { name: "Bars", href: "/app/bars" },
     { name: "VIP Passes", href: "/app/vip" },
     { name: "Plan a Crawl", href: "/app/crawl-planner" },
@@ -163,8 +161,8 @@ const AppNavbar = () => {
             >
               {/* NOTIFICATION BELL - ONLY ON MOBILE TOP NAVBAR */}
               {isAuthenticated && (
-                <button
-                  onClick={() => setShowNotifications(true)}
+                <Link
+                  href="/app/notifications"
                   style={{
                     background: "none",
                     border: "none",
@@ -176,6 +174,7 @@ const AppNavbar = () => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    textDecoration: "none",
                   }}
                 >
                   <FaBell size={20} />
@@ -201,7 +200,7 @@ const AppNavbar = () => {
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
-                </button>
+                </Link>
               )}
 
               {/* For non-authenticated users on mobile, show menu button */}
@@ -271,12 +270,6 @@ const AppNavbar = () => {
             );
           })}
         </MobileBottomNav>
-
-        {/* ADD NOTIFICATIONS PANEL HERE - Outside the main nav structure */}
-        <NotificationsPanel
-          isOpen={showNotifications}
-          onClose={() => setShowNotifications(false)}
-        />
       </>
     );
   }
@@ -305,39 +298,109 @@ const AppNavbar = () => {
 
           <AuthSection>
             {isAuthenticated ? (
-              <UserMenu ref={userMenuRef} onClick={toggleUserMenu}>
-                <UserAvatar>
-                  {session.user?.name?.charAt(0).toUpperCase() || "U"}
-                </UserAvatar>
-                <UserDropdown $isOpen={isUserMenuOpen}>
-                  <UserInfo>
-                    <UserName>{session.user?.name || "User"}</UserName>
-                    <UserEmail>{session.user?.email}</UserEmail>
-                  </UserInfo>
-                  <DropdownItem
-                    href="/app/my-crawls"
-                    onClick={() => setIsUserMenuOpen(false)}
-                  >
-                    My Crawls
-                  </DropdownItem>
-                  <DropdownItem
-                    href="/app/vip/wallet"
-                    onClick={() => setIsUserMenuOpen(false)}
-                  >
-                    My VIP Passes
-                  </DropdownItem>
-                  <DropdownItem
-                    href="/app/user-profile"
-                    onClick={() => setIsUserMenuOpen(false)}
-                  >
-                    Profile
-                  </DropdownItem>
-                  <DropdownDivider />
-                  <DropdownButton onClick={handleLogout}>
-                    Log out
-                  </DropdownButton>
-                </UserDropdown>
-              </UserMenu>
+              <>
+                {/* NOTIFICATION BELL FOR DESKTOP */}
+                <Link
+                  href="/app/notifications"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#e2e8f0",
+                    cursor: "pointer",
+                    padding: "0.5rem",
+                    borderRadius: "6px",
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textDecoration: "none",
+                    marginRight: "0.5rem",
+                  }}
+                >
+                  <FaBell size={18} />
+                  {unreadCount > 0 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "2px",
+                        right: "2px",
+                        background: "#ec4899",
+                        color: "white",
+                        borderRadius: "50%",
+                        width: "16px",
+                        height: "16px",
+                        fontSize: "10px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: "bold",
+                        border: "2px solid rgba(15, 23, 42, 0.9)",
+                      }}
+                    >
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </Link>
+
+                <UserMenu ref={userMenuRef} onClick={toggleUserMenu}>
+                  <UserAvatar>
+                    {session.user?.name?.charAt(0).toUpperCase() || "U"}
+                  </UserAvatar>
+                  <UserDropdown $isOpen={isUserMenuOpen}>
+                    <UserInfo>
+                      <UserName>{session.user?.name || "User"}</UserName>
+                      <UserEmail>{session.user?.email}</UserEmail>
+                    </UserInfo>
+                    <DropdownItem
+                      href="/app/my-crawls"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      My Crawls
+                    </DropdownItem>
+                    <DropdownItem
+                      href="/app/vip/wallet"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      My VIP Passes
+                    </DropdownItem>
+                    <DropdownItem
+                      href="/app/user-profile"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      Profile
+                    </DropdownItem>
+                    <DropdownItem
+                      href="/app/notifications"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      Notifications
+                      {unreadCount > 0 && (
+                        <span
+                          style={{
+                            background: "#ec4899",
+                            color: "white",
+                            borderRadius: "50%",
+                            width: "18px",
+                            height: "18px",
+                            fontSize: "10px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontWeight: "bold",
+                            marginLeft: "8px",
+                          }}
+                        >
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                      )}
+                    </DropdownItem>
+                    <DropdownDivider />
+                    <DropdownButton onClick={handleLogout}>
+                      Log out
+                    </DropdownButton>
+                  </UserDropdown>
+                </UserMenu>
+              </>
             ) : (
               <>
                 <SecondaryGradientButton href="/app/auth/login">
@@ -405,12 +468,6 @@ const AppNavbar = () => {
           </MobileAuthSection>
         </MobileMenu>
       </Nav>
-
-      {/* ADD NOTIFICATIONS PANEL FOR DESKTOP TOO */}
-      <NotificationsPanel
-        isOpen={showNotifications}
-        onClose={() => setShowNotifications(false)}
-      />
     </>
   );
 };
