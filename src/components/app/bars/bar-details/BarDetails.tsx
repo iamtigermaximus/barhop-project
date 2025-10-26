@@ -364,11 +364,15 @@ const Container = styled.div`
     rgb(9, 9, 11),
     rgb(21, 17, 23)
   );
-  height: 100%;
+  min-height: 100vh;
   animation: gradientShift 8s ease infinite;
 
   @media (min-width: 768px) {
     padding: 3rem 10rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1rem 2rem 10rem;
   }
   @keyframes gradientShift {
     0% {
@@ -1267,8 +1271,6 @@ export default function BarDetails() {
             alignItems: "center",
             marginTop: "1rem",
             flexWrap: "wrap",
-            backgroundColor: "transparent !important",
-            // border: "3px solid red",
           }}
         >
           <StatusBadge $isOpen={isOpen}>

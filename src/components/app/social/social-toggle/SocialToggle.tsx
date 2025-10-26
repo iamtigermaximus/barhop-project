@@ -6,7 +6,7 @@ const ToggleWrapper = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  background-color: transparent !important;
+  background: transparent !important;
 `;
 
 const ToggleButton = styled.button<{ $isActive: boolean }>`
@@ -42,6 +42,7 @@ const StatusIndicator = styled.div<{ $isActive: boolean }>`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  background: transparent !important;
 
   &::before {
     content: "";

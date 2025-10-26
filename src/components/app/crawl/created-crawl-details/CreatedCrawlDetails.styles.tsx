@@ -15,13 +15,17 @@ export const Page = styled.div`
   background-size: 400% 400%;
   animation: gradientShift 10s ease infinite;
   /* min-height: calc(100vh - 70px); */
-  height: 100vh;
+  height: 100%;
   width: 100%;
   box-sizing: border-box;
 
   @media (max-width: 768px) {
     padding: 1rem 0.5rem 10rem;
   }
+
+  /* @media (max-width: 480px) {
+    padding: 1rem 0.5rem 10rem;
+  } */
 
   @keyframes gradientShift {
     0% {

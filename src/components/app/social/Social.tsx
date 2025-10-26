@@ -1533,7 +1533,7 @@ const Social = () => {
               display: "flex",
               justifyContent: "center",
               margin: "1.5rem 0",
-              backgroundColor: "red !important",
+              background: "transparent ",
             }}
           >
             <SocialToggle

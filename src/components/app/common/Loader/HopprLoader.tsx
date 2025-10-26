@@ -144,7 +144,7 @@ export function HopprLoader({ size = "md" }: HopprLoaderProps) {
   return (
     <LoaderContainer>
       <LogoContainer>
-        <LogoIcon style={{ fontSize: config.iconSize }}>🍻</LogoIcon>
+        {/* <LogoIcon style={{ fontSize: config.iconSize }}>🍻</LogoIcon> */}
         <LogoText style={{ fontSize: config.textSize }}>Hoppr</LogoText>
       </LogoContainer>
 
@@ -160,7 +160,7 @@ export function HopprLoaderCompact() {
   return (
     <LoaderContainer style={{ padding: "2rem 1rem", minHeight: "150px" }}>
       <LogoContainer style={{ marginBottom: "1.5rem" }}>
-        <LogoIcon style={{ fontSize: "2rem" }}>🍻</LogoIcon>
+        {/* <LogoIcon style={{ fontSize: "2rem" }}>🍻</LogoIcon> */}
         <LogoText style={{ fontSize: "2rem" }}>Hoppr</LogoText>
       </LogoContainer>
 

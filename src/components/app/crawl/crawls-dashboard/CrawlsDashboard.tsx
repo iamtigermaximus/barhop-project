@@ -927,6 +927,15 @@ const CloseButton = styled.button`
   }
 `;
 
+const CreateCrawlCardMobileHidden = styled(CreateCrawlCard)`
+  /* Show on desktop, hide on mobile */
+  display: block;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
 interface CrawlUser {
   id: string;
   name: string | null;
@@ -1392,12 +1401,12 @@ export default function CrawlsDashboard() {
             >
               My Crawls ({tabCounts["my-crawls"]})
             </Tab>
-            <Tab
+            {/* <Tab
               $active={activeTab === "past-events"}
               onClick={() => setActiveTab("past-events")}
             >
               Past Public ({tabCounts["past-events"]})
-            </Tab>
+            </Tab> */}
             <Tab
               $active={activeTab === "my-past-events"}
               onClick={() => setActiveTab("my-past-events")}
@@ -1419,17 +1428,17 @@ export default function CrawlsDashboard() {
             {/* Create Crawl Card - Only show for non-past tabs */}
             {!isPastTab &&
               (isAuthenticated ? (
-                <CreateCrawlCard href="/app/crawl-planner">
+                <CreateCrawlCardMobileHidden href="/app/crawl-planner">
                   <CreateIcon>🎯</CreateIcon>
                   <CreateText>Create New Crawl</CreateText>
                   <CreateSubtext>Plan your own bar adventure</CreateSubtext>
-                </CreateCrawlCard>
+                </CreateCrawlCardMobileHidden>
               ) : (
-                <CreateCrawlCard href="/app/auth/signup">
+                <CreateCrawlCardMobileHidden href="/app/auth/signup">
                   <CreateIcon>🔐</CreateIcon>
                   <CreateText>Sign Up to Create Crawls</CreateText>
                   <CreateSubtext>Join to start planning crawls</CreateSubtext>
-                </CreateCrawlCard>
+                </CreateCrawlCardMobileHidden>
               ))}
 
             {/* Display crawls */}

@@ -23,6 +23,10 @@ const ProfileContainer = styled.div`
   max-width: 800px;
   margin: 0 auto;
   padding-bottom: 80px; /* Space for mobile nav */
+
+  @media (max-width: 480px) {
+    padding: 1rem 1rem 10rem;
+  }
 `;
 
 const ProfileHeader = styled.div`

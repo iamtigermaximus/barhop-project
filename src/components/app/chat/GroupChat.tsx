@@ -203,8 +203,8 @@ const GroupChat = ({ crawlId, chatroomId, onClose }: GroupChatProps) => {
       >
         <div
           style={{
-            background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
-            border: "1px solid rgba(139, 92, 246, 0.3)",
+            // background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
+            // border: "1px solid rgba(139, 92, 246, 0.3)",
             borderRadius: "20px",
             padding: "2rem",
             maxWidth: "400px",

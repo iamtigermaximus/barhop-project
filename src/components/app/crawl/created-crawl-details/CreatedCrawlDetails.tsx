@@ -735,6 +735,7 @@ const CreatedCrawlDetails = () => {
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: "0.5rem",
                 textDecoration: "none",
                 fontFamily: "inherit",

@@ -254,14 +254,28 @@ export const UsersGrid = styled.div`
   margin: 1.5rem 0;
   background-color: transparent !important;
 
-  @media (max-width: 768px) {
+  /* Tablet */
+  @media (max-width: 1024px) {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 0.5rem;
   }
 
-  @media (max-width: 480px) {
-    grid-template-columns: repeat(2, 1fr);
+  /* Mobile - 4 cards per row */
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
     gap: 0.5rem;
+  }
+
+  /* Small mobile - keep 4 per row but adjust gap */
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.375rem;
+  }
+
+  /* Extra small mobile */
+  @media (max-width: 360px) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
   }
 `;
 
@@ -280,6 +294,19 @@ export const UserCard = styled.div`
     border-color: #8b5cf6;
     box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
   }
+
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    border-radius: 10px;
+
+    &:hover {
+      transform: translateY(-1px); /* Smaller hover effect on mobile */
+    }
+  }
+
+  @media (max-width: 480px) {
+    border-radius: 8px;
+  }
 `;
 
 export const UserImageContainer = styled.div`
@@ -288,6 +315,26 @@ export const UserImageContainer = styled.div`
   height: 200px;
   overflow: hidden;
   background: linear-gradient(45deg, #8b5cf6, #0ea5e9);
+
+  /* Tablet */
+  @media (max-width: 1024px) {
+    height: 180px;
+  }
+
+  /* Mobile - smaller height */
+  @media (max-width: 768px) {
+    height: 120px;
+  }
+
+  /* Small mobile - even smaller */
+  @media (max-width: 480px) {
+    height: 100px;
+  }
+
+  /* Extra small mobile */
+  @media (max-width: 360px) {
+    height: 80px;
+  }
 `;
 
 export const UserImage = styled.div<{ $imageUrl?: string }>`
@@ -303,6 +350,15 @@ export const UserImage = styled.div<{ $imageUrl?: string }>`
   font-size: 2rem;
   color: white;
   font-weight: 600;
+
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.25rem;
+  }
 `;
 
 export const UserStatusBadge = styled.div<{ $status: string }>`
@@ -321,6 +377,23 @@ export const UserStatusBadge = styled.div<{ $status: string }>`
       ? "#f59e0b"
       : "#6b7280"};
   border: 2px solid rgba(15, 23, 42, 0.9);
+
+  /* Mobile - smaller badge */
+  @media (max-width: 768px) {
+    top: 6px;
+    right: 6px;
+    width: 6px;
+    height: 6px;
+    border: 1.5px solid rgba(15, 23, 42, 0.9);
+  }
+
+  @media (max-width: 480px) {
+    top: 4px;
+    right: 4px;
+    width: 5px;
+    height: 5px;
+    border: 1px solid rgba(15, 23, 42, 0.9);
+  }
 `;
 
 export const UserVibeBadge = styled.div<{ $vibe: string }>`
@@ -335,17 +408,36 @@ export const UserVibeBadge = styled.div<{ $vibe: string }>`
   font-weight: 600;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.3);
+
+  /* Mobile - smaller badge */
+  @media (max-width: 768px) {
+    top: 6px;
+    left: 6px;
+    padding: 1px 4px;
+    border-radius: 6px;
+    font-size: 0.5rem;
+  }
+
+  @media (max-width: 480px) {
+    top: 4px;
+    left: 4px;
+    padding: 1px 3px;
+    border-radius: 4px;
+    font-size: 0.45rem;
+  }
 `;
 
 export const UserInfo = styled.div`
   padding: 0.75rem;
-`;
 
-export const UserHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.25rem;
+  /* Mobile - smaller padding */
+  @media (max-width: 768px) {
+    padding: 0.5rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.375rem;
+  }
 `;
 
 export const UserName = styled.h3`
@@ -356,12 +448,37 @@ export const UserName = styled.h3`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  /* Mobile - smaller font */
+  @media (max-width: 768px) {
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+  }
+`;
+
+export const UserHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
 `;
 
 export const UserAge = styled.span`
   color: #94a3b8;
   font-size: 0.75rem;
   font-weight: 500;
+
+  /* Mobile - smaller font */
+  @media (max-width: 768px) {
+    font-size: 0.7rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.65rem;
+  }
 `;
 
 export const UserDetails = styled.div`
@@ -377,6 +494,15 @@ export const DistanceBadge = styled.div`
   display: flex;
   align-items: center;
   gap: 0.25rem;
+
+  /* Mobile - smaller font */
+  @media (max-width: 768px) {
+    font-size: 0.65rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.6rem;
+  }
 `;
 
 export const LocationInfo = styled.div`
@@ -388,12 +514,31 @@ export const LocationInfo = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-`;
 
+  /* Mobile - smaller font */
+  @media (max-width: 768px) {
+    font-size: 0.65rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.6rem;
+  }
+`;
 export const QuickActions = styled.div`
   display: flex;
   gap: 0.5rem;
   margin-top: 0.5rem;
+
+  /* Mobile - smaller gap */
+  @media (max-width: 768px) {
+    gap: 0.25rem;
+    margin-top: 0.375rem;
+  }
+
+  @media (max-width: 480px) {
+    gap: 0.125rem;
+    margin-top: 0.25rem;
+  }
 `;
 
 export const ActionButton = styled.button<{
@@ -416,12 +561,32 @@ export const ActionButton = styled.button<{
   cursor: pointer;
   transition: all 0.3s ease;
 
+  /* Mobile - smaller padding and font */
+  @media (max-width: 768px) {
+    padding: 0.375rem;
+    font-size: 0.65rem;
+    border-radius: 4px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.25rem;
+    font-size: 0.6rem;
+    border-radius: 3px;
+  }
+
   &:hover {
     transform: translateY(-1px);
     box-shadow: ${(props) =>
       props.$variant === "primary"
         ? "0 4px 12px rgba(139, 92, 246, 0.4)"
         : "0 2px 8px rgba(139, 92, 246, 0.2)"};
+  }
+
+  /* Reduce hover effect on mobile */
+  @media (max-width: 768px) {
+    &:hover {
+      transform: translateY(-0.5px);
+    }
   }
 `;
 
