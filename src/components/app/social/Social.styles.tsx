@@ -4,14 +4,54 @@ import { getVibeColor } from "./Social";
 
 export const SocialContainer = styled.div`
   padding: 1rem 1rem 10rem;
-  background: #0f172a;
-  min-height: 100vh;
+  background: linear-gradient(
+    -45deg,
+    rgb(9, 9, 11),
+    rgb(24, 20, 31),
+    rgb(9, 9, 11),
+    rgb(21, 17, 23)
+  );
+  height: 100%;
+  animation: gradientShift 8s ease infinite;
+
+  @keyframes gradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+        circle at 30% 20%,
+        rgba(14, 165, 233, 0.1) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 70% 80%,
+        rgba(139, 92, 246, 0.1) 0%,
+        transparent 50%
+      );
+    pointer-events: none;
+  }
 `;
 
 export const SocialHeader = styled.div`
   text-align: center;
   margin-bottom: 1.5rem;
   position: relative;
+  background-color: transparent !important;
 `;
 
 export const Title = styled.h1`
@@ -140,6 +180,7 @@ export const ViewToggle = styled.div`
   justify-content: center;
   margin: 1rem 0;
   gap: 0.5rem;
+  background-color: transparent !important;
 `;
 
 export const ViewButton = styled.button<{ $active: boolean }>`
@@ -171,7 +212,9 @@ export const CityDetection = styled.div`
   gap: 1rem;
   /* margin: 1rem 0;
   padding: 1rem; */
-  background: rgba(30, 41, 59, 0.5);
+  /* background: rgba(30, 41, 59, 0.5); */
+  background-color: transparent !important;
+
   border-radius: 12px;
   /* border: 1px solid rgba(139, 92, 246, 0.2); */
 `;
@@ -209,6 +252,7 @@ export const UsersGrid = styled.div`
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 0.75rem;
   margin: 1.5rem 0;
+  background-color: transparent !important;
 
   @media (max-width: 768px) {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -415,6 +459,7 @@ export const StatsContainer = styled.div`
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+  background-color: transparent !important;
 
   @media (min-width: 768px) {
     gap: 1rem;

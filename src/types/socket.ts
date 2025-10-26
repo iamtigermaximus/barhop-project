@@ -69,6 +69,7 @@ export interface NotificationData {
   fromUserId: string;
   message?: string;
   barId?: string;
+  crawlId?: string;
   read: boolean;
   readAt?: Date;
   createdAt: Date;
@@ -88,6 +89,17 @@ export interface NotificationData {
     };
     status: HopInStatus;
   };
+  crawl?: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface HopInRequestData {
+  fromUserId: string;
+  toUserId: string;
+  barId?: string;
+  message?: string;
 }
 
 export interface HopInRequestData {

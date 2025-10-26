@@ -6,6 +6,7 @@ const ToggleWrapper = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+  background-color: transparent !important;
 `;
 
 const ToggleButton = styled.button<{ $isActive: boolean }>`

@@ -10,9 +10,9 @@ export const Page = styled.div`
   background: linear-gradient(
     -45deg,
     rgb(9, 9, 11),
-    rgb(15, 23, 42),
+    rgb(24, 20, 31),
     rgb(9, 9, 11),
-    rgb(15, 23, 42)
+    rgb(21, 17, 23)
   );
   background-size: 400% 400%;
   animation: gradientShift 12s ease infinite;
@@ -33,6 +33,26 @@ export const Page = styled.div`
     100% {
       background-position: 0% 50%;
     }
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+        circle at 30% 20%,
+        rgba(14, 165, 233, 0.1) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 70% 80%,
+        rgba(139, 92, 246, 0.1) 0%,
+        transparent 50%
+      );
+    pointer-events: none;
   }
 `;
 

@@ -5,11 +5,29 @@ import Link from "next/link";
 export const Container = styled.div`
   margin: 0 auto;
   padding: 2rem 1rem;
-  background: #0f172a;
+  background: linear-gradient(
+    -45deg,
+    rgb(9, 9, 11),
+    rgb(24, 20, 31),
+    rgb(9, 9, 11),
+    rgb(21, 17, 23)
+  );
   min-height: 100vh;
+  animation: gradientShift 8s ease infinite;
 
   @media (min-width: 768px) {
     padding: 3rem 2rem;
+  }
+  @keyframes gradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
   }
 `;
 

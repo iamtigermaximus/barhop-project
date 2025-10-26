@@ -17,7 +17,7 @@ import {
 } from "react-icons/fa";
 
 const ProfileContainer = styled.div`
-  padding: 2rem 1rem;
+  padding: 2rem 1rem 10rem;
   background: #0f172a;
   min-height: 100vh;
   max-width: 800px;

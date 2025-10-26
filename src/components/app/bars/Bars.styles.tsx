@@ -9,9 +9,9 @@ export const Page = styled.div`
   background: linear-gradient(
     -45deg,
     rgb(9, 9, 11),
-    rgb(15, 23, 42),
+    rgb(24, 20, 31),
     rgb(9, 9, 11),
-    rgb(15, 23, 42)
+    rgb(21, 17, 23)
   );
   background-size: 400% 400%;
   animation: gradientShift 12s ease infinite;

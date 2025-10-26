@@ -357,11 +357,49 @@ interface EnhancedBar {
 const Container = styled.div`
   margin: 0 auto;
   padding: 2rem 1rem;
-  background: #0f172a;
-  min-height: 100vh;
+  background: linear-gradient(
+    -45deg,
+    rgb(9, 9, 11),
+    rgb(24, 20, 31),
+    rgb(9, 9, 11),
+    rgb(21, 17, 23)
+  );
+  height: 100%;
+  animation: gradientShift 8s ease infinite;
 
   @media (min-width: 768px) {
-    padding: 3rem 2rem;
+    padding: 3rem 10rem;
+  }
+  @keyframes gradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+        circle at 30% 20%,
+        rgba(14, 165, 233, 0.1) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 70% 80%,
+        rgba(139, 92, 246, 0.1) 0%,
+        transparent 50%
+      );
+    pointer-events: none;
   }
 `;
 
@@ -381,6 +419,7 @@ const BackButton = styled(Link)`
 
 const Header = styled.div`
   margin-bottom: 3rem;
+  background-color: transparent !important;
 `;
 
 const BarName = styled.h1`
@@ -400,6 +439,7 @@ const BarMeta = styled.div`
   gap: 1rem;
   align-items: center;
   margin-bottom: 1rem;
+  background-color: transparent !important;
 `;
 
 const Tag = styled.span`
@@ -425,13 +465,16 @@ const ContentGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
   gap: 3rem;
+  background-color: transparent !important;
 
   @media (min-width: 1024px) {
     grid-template-columns: 2fr 1fr;
   }
 `;
 
-const MainContent = styled.div``;
+const MainContent = styled.div`
+  background-color: transparent !important;
+`;
 
 const Description = styled.p`
   color: #e2e8f0;
@@ -506,7 +549,7 @@ const Sidebar = styled.div`
 
 const ActionButton = styled.button`
   width: 100%;
-  background: #0284c7;
+  background: linear-gradient(45deg, #8b5cf6, #3b82f6, #0ea5e9);
   color: white;
   border: none;
   padding: 1rem 2rem;
@@ -516,6 +559,7 @@ const ActionButton = styled.button`
   margin-bottom: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  animation: gradientShift 4s ease infinite;
 
   &:hover {
     background: #0369a1;
@@ -562,6 +606,7 @@ const LoadingState = styled.div`
   min-height: 400px;
   color: #e2e8f0;
   font-size: 1.125rem;
+  background-color: transparent !important;
 `;
 
 const ErrorState = styled.div`
@@ -624,6 +669,7 @@ const TabNavigation = styled.div`
   margin-bottom: 2rem;
   border-bottom: 1px solid #334155;
   flex-wrap: wrap;
+  background-color: transparent !important;
 `;
 
 const Tab = styled.button<{ $isActive: boolean }>`
@@ -824,7 +870,7 @@ const RatingSection = styled.div`
     align-items: center;
     margin-bottom: 2rem;
     padding: 1.5rem;
-    background: rgba(30, 41, 59, 0.5);
+    background-color: transparent !important;
     border-radius: 12px;
     border: 1px solid #334155;
 
@@ -1147,10 +1193,10 @@ export default function BarDetails() {
     router.push(`/plan-visit?bar=${bar?.id}`);
   };
 
-  const handleGroupClick = () => {
-    setSelectedAction("group");
-    router.push(`/groups/create?bar=${bar?.id}`);
-  };
+  // const handleGroupClick = () => {
+  //   setSelectedAction("group");
+  //   router.push(`/groups/create?bar=${bar?.id}`);
+  // };
 
   const getTodayHours = (): { open: string; close: string } | undefined => {
     if (!bar?.operatingHours) return undefined;
@@ -1163,7 +1209,7 @@ export default function BarDetails() {
       <Container>
         <LoadingState>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🎪</div>
+            {/* <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🎪</div> */}
             <p>Loading bar details...</p>
           </div>
         </LoadingState>
@@ -1221,6 +1267,8 @@ export default function BarDetails() {
             alignItems: "center",
             marginTop: "1rem",
             flexWrap: "wrap",
+            backgroundColor: "transparent !important",
+            // border: "3px solid red",
           }}
         >
           <StatusBadge $isOpen={isOpen}>
@@ -1624,11 +1672,11 @@ export default function BarDetails() {
             </>
           )}
 
-          <ActionButton onClick={handlePlanClick}>Plan Visit</ActionButton>
+          {/* <ActionButton onClick={handlePlanClick}>Plan Visit</ActionButton>
 
           <SecondaryButton onClick={handleGroupClick}>
             Create Group
-          </SecondaryButton>
+          </SecondaryButton> */}
 
           {/* Quick Info */}
           <div className="quick-info">

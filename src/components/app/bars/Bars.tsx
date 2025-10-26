@@ -35,6 +35,26 @@ export const Page = styled.div`
       background-position: 0% 50%;
     }
   }
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+        circle at 30% 20%,
+        rgba(14, 165, 233, 0.1) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 70% 80%,
+        rgba(139, 92, 246, 0.1) 0%,
+        transparent 50%
+      );
+    pointer-events: none;
+  }
 `;
 
 export const Title = styled.h1`
@@ -275,6 +295,7 @@ export const BarName = styled.h3`
   color: #f8fafc;
   margin-bottom: 0.5rem;
   font-weight: 600;
+  background-color: transparent !important;
 
   @media (max-width: 768px) {
     font-size: 1.25rem;
@@ -301,6 +322,7 @@ export const BarDetails = styled.div`
   gap: 0.5rem;
   margin-bottom: 1rem;
   flex-wrap: wrap;
+  background-color: transparent !important;
 
   @media (max-width: 480px) {
     gap: 0.25rem;
@@ -732,6 +754,7 @@ export default function Bars() {
                   justifyContent: "space-between",
                   alignItems: "flex-start",
                   marginBottom: "0.5rem",
+                  backgroundColor: "red !important",
                 }}
               >
                 <BarName>{bar.name}</BarName>
@@ -741,6 +764,7 @@ export default function Bars() {
                     gap: "0.5rem",
                     flexDirection: "column",
                     alignItems: "flex-end",
+                    backgroundColor: "transparent !important",
                   }}
                 >
                   {bar.distance && (

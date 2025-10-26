@@ -1453,18 +1453,19 @@ const Social = () => {
             {/* Notification Bell */}
             <DesktopNotificationBell
               onClick={() => setShowNotifications(true)}
-              style={{
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                cursor: "pointer",
-                padding: "0.5rem 1rem",
-                background: "rgba(139, 92, 246, 0.1)",
-                border: "1px solid rgba(139, 92, 246, 0.3)",
-                borderRadius: "8px",
-                transition: "all 0.2s ease",
-              }}
+              // style={{
+              //   position: "relative",
+              //   display: "flex",
+              //   alignItems: "center",
+              //   gap: "0.5rem",
+              //   cursor: "pointer",
+              //   padding: "0.5rem 1rem",
+              //   background: "rgba(139, 92, 246, 0.1)",
+              //   border: "1px solid rgba(139, 92, 246, 0.3)",
+              //   borderRadius: "8px",
+              //   transition: "all 0.2s ease",
+              //   backgroundColor: "transparent !important",
+              // }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "rgba(139, 92, 246, 0.2)";
               }}
@@ -1473,7 +1474,7 @@ const Social = () => {
               }}
             >
               <span>🔔</span>
-              Notifications
+              {/* Notifications */}
               {unreadCount > 0 && (
                 <span
                   style={{
@@ -1503,7 +1504,7 @@ const Social = () => {
           {hasSocialProfile && userSocialProfile && !showProfileSetup && (
             <EditProfileButton onClick={handleEditProfile}>
               <span>⚙️</span>
-              Edit Profile
+              Edit
             </EditProfileButton>
           )}
         </HeaderActions>
@@ -1532,6 +1533,7 @@ const Social = () => {
               display: "flex",
               justifyContent: "center",
               margin: "1.5rem 0",
+              backgroundColor: "red !important",
             }}
           >
             <SocialToggle

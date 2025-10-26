@@ -3053,6 +3053,19 @@ interface ChatroomMessageData {
   userId: string;
 }
 
+interface ChatroomMessage {
+  id: string;
+  content: string;
+  userId: string;
+  chatroomId: string;
+  messageType: string;
+  createdAt: Date;
+  user: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  };
+}
 interface ErrorResponse {
   message: string;
   code?: string;
@@ -3324,6 +3337,8 @@ export class SocketService {
       console.log(`Message created in database:`, message.id);
 
       this.io?.to(`chatroom_${chatroomId}`).emit("new_message", message);
+      //  Send notifications to all participants (except sender)
+      await this.handleChatMessageNotification(message, chatroomId);
 
       console.log(`Message broadcasted to chatroom ${chatroomId}`);
     } catch (error) {
@@ -4123,6 +4138,94 @@ export class SocketService {
         message: "Failed to send leave notification",
         code: "LEAVE_NOTIFICATION_ERROR",
       });
+    }
+  }
+
+  private async handleChatMessageNotification(
+    message: ChatroomMessage,
+    chatroomId: string
+  ): Promise<void> {
+    try {
+      console.log(
+        `📢 Starting chat notification process for message ${message.id}`
+      );
+
+      // Get all participants in the chatroom except the sender
+      const participants = await prisma.chatroomParticipant.findMany({
+        where: {
+          chatroomId,
+          userId: { not: message.userId }, // Exclude the message sender
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      // Get chatroom and crawl info for the notification message
+      const chatroom = await prisma.chatroom.findUnique({
+        where: { id: chatroomId },
+        include: {
+          crawl: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      });
+
+      const crawlName = chatroom?.crawl?.name || "the crawl";
+      const senderName = message.user.name || "Someone";
+
+      console.log(
+        `📨 Creating notifications for ${participants.length} participants`
+      );
+
+      // Create notifications for all participants
+      for (const participant of participants) {
+        const notification = await prisma.notification.create({
+          data: {
+            userId: participant.userId,
+            fromUserId: message.userId,
+            type: "MESSAGE", // Using existing MESSAGE type
+            message: `${senderName} sent a message in "${crawlName}"`,
+            crawlId: chatroom?.crawlId || null,
+            hopInId: null,
+            meetupId: null,
+          },
+          include: {
+            fromUser: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+            crawl: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        });
+
+        // Send real-time notification via socket
+        this.io
+          ?.to(`user_${participant.userId}`)
+          .emit("new_notification", notification);
+        console.log(`✅ Sent chat notification to user ${participant.userId}`);
+      }
+
+      console.log(
+        `🎉 Successfully sent chat notifications to ${participants.length} participants`
+      );
+    } catch (error) {
+      console.error("❌ Error sending chat notifications:", error);
     }
   }
 
