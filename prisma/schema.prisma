@@ -692,6 +692,7 @@ model Notification {
   message      String?
   barId        String?
   crawlId      String?  
+  chatroomId   String? 
   read         Boolean          @default(false)
   readAt       DateTime?  
   createdAt    DateTime         @default(now())
@@ -704,6 +705,7 @@ model Notification {
   hopIn     HopIn?      @relation(fields: [hopInId], references: [id], onDelete: Cascade)
   meetup    SocialMeetup? @relation(fields: [meetupId], references: [id], onDelete: Cascade)
   crawl     Crawl?      @relation(fields: [crawlId], references: [id], onDelete: Cascade) 
+  chatroom  Chatroom?   @relation(fields: [chatroomId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
   @@map("notifications")
@@ -729,6 +731,12 @@ model HopIn {
   @@map("hop_ins")
 }
 
+
+enum ChatType {
+  PRIVATE
+  GROUP  
+  CRAWL
+}
 //  MODELS FOR GROUP CHATROOMS
 model Chatroom {
   id          String   @id @default(cuid())
@@ -736,6 +744,7 @@ model Chatroom {
   description String?
   crawlId     String?  @unique
   isGroupChat Boolean  @default(false)
+  chatType    ChatType @default(CRAWL) 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -743,6 +752,7 @@ model Chatroom {
   crawl       Crawl?   @relation(fields: [crawlId], references: [id], onDelete: Cascade)
   participants ChatroomParticipant[]
   messages    ChatroomMessage[]
+  notifications Notification[]
 
   @@map("chatrooms")
 }

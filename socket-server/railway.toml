@@ -1,0 +1,11 @@
+[service]
+  name = "socket-server"
+  type = "web"
+
+[deploy]
+  restart = true
+  numReplicas = 1
+
+[[services.ports]]
+  port = 3001
+  http = true

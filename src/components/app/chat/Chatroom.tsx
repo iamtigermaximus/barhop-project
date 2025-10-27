@@ -34,11 +34,27 @@ interface ChatroomParticipant {
   };
 }
 
+// 🆕 NEW INTERFACE FOR PRIVATE CHATROOMS
+interface ChatroomInfo {
+  id: string;
+  name: string;
+  description?: string;
+  isGroupChat: boolean;
+  crawlId?: string;
+  participants: ChatroomParticipant[];
+  _count: {
+    participants: number;
+    messages: number;
+  };
+}
+
+// 🆕 KEEP CRAWL INFO FOR BACKWARD COMPATIBILITY
 interface CrawlInfo {
   id: string;
   name: string;
   chatroom?: {
     id: string;
+    name: string;
   };
   participants: Array<{
     userId: string;
@@ -318,41 +334,85 @@ const Chatroom = () => {
   const [hasJoined, setHasJoined] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [crawlInfo, setCrawlInfo] = useState<CrawlInfo | null>(null);
+  const [chatroomInfo, setChatroomInfo] = useState<ChatroomInfo | null>(null); // 🆕 NEW STATE
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const crawlId = params.crawlId as string;
-  const chatroomId = crawlInfo?.chatroom?.id;
+  const chatroomId = params.chatroomId as string; // 🆕 GET CHATROOM ID FROM URL
 
-  // Fetch crawl info
+  // 🆕 UPDATED: Fetch chat info - handles BOTH crawl chats and private chats
   useEffect(() => {
-    const fetchCrawlInfo = async () => {
+    const fetchChatInfo = async () => {
       try {
-        const response = await fetch(`/api/crawls/${crawlId}?includeChat=true`);
-        if (response.ok) {
-          const data: CrawlInfo = await response.json();
-          setCrawlInfo(data);
+        setIsLoading(true);
+
+        // Determine if this is a crawl chat or private chat
+        const isCrawlChat = !!crawlId;
+        const targetChatroomId = isCrawlChat
+          ? crawlInfo?.chatroom?.id
+          : chatroomId;
+
+        if (!targetChatroomId && isCrawlChat) {
+          // For crawl chats, we need to fetch crawl info first to get the chatroom ID
+          const crawlRes = await fetch(
+            `/api/crawls/${crawlId}?includeChat=true`
+          );
+          if (crawlRes.ok) {
+            const crawlData: CrawlInfo = await crawlRes.json();
+            setCrawlInfo(crawlData);
+
+            if (crawlData.chatroom) {
+              // Now fetch the chatroom info
+              const chatroomRes = await fetch(
+                `/api/chat/${crawlData.chatroom.id}/info`
+              );
+              if (chatroomRes.ok) {
+                const chatroomData: ChatroomInfo = await chatroomRes.json();
+                setChatroomInfo(chatroomData);
+              }
+            } else {
+              setError("This crawl doesn't have a chat room");
+            }
+          } else {
+            setError("Failed to load crawl information");
+          }
+        } else if (targetChatroomId) {
+          // For private chats or when we already have the chatroom ID
+          const chatroomRes = await fetch(`/api/chat/${targetChatroomId}/info`);
+          if (chatroomRes.ok) {
+            const chatroomData: ChatroomInfo = await chatroomRes.json();
+            setChatroomInfo(chatroomData);
+          } else {
+            setError("Failed to load chat information");
+          }
         } else {
-          setError("Failed to load crawl information");
+          setError("No chatroom found");
         }
       } catch (error) {
-        console.error("Error fetching crawl info:", error);
-        setError("Failed to load crawl information");
+        console.error("Error fetching chat info:", error);
+        setError("Failed to load chat information");
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    if (crawlId) {
-      fetchCrawlInfo();
+    if (crawlId || chatroomId) {
+      fetchChatInfo();
     }
-  }, [crawlId]);
+  }, [crawlId, chatroomId]);
 
-  // Load messages
+  // 🆕 UPDATED: Load messages for BOTH chat types
   useEffect(() => {
     const loadMessages = async () => {
-      if (!chatroomId) return;
+      const targetChatroomId = crawlInfo?.chatroom?.id || chatroomId;
+
+      if (!targetChatroomId) return;
 
       try {
         setIsLoading(true);
-        const messagesRes = await fetch(`/api/chat/${chatroomId}/messages`);
+        const messagesRes = await fetch(
+          `/api/chat/${targetChatroomId}/messages`
+        );
 
         if (messagesRes.ok) {
           const messagesData = await messagesRes.json();
@@ -365,14 +425,16 @@ const Chatroom = () => {
       }
     };
 
-    if (chatroomId) {
+    if (crawlInfo?.chatroom?.id || chatroomId) {
       loadMessages();
     }
-  }, [chatroomId]);
+  }, [crawlInfo?.chatroom?.id, chatroomId]);
 
-  // Socket.IO event listeners
+  // 🆕 UPDATED: Socket.IO event listeners for BOTH chat types
   useEffect(() => {
-    if (!socket || !chatroomId || !hasJoined) return;
+    const targetChatroomId = crawlInfo?.chatroom?.id || chatroomId;
+
+    if (!socket || !targetChatroomId || !hasJoined) return;
 
     const handleNewMessage = (message: ChatroomMessage) => {
       setMessages((prev) => [...prev, message]);
@@ -383,20 +445,22 @@ const Chatroom = () => {
     return () => {
       socket.off("new_message", handleNewMessage);
     };
-  }, [socket, chatroomId, hasJoined]);
+  }, [socket, crawlInfo?.chatroom?.id, chatroomId, hasJoined]);
 
-  // Join/leave chatroom
+  // 🆕 UPDATED: Join/leave chatroom for BOTH types
   useEffect(() => {
-    if (!socket || !chatroomId || !session?.user?.id) return;
+    const targetChatroomId = crawlInfo?.chatroom?.id || chatroomId;
 
-    socket.emit("join_chatroom", { chatroomId });
+    if (!socket || !targetChatroomId || !session?.user?.id) return;
+
+    socket.emit("join_chatroom", { chatroomId: targetChatroomId });
     setHasJoined(true);
 
     return () => {
-      socket.emit("leave_chatroom", { chatroomId });
+      socket.emit("leave_chatroom", { chatroomId: targetChatroomId });
       setHasJoined(false);
     };
-  }, [socket, chatroomId, session?.user?.id]);
+  }, [socket, crawlInfo?.chatroom?.id, chatroomId, session?.user?.id]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -405,15 +469,22 @@ const Chatroom = () => {
     }
   }, [messages]);
 
-  // Send message using Socket.IO
+  // 🆕 UPDATED: Send message for BOTH chat types
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !socket || !session?.user?.id || !chatroomId)
+    const targetChatroomId = crawlInfo?.chatroom?.id || chatroomId;
+
+    if (
+      !newMessage.trim() ||
+      !socket ||
+      !session?.user?.id ||
+      !targetChatroomId
+    )
       return;
 
     try {
       socket.emit("send_message", {
-        chatroomId,
+        chatroomId: targetChatroomId,
         content: newMessage.trim(),
         userId: session.user.id,
       });
@@ -422,6 +493,37 @@ const Chatroom = () => {
       console.error("Error sending message:", error);
       alert("Failed to send message. Please try again.");
     }
+  };
+
+  // 🆕 UPDATED: Get chat title for BOTH types
+  const getChatTitle = () => {
+    if (crawlInfo) {
+      return `${crawlInfo.name} - Group Chat`;
+    }
+    if (chatroomInfo) {
+      return chatroomInfo.name;
+    }
+    return "Chat";
+  };
+
+  // 🆕 UPDATED: Get back button URL for BOTH types
+  const getBackUrl = () => {
+    if (crawlInfo) {
+      return `/app/crawls/${crawlId}`;
+    }
+    // For private chats, go back to social page
+    return "/app/social";
+  };
+
+  // 🆕 UPDATED: Get participant count for BOTH types
+  const getParticipantCount = () => {
+    if (crawlInfo) {
+      return crawlInfo._count.participants;
+    }
+    if (chatroomInfo) {
+      return chatroomInfo._count.participants;
+    }
+    return 0;
   };
 
   // Keyboard shortcut
@@ -438,6 +540,17 @@ const Chatroom = () => {
     document.addEventListener("keydown", handleKeyPress);
     return () => document.removeEventListener("keydown", handleKeyPress);
   }, []);
+
+  // 🆕 UPDATED: Check if chat is available for BOTH types
+  const isChatAvailable = () => {
+    if (crawlId) {
+      return !!crawlInfo?.chatroom;
+    }
+    if (chatroomId) {
+      return !!chatroomInfo;
+    }
+    return false;
+  };
 
   if (isLoading) {
     return (
@@ -461,24 +574,26 @@ const Chatroom = () => {
         <ErrorContent>
           <ErrorTitle>Error</ErrorTitle>
           <ErrorMessage>{error}</ErrorMessage>
-          <ErrorButton onClick={() => router.push(`/app/crawls/${crawlId}`)}>
-            Back to Crawl
+          <ErrorButton onClick={() => router.push(getBackUrl())}>
+            Back {crawlInfo ? "to Crawl" : "to Social"}
           </ErrorButton>
         </ErrorContent>
       </ErrorContainer>
     );
   }
 
-  if (!crawlInfo?.chatroom) {
+  if (!isChatAvailable()) {
     return (
       <ErrorContainer>
         <ErrorContent>
           <ErrorTitle>Chat Not Available</ErrorTitle>
           <ErrorMessage>
-            This crawl doesn&apos;t have a chat room set up.
+            {crawlId
+              ? "This crawl doesn't have a chat room set up."
+              : "This chat room is not available."}
           </ErrorMessage>
-          <ErrorButton onClick={() => router.push(`/app/crawls/${crawlId}`)}>
-            Back to Crawl
+          <ErrorButton onClick={() => router.push(getBackUrl())}>
+            Back {crawlInfo ? "to Crawl" : "to Social"}
           </ErrorButton>
         </ErrorContent>
       </ErrorContainer>
@@ -487,22 +602,20 @@ const Chatroom = () => {
 
   return (
     <PageContainer>
-      {/* FIXED CHAT WINDOW - DOES NOT MOVE */}
       <ChatWindow>
-        {/* HEADER - FIXED AT TOP */}
+        {/* 🆕 UPDATED HEADER */}
         <Header>
-          <BackButton onClick={() => router.push(`/app/crawls/${crawlId}`)}>
-            ← Back to Crawl
+          <BackButton onClick={() => router.push(getBackUrl())}>
+            ← Back {crawlInfo ? "to Crawl" : "to Social"}
           </BackButton>
           <HeaderInfo>
-            <ChatTitle>{crawlInfo.name} - Group Chat</ChatTitle>
+            <ChatTitle>{getChatTitle()}</ChatTitle>
             <ConnectionStatus $isConnected={isConnected}>
               {isConnected ? "🟢 Connected" : "🔴 Disconnected"}
             </ConnectionStatus>
           </HeaderInfo>
         </Header>
 
-        {/* MESSAGES AREA - ONLY THIS SCROLLS INSIDE THE FIXED WINDOW */}
         <MessagesArea>
           {messages.length === 0 ? (
             <EmptyState>
@@ -548,7 +661,6 @@ const Chatroom = () => {
           )}
         </MessagesArea>
 
-        {/* INPUT AREA - FIXED AT BOTTOM */}
         <MessageForm onSubmit={sendMessage}>
           <InputContainer>
             <MessageInput
@@ -577,7 +689,7 @@ const Chatroom = () => {
               <StatusText $color="#10b981">🟢 Connected and ready</StatusText>
             )}
             <StatusText $color="#94a3b8">
-              {crawlInfo._count.participants} participants
+              {getParticipantCount()} participants
             </StatusText>
           </StatusBar>
         </MessageForm>

@@ -3575,24 +3575,13 @@ export class SocketService {
         data: { status },
         include: {
           fromUser: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            },
+            select: { id: true, name: true, image: true },
           },
           toUser: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            },
+            select: { id: true, name: true, image: true },
           },
           bar: {
-            select: {
-              id: true,
-              name: true,
-            },
+            select: { id: true, name: true },
           },
         },
       });
@@ -3600,24 +3589,52 @@ export class SocketService {
       console.log(`Hop request updated to: ${status}`);
 
       if (status === "ACCEPTED") {
+        const chatroom = await this.createPrivateChatroom(
+          hopIn.fromUserId,
+          hopIn.toUserId
+        );
+
         const acceptanceNotification = await prisma.notification.create({
           data: {
-            userId: hopIn.fromUserId,
-            fromUserId: userId,
+            userId: hopIn.fromUserId, // Notify the person who sent the request
+            fromUserId: userId, // The person who accepted
             type: "HOP_ACCEPTED",
             message: `${
               hopIn.toUser.name || "Someone"
-            } accepted your hop in request! 🎉`,
+            } accepted your hop request! Click here to start chatting. 💬`,
             barId: hopIn.barId || undefined,
             hopInId: hopIn.id,
+            chatroomId: chatroom.id,
           },
           include: {
             fromUser: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
+              select: { id: true, name: true, image: true },
+            },
+            chatroom: {
+              select: { id: true, name: true },
+            },
+          },
+        });
+
+        // Create notification for the acceptor (so they also get the chat link)
+        const acceptorNotification = await prisma.notification.create({
+          data: {
+            userId: hopIn.toUserId, // Notify the person who accepted
+            fromUserId: hopIn.fromUserId, // The original requester
+            type: "HOP_ACCEPTED",
+            message: `You accepted ${
+              hopIn.fromUser.name || "someone"
+            }'s hop request! Click here to start chatting. 💬`,
+            barId: hopIn.barId || undefined,
+            hopInId: hopIn.id,
+            chatroomId: chatroom.id,
+          },
+          include: {
+            fromUser: {
+              select: { id: true, name: true, image: true },
+            },
+            chatroom: {
+              select: { id: true, name: true },
             },
           },
         });
@@ -3625,9 +3642,14 @@ export class SocketService {
         this.io
           ?.to(`user_${hopIn.fromUserId}`)
           .emit("new_notification", acceptanceNotification);
-        console.log(
-          `Sent acceptance notification to user: ${hopIn.fromUserId}`
-        );
+        // this.io?.to(`user_${hopIn.fromUserId}`).emit("new_chatroom", chatroom);
+        // this.io?.to(`user_${hopIn.toUserId}`).emit("new_chatroom", chatroom);
+
+        this.io
+          ?.to(`user_${hopIn.toUserId}`)
+          .emit("new_notification", acceptorNotification);
+
+        console.log(`Sent acceptance notifications to both users`);
 
         const acceptedResponse: HopRequestAcceptedResponse = {
           hopInId: hopIn.id,
@@ -4226,6 +4248,108 @@ export class SocketService {
       );
     } catch (error) {
       console.error("❌ Error sending chat notifications:", error);
+    }
+  }
+
+  private async createPrivateChatroom(
+    userId1: string,
+    userId2: string
+  ): Promise<{
+    id: string;
+    name: string;
+    isGroupChat: boolean;
+    participants: Array<{
+      id: string;
+      userId: string;
+      chatroomId: string;
+      role: string;
+      joinedAt: Date;
+      user: {
+        id: string;
+        name: string | null;
+        image: string | null;
+      };
+    }>;
+  }> {
+    try {
+      console.log(`💬 Creating private chat between ${userId1} and ${userId2}`);
+
+      const existingChat = await prisma.chatroom.findFirst({
+        where: {
+          participants: {
+            every: {
+              userId: { in: [userId1, userId2] },
+            },
+          },
+          crawlId: null,
+          isGroupChat: false,
+        },
+        include: {
+          participants: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  image: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (existingChat) {
+        console.log(`✅ Existing private chat found: ${existingChat.id}`);
+        return existingChat;
+      }
+
+      const [user1, user2] = await Promise.all([
+        prisma.user.findUnique({
+          where: { id: userId1 },
+          select: { name: true },
+        }),
+        prisma.user.findUnique({
+          where: { id: userId2 },
+          select: { name: true },
+        }),
+      ]);
+
+      const chatroomName = `Private Chat - ${user1?.name || "User"} & ${
+        user2?.name || "User"
+      }`;
+
+      const newChatroom = await prisma.chatroom.create({
+        data: {
+          name: chatroomName,
+          isGroupChat: false,
+          participants: {
+            create: [
+              { userId: userId1, role: "MEMBER" },
+              { userId: userId2, role: "MEMBER" },
+            ],
+          },
+        },
+        include: {
+          participants: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  image: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      console.log(`✅ New private chat created: ${newChatroom.id}`);
+      return newChatroom;
+    } catch (error) {
+      console.error("❌ Error creating private chatroom:", error);
+      throw error;
     }
   }
 

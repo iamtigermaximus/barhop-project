@@ -437,6 +437,7 @@ export default function Notifications() {
   }, []);
 
   // Handle notification click - FIXED VERSION
+  // In your Notifications.tsx - REPLACE the existing handleNotificationClick
   const handleNotificationClick = async (notification: NotificationData) => {
     try {
       console.log("🔔 STEP 1: Notification clicked:", notification);
@@ -446,29 +447,45 @@ export default function Notifications() {
         await markAsRead(notification.id);
       }
 
-      // Use a switch statement with guaranteed navigation
       let targetUrl = "";
 
       switch (notification.type) {
+        case "HOP_ACCEPTED":
+          // 🆕 OPEN PRIVATE CHAT WHEN HOP-IN IS ACCEPTED
+          if (notification.chatroomId) {
+            targetUrl = `/app/chat/private/${notification.chatroomId}`;
+            console.log("💬 Opening private chat:", targetUrl);
+          } else {
+            console.warn("No chatroomId found in HOP_ACCEPTED notification");
+          }
+          break;
+
         case "MESSAGE":
           if (notification.crawlId) {
             targetUrl = `/app/chat/${notification.crawlId}`;
+          } else if (notification.chatroomId) {
+            // 🆕 HANDLE PRIVATE CHAT MESSAGES TOO
+            targetUrl = `/app/chat/private/${notification.chatroomId}`;
           }
           break;
+
+        case "HOP_REQUEST":
+          // Stay on social page to see the request
+          targetUrl = "/app/social";
+          break;
+
         case "CRAWL_JOIN_REQUEST":
         case "CRAWL_JOIN_APPROVED":
-        case "CRAWL_JOIN_REJECTED":
           if (notification.crawlId) {
             targetUrl = `/app/crawls/${notification.crawlId}`;
           }
           break;
-        case "HOP_REQUEST":
-        case "HOP_ACCEPTED":
-          if (notification.barId) {
-            targetUrl = `/app/bars/${notification.barId}`;
-          }
-          break;
+
         default:
+          console.log(
+            "No specific action for notification type:",
+            notification.type
+          );
           return;
       }
 

@@ -60,8 +60,26 @@
 //     server?: import("http").Server & { io?: CustomSocketServer };
 //   }
 // }
-import { NotificationType, HopInStatus } from "@prisma/client";
+export enum NotificationType {
+  HOP_REQUEST = "HOP_REQUEST",
+  HOP_ACCEPTED = "HOP_ACCEPTED",
+  HOP_DECLINED = "HOP_DECLINED",
+  WAVE = "WAVE",
+  MESSAGE = "MESSAGE",
+  SYSTEM = "SYSTEM",
+  MEETUP_INVITE = "MEETUP_INVITE",
+  CRAWL_JOIN_REQUEST = "CRAWL_JOIN_REQUEST",
+  CRAWL_JOIN_APPROVED = "CRAWL_JOIN_APPROVED",
+  CRAWL_JOIN_REJECTED = "CRAWL_JOIN_REJECTED",
+}
 
+export enum HopInStatus {
+  PENDING = "PENDING",
+  ACCEPTED = "ACCEPTED",
+  DECLINED = "DECLINED",
+  CANCELLED = "CANCELLED",
+  EXPIRED = "EXPIRED",
+}
 export interface NotificationData {
   id: string;
   userId: string;
@@ -70,6 +88,7 @@ export interface NotificationData {
   message?: string;
   barId?: string;
   crawlId?: string;
+  chatroomId?: string;
   read: boolean;
   readAt?: Date;
   createdAt: Date;

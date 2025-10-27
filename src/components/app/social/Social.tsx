@@ -460,6 +460,46 @@ const Social = () => {
 
   // NOTIFICATION SYSTEM: Socket connection and event listeners
   // In your Social component, update the socket useEffect to only handle accepts:
+  // useEffect(() => {
+  //   if (!socket || !session?.user?.id) return;
+
+  //   // Join user's private room
+  //   socket.emit("join_user_room", session.user.id);
+
+  //   // Listen for new notifications
+  //   socket.on("new_notification", (notification: NotificationData) => {
+  //     console.log("📨 New notification received:", notification);
+  //     addNotification(notification);
+  //     setSuccess(`New notification: ${notification.message}`);
+  //   });
+
+  //   // Listen for hop request responses (when someone accepts YOUR request)
+  //   socket.on("hop_request_accepted", (data) => {
+  //     console.log("✅ Your hop request was accepted:", data);
+  //     setSuccess(
+  //       `${data.toUser?.name || "Someone"} accepted your hop in request! 🎉`
+  //     );
+  //   });
+
+  //   // REMOVE decline notifications - silent declines
+  //   // socket.on("hop_request_declined", (data) => {
+  //   //   setSuccess(`${data.toUser?.name || 'Someone'} declined your hop in request`);
+  //   // });
+
+  //   // Listen for errors
+  //   socket.on("error", (error) => {
+  //     console.error("Socket error:", error);
+  //     setError(error);
+  //   });
+
+  //   return () => {
+  //     socket.off("new_notification");
+  //     socket.off("hop_request_accepted");
+  //     // socket.off("hop_request_declined"); // Remove this
+  //     socket.off("error");
+  //   };
+  // }, [socket, session, addNotification]);
+
   useEffect(() => {
     if (!socket || !session?.user?.id) return;
 
@@ -470,21 +510,24 @@ const Social = () => {
     socket.on("new_notification", (notification: NotificationData) => {
       console.log("📨 New notification received:", notification);
       addNotification(notification);
-      setSuccess(`New notification: ${notification.message}`);
+
+      // 🆕 UPDATED: Show success but DON'T auto-navigate
+      if (notification.type === "HOP_ACCEPTED") {
+        setSuccess(
+          `You have a new chat invitation! Check your notifications to start chatting.`
+        );
+      }
     });
 
     // Listen for hop request responses (when someone accepts YOUR request)
     socket.on("hop_request_accepted", (data) => {
       console.log("✅ Your hop request was accepted:", data);
       setSuccess(
-        `${data.toUser?.name || "Someone"} accepted your hop in request! 🎉`
+        `${
+          data.toUser?.name || "Someone"
+        } accepted your hop in request! Check notifications to start chatting. 💬`
       );
     });
-
-    // REMOVE decline notifications - silent declines
-    // socket.on("hop_request_declined", (data) => {
-    //   setSuccess(`${data.toUser?.name || 'Someone'} declined your hop in request`);
-    // });
 
     // Listen for errors
     socket.on("error", (error) => {
@@ -495,7 +538,6 @@ const Social = () => {
     return () => {
       socket.off("new_notification");
       socket.off("hop_request_accepted");
-      // socket.off("hop_request_declined"); // Remove this
       socket.off("error");
     };
   }, [socket, session, addNotification]);
@@ -869,6 +911,30 @@ const Social = () => {
   };
 
   // NOTIFICATION SYSTEM: Updated send hop in request using Socket.io
+  // const sendHopInRequest = async () => {
+  //   if (!selectedUser || !socket || !session?.user?.id) return;
+
+  //   setIsSendingHopIn(true);
+  //   try {
+  //     socket.emit("send_hop_request", {
+  //       fromUserId: session.user.id,
+  //       toUserId: selectedUser.userId,
+  //       barId: selectedUser.currentBarId,
+  //       message: `Hey ${
+  //         selectedUser.user.name || "there"
+  //       }! I'd like to join you.`,
+  //     });
+
+  //     setSuccess(`Hop in request sent to ${selectedUser.user.name || "user"}!`);
+  //     setShowHopInModal(false);
+  //     setSelectedUser(null);
+  //   } catch (err) {
+  //     setError("Failed to send hop in request");
+  //   } finally {
+  //     setIsSendingHopIn(false);
+  //   }
+  // };
+
   const sendHopInRequest = async () => {
     if (!selectedUser || !socket || !session?.user?.id) return;
 
@@ -883,7 +949,12 @@ const Social = () => {
         }! I'd like to join you.`,
       });
 
-      setSuccess(`Hop in request sent to ${selectedUser.user.name || "user"}!`);
+      // 🆕 UPDATED SUCCESS MESSAGE
+      setSuccess(
+        `Hop in request sent to ${
+          selectedUser.user.name || "user"
+        }! You'll get a notification with a chat link if they accept.`
+      );
       setShowHopInModal(false);
       setSelectedUser(null);
     } catch (err) {
@@ -1005,19 +1076,111 @@ const Social = () => {
     }
   };
 
+  const handleNotificationClick = async (notification: NotificationData) => {
+    try {
+      console.log("🔔 Notification clicked:", notification);
+
+      // Mark as read first
+      if (!notification.read) {
+        await markAsRead(notification.id);
+      }
+
+      let targetUrl = "";
+
+      switch (notification.type) {
+        case "HOP_ACCEPTED":
+          // 🆕 OPEN PRIVATE CHAT WHEN HOP-IN IS ACCEPTED
+          if (notification.chatroomId) {
+            targetUrl = `/app/chat/private/${notification.chatroomId}`;
+            console.log("💬 Opening private chat:", targetUrl);
+          } else {
+            console.warn("No chatroomId found in HOP_ACCEPTED notification");
+          }
+          break;
+
+        case "MESSAGE":
+          if (notification.crawlId) {
+            targetUrl = `/app/chat/${notification.crawlId}`;
+          } else if (notification.chatroomId) {
+            // 🆕 HANDLE PRIVATE CHAT MESSAGES TOO
+            targetUrl = `/app/chat/private/${notification.chatroomId}`;
+          }
+          break;
+
+        case "HOP_REQUEST":
+          // Stay on social page to see the request
+          targetUrl = "/app/social";
+          break;
+
+        case "CRAWL_JOIN_REQUEST":
+        case "CRAWL_JOIN_APPROVED":
+          if (notification.crawlId) {
+            targetUrl = `/app/crawls/${notification.crawlId}`;
+          }
+          break;
+
+        default:
+          console.log(
+            "No specific action for notification type:",
+            notification.type
+          );
+          return;
+      }
+
+      if (targetUrl) {
+        console.log("🎯 Navigating to:", targetUrl);
+        // Use window.location for reliable navigation
+        window.location.href = targetUrl;
+      }
+    } catch (error) {
+      console.error("💥 Error handling notification click:", error);
+    }
+  };
+
+  // const handleAcceptHop = async (notification: NotificationData) => {
+  //   if (!socket || !session?.user?.id) return;
+
+  //   try {
+  //     socket.emit("respond_hop_request", {
+  //       hopInId: notification.hopInId,
+  //       status: "ACCEPTED",
+  //       userId: session.user.id,
+  //     });
+
+  //     handleMarkAsRead(notification.id);
+  //     setSuccess(`You accepted the hop in request!`);
+  //   } catch (err) {
+  //     setError("Failed to accept hop request");
+  //   }
+  // };
+
   const handleAcceptHop = async (notification: NotificationData) => {
-    if (!socket || !session?.user?.id) return;
+    if (
+      !socket ||
+      !isConnected ||
+      !notification.hopInId ||
+      !session?.user?.id
+    ) {
+      return;
+    }
 
     try {
+      console.log("✅ Accepting hop request:", notification.hopInId);
+
       socket.emit("respond_hop_request", {
         hopInId: notification.hopInId,
         status: "ACCEPTED",
         userId: session.user.id,
       });
 
-      handleMarkAsRead(notification.id);
-      setSuccess(`You accepted the hop in request!`);
+      await markAsRead(notification.id);
+
+      // 🆕 UPDATED SUCCESS MESSAGE
+      setSuccess(
+        `Hop request accepted! Check your notifications for the chat link when you're ready to talk.`
+      );
     } catch (err) {
+      console.error("Error accepting hop request:", err);
       setError("Failed to accept hop request");
     }
   };
@@ -1086,6 +1249,14 @@ const Social = () => {
         {/* NOTIFICATION SYSTEM: Header Actions - Only show notification bell on desktop */}
         <HeaderActions>
           <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <EditProfileButton
+              onClick={() => router.push("/app/chat/my-chats")}
+              style={{ marginLeft: "0.5rem" }}
+            >
+              {/* <span>💬</span> */}
+              My Chats
+            </EditProfileButton>
+
             {/* Connection Status */}
 
             {/* <div
@@ -1153,12 +1324,12 @@ const Social = () => {
           </div>
 
           {/* Edit Profile Button */}
-          {hasSocialProfile && userSocialProfile && !showProfileSetup && (
+          {/* {hasSocialProfile && userSocialProfile && !showProfileSetup && (
             <EditProfileButton onClick={handleEditProfile}>
               <span>⚙️</span>
               Edit
             </EditProfileButton>
-          )}
+          )} */}
         </HeaderActions>
       </SocialHeader>
 
