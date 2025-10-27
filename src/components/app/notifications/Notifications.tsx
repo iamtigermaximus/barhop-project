@@ -436,7 +436,7 @@ export default function Notifications() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Handle notification click - BULLETPROOF VERSION
+  // Handle notification click - FIXED VERSION
   const handleNotificationClick = async (notification: NotificationData) => {
     try {
       console.log("🔔 STEP 1: Notification clicked:", notification);
@@ -452,7 +452,7 @@ export default function Notifications() {
       switch (notification.type) {
         case "MESSAGE":
           if (notification.crawlId) {
-            targetUrl = `/app`;
+            targetUrl = `/app/chat/${notification.crawlId}`;
           }
           break;
         case "CRAWL_JOIN_REQUEST":
@@ -469,7 +469,7 @@ export default function Notifications() {
           }
           break;
         default:
-          return; // Don't navigate for other types
+          return;
       }
 
       if (targetUrl) {
