@@ -517,7 +517,7 @@ import React, {
   ReactNode,
 } from "react";
 import { useSession } from "next-auth/react";
-import { NotificationData } from "@/types/socket";
+import { NotificationData } from "../../../types/socket";
 import { io, Socket } from "socket.io-client";
 
 interface SocketContextType {
