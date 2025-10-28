@@ -35,8 +35,8 @@
 // CREATE: app/api/notifications/mark-read/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import prisma from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
