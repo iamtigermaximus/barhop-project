@@ -1,11 +1,19 @@
-[service]
-  name = "socket-server"
-  type = "web"
+[build]
+builder = "nixpacks"
 
 [deploy]
-  restart = true
-  numReplicas = 1
+numReplicas = 1
+restartPolicyType = "ON_FAILURE"
 
-[[services.ports]]
-  port = 3001
-  http = true
+[[services]]
+name = "socket-server"
+httpPort = 3001
+
+[services.env]
+PORT = "3001"
+
+[services.healthcheck]
+path = "/health"
+initialDelay = 30
+period = 30
+timeout = 10
