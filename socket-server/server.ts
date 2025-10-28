@@ -1754,6 +1754,279 @@ app.post(
   }
 );
 
+// Crawl join endpoint
+app.post("/api/crawls/:id/join", async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.body;
+    const crawlId = req.params.id;
+
+    // Validate authentication
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ error: "Access token required" });
+    }
+
+    // Verify token
+    interface JwtPayload {
+      userId: string;
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+
+    // Your existing crawl join logic
+    const crawl = await prisma.crawl.findUnique({
+      where: { id: crawlId },
+      include: {
+        creator: { select: { id: true, name: true } },
+      },
+    });
+
+    if (!crawl) {
+      return res.status(404).json({ error: "Crawl not found" });
+    }
+
+    const joiningUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, image: true },
+    });
+
+    if (!joiningUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Add user to crawl participants
+    await prisma.crawlParticipant.create({
+      data: { crawlId, userId },
+    });
+
+    // Create notification
+    const notification = await prisma.notification.create({
+      data: {
+        userId: crawl.creatorId,
+        fromUserId: userId,
+        type: "SYSTEM" as NotificationType,
+        message: `${joiningUser.name || "Someone"} joined your crawl "${
+          crawl.name
+        }"!`,
+        crawlId: crawlId,
+      },
+      include: {
+        fromUser: { select: { id: true, name: true, image: true } },
+      },
+    });
+
+    // Emit socket event to crawl creator
+    const socketService = SocketService.getInstance();
+    socketService.sendToUser(crawl.creatorId, "new_notification", notification);
+
+    return res.json({ success: true, notification });
+  } catch (error) {
+    console.error("Error joining crawl:", error);
+    return res.status(500).json({ error: "Failed to join crawl" });
+  }
+});
+
+// Crawl leave endpoint
+app.post("/api/crawls/:id/leave", async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.body;
+    const crawlId = req.params.id;
+
+    // Validate authentication
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ error: "Access token required" });
+    }
+
+    // Remove user from crawl participants
+    await prisma.crawlParticipant.deleteMany({
+      where: { crawlId, userId },
+    });
+
+    // Get crawl info for notification
+    const crawl = await prisma.crawl.findUnique({
+      where: { id: crawlId },
+      include: { creator: { select: { id: true, name: true } } },
+    });
+
+    const leavingUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, image: true },
+    });
+
+    if (crawl && leavingUser) {
+      const notification = await prisma.notification.create({
+        data: {
+          userId: crawl.creatorId,
+          fromUserId: userId,
+          type: "SYSTEM" as NotificationType,
+          message: `${leavingUser.name || "Someone"} left your crawl "${
+            crawl.name
+          }"`,
+          crawlId: crawlId,
+        },
+        include: {
+          fromUser: { select: { id: true, name: true, image: true } },
+        },
+      });
+
+      const socketService = SocketService.getInstance();
+      socketService.sendToUser(
+        crawl.creatorId,
+        "new_notification",
+        notification
+      );
+    }
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error("Error leaving crawl:", error);
+    return res.status(500).json({ error: "Failed to leave crawl" });
+  }
+});
+
+// Hop-in request endpoint
+app.post("/api/social/hop-in", async (req: Request, res: Response) => {
+  try {
+    const { fromUserId, toUserId, barId, message } = req.body;
+
+    // Validate authentication
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ error: "Access token required" });
+    }
+
+    // Your existing hop request logic
+    const hopIn = await prisma.hopIn.create({
+      data: {
+        fromUserId,
+        toUserId,
+        barId,
+        message,
+        status: "PENDING" as HopInStatus,
+        expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+      },
+    });
+
+    const fromUser = await prisma.user.findUnique({
+      where: { id: fromUserId },
+      select: { name: true, image: true },
+    });
+
+    const notification = await prisma.notification.create({
+      data: {
+        userId: toUserId,
+        fromUserId,
+        type: "HOP_REQUEST" as NotificationType,
+        message: message || `${fromUser?.name || "Someone"} wants to join you!`,
+        barId,
+        hopInId: hopIn.id,
+      },
+      include: {
+        fromUser: { select: { id: true, name: true, image: true } },
+      },
+    });
+
+    const socketService = SocketService.getInstance();
+    socketService.sendToUser(toUserId, "new_notification", notification);
+
+    return res.json({ success: true, hopInId: hopIn.id, notification });
+  } catch (error) {
+    console.error("Error sending hop request:", error);
+    return res.status(500).json({ error: "Failed to send hop request" });
+  }
+});
+
+// Hop-in response endpoint
+app.post("/api/social/hop-in/respond", async (req: Request, res: Response) => {
+  try {
+    const { hopInId, status, userId } = req.body;
+
+    // Validate authentication
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ error: "Access token required" });
+    }
+
+    // Your existing hop response logic
+    const hopIn = await prisma.hopIn.update({
+      where: { id: hopInId },
+      data: { status: status as HopInStatus },
+      include: {
+        fromUser: { select: { id: true, name: true, image: true } },
+        toUser: { select: { id: true, name: true, image: true } },
+        bar: { select: { id: true, name: true } },
+      },
+    });
+
+    if (status === "ACCEPTED") {
+      const chatroom = await prisma.chatroom.create({
+        data: {
+          name: `Private Chat - ${hopIn.fromUser.name || "User"} & ${
+            hopIn.toUser.name || "User"
+          }`,
+          isGroupChat: false,
+          participants: {
+            create: [
+              { userId: hopIn.fromUserId, role: "MEMBER" },
+              { userId: hopIn.toUserId, role: "MEMBER" },
+            ],
+          },
+        },
+      });
+
+      // Create notifications for both users
+      const acceptanceNotification = await prisma.notification.create({
+        data: {
+          userId: hopIn.fromUserId,
+          fromUserId: userId,
+          type: "HOP_ACCEPTED" as NotificationType,
+          message: `${
+            hopIn.toUser.name || "Someone"
+          } accepted your hop request!`,
+          barId: hopIn.barId || undefined,
+          hopInId: hopIn.id,
+          chatroomId: chatroom.id,
+        },
+      });
+
+      const acceptorNotification = await prisma.notification.create({
+        data: {
+          userId: hopIn.toUserId,
+          fromUserId: hopIn.fromUserId,
+          type: "HOP_ACCEPTED" as NotificationType,
+          message: `You accepted ${
+            hopIn.fromUser.name || "someone"
+          }'s hop request!`,
+          barId: hopIn.barId || undefined,
+          hopInId: hopIn.id,
+          chatroomId: chatroom.id,
+        },
+      });
+
+      const socketService = SocketService.getInstance();
+      socketService.sendToUser(
+        hopIn.fromUserId,
+        "new_notification",
+        acceptanceNotification
+      );
+      socketService.sendToUser(
+        hopIn.toUserId,
+        "new_notification",
+        acceptorNotification
+      );
+    }
+
+    return res.json({ success: true, hopIn });
+  } catch (error) {
+    console.error("Error responding to hop request:", error);
+    return res.status(500).json({ error: "Failed to respond to hop request" });
+  }
+});
+
 // INTERFACES
 interface SystemNotificationData {
   barId?: string;
