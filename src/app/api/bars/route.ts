@@ -1,7 +1,7 @@
 // app/api/bars/route.ts
 import { NextResponse } from "next/server";
 import { Prisma, BarType } from "@prisma/client"; // 👈 Import Prisma types
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {

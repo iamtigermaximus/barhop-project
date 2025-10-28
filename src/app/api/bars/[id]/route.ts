@@ -60,7 +60,7 @@
 //   }
 // }
 // src/app/api/bars/[id]/route.ts
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 interface RouteParams {
