@@ -80,7 +80,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { socketService } from "@/lib/socket";
+import jwt from "jsonwebtoken"; // 🆕 ADD JWT IMPORT
 
 export async function POST(
   request: NextRequest,
@@ -89,7 +89,8 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session) {
+    if (!session || !session.user) {
+      // 🆕 ADD USER VALIDATION
       return NextResponse.json(
         { message: "Authentication required" },
         { status: 401 }
@@ -98,24 +99,44 @@ export async function POST(
 
     const { id: crawlId } = await params;
 
-    // Include creator info for notifications
-    const crawl = await prisma.crawl.findUnique({
-      where: { id: crawlId },
-      include: {
-        participants: true,
-        creator: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+    // 🆕 GENERATE JWT TOKEN FOR SOCKET SERVER AUTH
+    const token = jwt.sign(
+      {
+        userId: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
       },
-    });
+      process.env.JWT_SECRET!,
+      { expiresIn: "1h" }
+    );
 
-    if (!crawl) {
-      return NextResponse.json({ message: "Crawl not found" }, { status: 404 });
+    // 🆕 MAKE HTTP CALL TO SOCKET SERVER INSTEAD OF DIRECT SOCKET USAGE
+    const socketServerUrl =
+      process.env.SOCKET_SERVER_URL || "http://localhost:3001";
+    const response = await fetch(
+      `${socketServerUrl}/api/crawls/${crawlId}/leave`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // 🆕 USE BEARER TOKEN
+        },
+        body: JSON.stringify({
+          userId: session.user.id,
+          crawlId,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return NextResponse.json(
+        { message: errorData.error || "Failed to leave crawl" },
+        { status: response.status }
+      );
     }
 
+    // ✅ KEEP DATABASE OPERATIONS IN NEXT.JS (participant removal)
     // Check if user is a participant
     const existingParticipant = await prisma.crawlParticipant.findUnique({
       where: {
@@ -143,45 +164,8 @@ export async function POST(
       },
     });
 
-    // 🚨 EXACT SAME PATTERN AS HOP REQUEST - CREATE NOTIFICATION + SEND VIA SOCKET
-    if (crawl.creator.id !== session.user.id) {
-      // Get leaving user info
-      const leavingUser = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { name: true, image: true },
-      });
-
-      // Create notification - EXACT SAME PATTERN
-      const notification = await prisma.notification.create({
-        data: {
-          userId: crawl.creator.id, // Notify crawl creator
-          fromUserId: session.user.id, // User who left
-          type: "SYSTEM",
-          message: `${leavingUser?.name || "Someone"} left your crawl "${
-            crawl.name
-          }"`,
-          crawlId: crawlId,
-        },
-        include: {
-          fromUser: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            },
-          },
-        },
-      });
-
-      // Send real-time notification via Socket.io - EXACT SAME PATTERN
-      if (socketService.io) {
-        socketService.io
-          .to(`user_${crawl.creator.id}`)
-          .emit("new_notification", notification);
-      }
-
-      console.log("✅ Leave notification created and sent:", notification.id);
-    }
+    // ❌ REMOVED: Direct notification creation and socket emission
+    // This is now handled by the socket server via the HTTP call above
 
     return NextResponse.json(
       { message: "Successfully left crawl" },
