@@ -1,0 +1,5 @@
+socket-server/
+*.ts
+!*.d.ts
+.env
+.env.local
