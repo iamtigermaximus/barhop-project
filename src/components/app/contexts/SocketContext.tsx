@@ -11,6 +11,7 @@ import React, {
 import { useSession } from "next-auth/react";
 import { io, Socket } from "socket.io-client";
 import { NotificationData } from "@/types/socket";
+
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;

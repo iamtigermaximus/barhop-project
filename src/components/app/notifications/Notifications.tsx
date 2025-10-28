@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { useSocket } from "../contexts/SocketContext";
 import styled from "styled-components";
 
+console.log("✅ Alias '@/types/socket' resolved correctly!");
+
 // Styled Components
 const PageContainer = styled.div`
   min-height: 100vh;
