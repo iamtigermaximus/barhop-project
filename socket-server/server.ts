@@ -1633,6 +1633,17 @@ import { PrismaClient, NotificationType, HopInStatus } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { Server as NetServer } from "http";
 
+// Validate required environment variables
+if (!process.env.JWT_SECRET) {
+  console.error("❌ JWT_SECRET environment variable is required");
+  process.exit(1);
+}
+
+if (!process.env.DATABASE_URL) {
+  console.error("❌ DATABASE_URL environment variable is required");
+  process.exit(1);
+}
+
 const app = express();
 const server = createServer(app);
 const prisma = new PrismaClient();
