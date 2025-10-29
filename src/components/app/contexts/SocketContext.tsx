@@ -279,7 +279,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
       const token = await getToken();
       const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+        process.env.NEXT_PUBLIC_BACKEND_URL ||
+        "https://hoppr-socket-project.onrender.com";
 
       const response = await fetch(`${backendUrl}/api/notifications`, {
         headers: {
@@ -360,7 +361,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
         // Use the EXTERNAL Socket.io URL
         const socketUrl =
-          process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
+          process.env.NEXT_PUBLIC_SOCKET_URL ||
+          "https://hoppr-socket-project.onrender.com";
         console.log("🔗 Connecting to EXTERNAL socket server:", socketUrl);
 
         // Clean up existing socket
