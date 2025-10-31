@@ -15,6 +15,7 @@ import {
   FooterLinks,
   FooterBottomLink,
 } from "./Footer.styles";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -22,8 +23,16 @@ export default function Footer() {
       <FooterContent>
         <FooterBrand>
           <FooterLogo href="/">
-            <span>🍻</span>
-            Hoppr
+            <Image
+              src="/hoppr-neon-nobg.png"
+              alt="Hoppr Logo"
+              width={100}
+              height={100}
+              priority={true}
+              style={{
+                objectFit: "contain",
+              }}
+            />
           </FooterLogo>
           <FooterDescription>
             Connect with new people through shared experiences. Plan crawls,

@@ -3,7 +3,7 @@ import styled from "styled-components";
 import Link from "next/link";
 
 export const FooterContainer = styled.footer`
-  background-color: transparent !important;
+  /* background-color: transparent !important; */
   padding: 2rem 1rem 1.5rem;
   border-top: 1px solid rgba(139, 92, 246, 0.2);
 
@@ -30,7 +30,7 @@ export const FooterContent = styled.div`
 export const FooterBrand = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  /* gap: 1rem; */
   align-items: center;
 
   @media (min-width: 640px) {
@@ -39,7 +39,7 @@ export const FooterBrand = styled.div`
 `;
 
 export const FooterLogo = styled(Link)`
-  font-size: 1.5rem;
+  /* font-size: 1.5rem;
   font-weight: 700;
   background: linear-gradient(-45deg, #0ea5e9, #8b5cf6, #ec4899);
   background-size: 400% 400%;
@@ -50,7 +50,7 @@ export const FooterLogo = styled(Link)`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  width: fit-content;
+  width: fit-content; */
 `;
 
 export const FooterDescription = styled.p`

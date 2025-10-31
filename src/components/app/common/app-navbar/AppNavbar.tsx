@@ -43,6 +43,7 @@ import {
 } from "react-icons/fa";
 import { useSocket } from "../../contexts/SocketContext";
 import Link from "next/link";
+import Image from "next/image";
 
 const AppNavbar = () => {
   const pathname = usePathname();
@@ -146,9 +147,24 @@ const AppNavbar = () => {
         {/* Mobile Top Navbar - ONLY has Logo and Notification Bell */}
         <Nav $isMobile={true}>
           <NavContainer>
-            <Logo href="/app">
+            {/* <Logo href="/app">
               <LogoIcon>🍻</LogoIcon>
               Hoppr
+            </Logo> */}
+            <Logo href="/">
+              <LogoIcon>
+                <Image
+                  src="/hoppr-neon-nobg.png"
+                  alt="Hoppr Logo"
+                  width={100}
+                  height={100}
+                  priority={true}
+                  style={{
+                    objectFit: "contain",
+                  }}
+                />
+              </LogoIcon>
+              {/* Hoppr */}
             </Logo>
 
             {/* RIGHT SIDE: Use inline styles to avoid the hidden AuthSection */}
@@ -279,9 +295,24 @@ const AppNavbar = () => {
     <>
       <Nav>
         <NavContainer>
-          <Logo href="/app">
+          {/* <Logo href="/app">
             <LogoIcon>🍻</LogoIcon>
             Hoppr
+          </Logo> */}
+          <Logo href="/app">
+            <LogoIcon>
+              <Image
+                src="/hoppr-neon-nobg.png"
+                alt="Hoppr Logo"
+                width={100}
+                height={100}
+                priority={true}
+                style={{
+                  objectFit: "contain",
+                }}
+              />
+            </LogoIcon>
+            {/* Hoppr */}
           </Logo>
 
           <NavLinks>

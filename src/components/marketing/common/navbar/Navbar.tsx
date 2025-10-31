@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
+import Image from "next/image";
 import {
   Nav,
   NavContainer,
@@ -67,28 +68,10 @@ const Navbar = () => {
   };
 
   const navigation = [
-    // { name: "", href: "/" },
-    // { name: "Social Map", href: "/social" },
-    // { name: "Bars", href: "/bars" },
-    // { name: "VIP Passes", href: "/vip" },
-
-    // { name: "Plan a Crawl", href: "/crawl-planner" },
-    // // Only show "My Crawls" when user is authenticated
-    // ...(session ? [{ name: "My Crawls", href: "/my-crawls" }] : []),
-    // ...(session ? [{ name: "My VIP Passes", href: "/vip/wallet" }] : []),
     { name: "Partners", href: "/partners" },
     { name: "Explore", href: "/app" },
     { name: "Contact", href: "/contact" },
-
-    // { name: "Discover Crawls", href: "/crawls-dashboard" },
   ];
-
-  // const isActive = (path: string) => {
-  //   if (path === "/") {
-  //     return pathname === "/";
-  //   }
-  //   return pathname.startsWith(path);
-  // };
 
   const handleLogout = () => {
     signOut();
@@ -105,10 +88,21 @@ const Navbar = () => {
   return (
     <Nav>
       <NavContainer>
-        {/* Logo */}
+        {/* Logo with Image */}
         <Logo href="/">
-          <LogoIcon>🍻</LogoIcon>
-          Hoppr
+          <LogoIcon>
+            <Image
+              src="/hoppr-neon-nobg.png"
+              alt="Hoppr Logo"
+              width={100}
+              height={100}
+              priority={true}
+              style={{
+                objectFit: "contain",
+              }}
+            />
+          </LogoIcon>
+          {/* Hoppr */}
         </Logo>
 
         {/* Desktop Navigation */}
