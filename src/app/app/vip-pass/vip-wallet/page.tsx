@@ -1,4 +1,4 @@
-import VIPWallet from "@/components/app/vip/vip-wallet/VIPWallet";
+import VIPWallet from "@/components/app/vip-pass/vip-wallet/VIPWallet";
 import React from "react";
 
 const VIPWalletPage = () => {

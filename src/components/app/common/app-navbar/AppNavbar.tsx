@@ -85,12 +85,12 @@ const AppNavbar = () => {
   // Route active state check
   const isActive = (path: string) => {
     if (path === "/app") return pathname === "/app" || pathname === "/app/";
-    if (path === "/app/vip")
-      return pathname === "/app/vip" || pathname === "/app/vip/";
+    if (path === "/app/vip-pass")
+      return pathname === "/app/vip-pass" || pathname === "/app/vip-pass/";
     if (path === "/app/vip/wallet")
       return (
         pathname === "/app/vip/wallet" ||
-        pathname.startsWith("/app/vip/wallet/")
+        pathname.startsWith("/app/vip-pass/vip-wallet/")
       );
     if (pathname === path) return true;
     if (pathname.startsWith(path + "/")) return true;
@@ -102,10 +102,12 @@ const AppNavbar = () => {
     { name: "Home", href: "/app" },
     { name: "Social", href: "/app/social" },
     { name: "Bars", href: "/app/bars" },
-    { name: "VIP Passes", href: "/app/vip" },
+    { name: "VIP Passes", href: "/app/vip-pass" },
     { name: "Plan a Crawl", href: "/app/crawl-planner" },
     ...(session ? [{ name: "My Crawls", href: "/app/my-crawls" }] : []),
-    ...(session ? [{ name: "My VIP Passes", href: "/app/vip/wallet" }] : []),
+    ...(session
+      ? [{ name: "My VIP Passes", href: "/app/vip-pass/vip-wallet" }]
+      : []),
     { name: "Discover Crawls", href: "/app/crawls-dashboard" },
   ];
 
@@ -389,7 +391,7 @@ const AppNavbar = () => {
                       My Crawls
                     </DropdownItem>
                     <DropdownItem
-                      href="/app/vip/wallet"
+                      href="/app/vip-pass/vip-wallet"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       My VIP Passes

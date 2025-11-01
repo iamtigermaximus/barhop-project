@@ -1,44 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+    const session = await getServerSession();
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { vipPassId } = await request.json();
 
-    if (!vipPassId) {
-      return NextResponse.json(
-        { error: "VIP pass ID is required" },
-        { status: 400 }
-      );
+    // Get user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check if VIP pass exists and is available
+    // Get VIP pass with bar info
     const vipPass = await prisma.vIPPassEnhanced.findUnique({
-      where: {
-        id: vipPassId,
-        isActive: true,
-        validityStart: { lte: new Date() },
-        validityEnd: { gte: new Date() },
-      },
+      where: { id: vipPassId },
       include: {
-        bar: true,
+        bar: {
+          include: {
+            city: true,
+          },
+        },
       },
     });
 
     if (!vipPass) {
       return NextResponse.json(
-        { error: "VIP pass not found or not available" },
+        { error: "VIP pass not found" },
         { status: 404 }
       );
     }
@@ -51,36 +47,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already purchased this pass (respect maxPerUser)
-    const userPurchases = await prisma.userVIPPass.count({
+    // Check if user already purchased max allowed
+    const userPassCount = await prisma.userVIPPass.count({
       where: {
-        userId: session.user.id,
+        userId: user.id,
         vipPassId: vipPassId,
         status: "ACTIVE",
       },
     });
 
-    if (userPurchases >= vipPass.maxPerUser) {
+    if (userPassCount >= vipPass.maxPerUser) {
       return NextResponse.json(
         { error: `You can only purchase ${vipPass.maxPerUser} of this pass` },
         { status: 400 }
       );
     }
 
-    // Generate unique QR code
-    const qrCode = `HOPPR-VIP-${session.user.id.slice(-6)}-${Date.now()}`;
-
-    // Create transaction
+    // Start transaction
     const result = await prisma.$transaction(async (tx) => {
+      // Generate QR code
+      const qrCode = `HOPPR-VIP-${
+        user.name?.split(" ")[0]?.toUpperCase() || "USER"
+      }-${Date.now().toString().slice(-4)}`;
+
       // Create user VIP pass
-      const userVipPass = await tx.userVIPPass.create({
+      const userVIPPass = await tx.userVIPPass.create({
         data: {
-          userId: session.user.id,
+          userId: user.id,
           vipPassId: vipPassId,
           barId: vipPass.barId,
-          qrCode,
+          qrCode: qrCode,
           purchasePriceCents: vipPass.priceCents,
           expiresAt: vipPass.validityEnd,
+          status: "ACTIVE",
         },
       });
 
@@ -94,23 +93,27 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return userVipPass;
+      return userVIPPass;
     });
-
-    console.log(`✅ VIP pass purchased: ${qrCode} for user ${session.user.id}`);
 
     return NextResponse.json({
       success: true,
-      pass: {
+      purchase: {
         id: result.id,
+        pass: {
+          name: vipPass.name,
+          bar: {
+            name: vipPass.bar.name,
+          },
+        },
         qrCode: result.qrCode,
-        expiresAt: result.expiresAt,
+        expiresAt: result.expiresAt.toISOString(),
       },
     });
   } catch (error) {
-    console.error("❌ Error purchasing VIP pass:", error);
+    console.error("Purchase error:", error);
     return NextResponse.json(
-      { error: "Failed to purchase VIP pass" },
+      { error: "Failed to process purchase" },
       { status: 500 }
     );
   }

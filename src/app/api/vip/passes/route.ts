@@ -4,17 +4,14 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const city = searchParams.get("city")?.toLowerCase() || "helsinki";
+    const city = searchParams.get("city") || "helsinki";
 
-    console.log(`🔍 Fetching VIP passes for city: ${city}`);
-
-    // Fetch active VIP passes from database
-    const passes = await prisma.vIPPassEnhanced.findMany({
+    // Get VIP passes with bar information
+    const vipPasses = await prisma.vIPPassEnhanced.findMany({
       where: {
         isActive: true,
         validityStart: { lte: new Date() },
         validityEnd: { gte: new Date() },
-        soldCount: { lt: prisma.vIPPassEnhanced.fields.totalQuantity },
         bar: {
           city: {
             name: {
@@ -23,38 +20,37 @@ export async function GET(request: NextRequest) {
             },
           },
           isActive: true,
+          vipEnabled: true,
         },
       },
       include: {
         bar: {
-          select: {
-            id: true,
-            name: true,
-            imageUrl: true,
-            type: true,
-            district: true,
+          include: {
+            city: true,
           },
         },
       },
       orderBy: {
-        soldCount: "desc",
+        createdAt: "desc",
       },
     });
 
-    console.log(`✅ Found ${passes.length} VIP passes for ${city}`);
-
-    const formattedPasses = passes.map((pass) => ({
+    // Transform data to match frontend interface
+    const transformedPasses = vipPasses.map((pass) => ({
       id: pass.id,
       barId: pass.barId,
       bar: {
         id: pass.bar.id,
         name: pass.bar.name,
-        image: pass.bar.imageUrl || undefined,
+        image: pass.bar.imageUrl,
         type: pass.bar.type,
         district: pass.bar.district,
+        latitude: pass.bar.latitude,
+        longitude: pass.bar.longitude,
+        city: pass.bar.city.name,
       },
       name: pass.name,
-      description: pass.description,
+      description: pass.description || "",
       type: pass.type,
       price: pass.priceCents / 100,
       originalPrice: pass.originalPriceCents
@@ -68,7 +64,9 @@ export async function GET(request: NextRequest) {
         start: pass.validityStart,
         end: pass.validityEnd,
         validDays: pass.validDays,
-        validHours: pass.validHours,
+        validHours: pass.validHours as
+          | { start: string; end: string }
+          | undefined,
       },
       capacity: {
         total: pass.totalQuantity,
@@ -78,12 +76,9 @@ export async function GET(request: NextRequest) {
       maxPerUser: pass.maxPerUser,
     }));
 
-    return NextResponse.json({
-      success: true,
-      passes: formattedPasses,
-    });
+    return NextResponse.json({ passes: transformedPasses });
   } catch (error) {
-    console.error("❌ Error fetching VIP passes:", error);
+    console.error("Error fetching VIP passes:", error);
     return NextResponse.json(
       { error: "Failed to fetch VIP passes" },
       { status: 500 }

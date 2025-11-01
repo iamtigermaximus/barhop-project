@@ -34,51 +34,19 @@ interface UserVIPPass {
 
 const WalletContainer = styled.div`
   padding: 1rem 1rem 10rem;
-  background: linear-gradient(
-    -45deg,
-    rgb(9, 9, 11),
-    rgb(24, 20, 31),
-    rgb(9, 9, 11),
-    rgb(21, 17, 23)
-  );
+  background-color: transparent !important;
   width: 100%;
-  height: 100vh;
+  height: 100%;
   color: #e2e8f0;
 
   @media (max-width: 768px) {
     padding: 0.5rem;
     padding: 1rem 1rem 10rem;
   }
-  @keyframes gradientShift {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
-  }
 
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(
-        circle at 30% 20%,
-        rgba(14, 165, 233, 0.1) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        circle at 70% 80%,
-        rgba(139, 92, 246, 0.1) 0%,
-        transparent 50%
-      );
-    pointer-events: none;
+  @media (max-width: 480px) {
+    padding: 0.5rem;
+    padding: 1rem 1rem 10rem;
   }
 `;
 
@@ -525,8 +493,8 @@ export default function VIPWallet() {
           <p style={{ color: "#94a3b8", marginBottom: "2rem" }}>
             Purchase your first VIP pass from the marketplace to get started!
           </p>
-          <BrowseButton onClick={() => router.push("/app/vip")}>
-            Browse Marketplace
+          <BrowseButton onClick={() => router.push("/app/vip-pass")}>
+            Browse Passes
           </BrowseButton>
         </EmptyState>
       ) : (
