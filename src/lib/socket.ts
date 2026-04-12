@@ -123,7 +123,7 @@ class SocketClient {
       auth: {
         token: token,
       },
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"],
       autoConnect: true,
     });
 

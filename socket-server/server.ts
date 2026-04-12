@@ -23,16 +23,44 @@ const app = express();
 const server = createServer(app);
 const prisma = new PrismaClient();
 
-// Middleware - UPDATE CORS to be more permissive
+/** `cors` does not treat "https://*.vercel.app" as a glob — use this for browser + Socket.IO. */
+function isAllowedCorsOrigin(origin: string | undefined): boolean {
+  if (!origin) return true;
+  try {
+    const { protocol, hostname } = new URL(origin);
+    if (
+      protocol === "http:" &&
+      (hostname === "localhost" || hostname === "127.0.0.1")
+    ) {
+      return true;
+    }
+    const fixedHosts = new Set([
+      "barhop-project.vercel.app",
+      "hoppr.vercel.app",
+      "hoppr-socket-project.onrender.com",
+    ]);
+    if (fixedHosts.has(hostname)) return true;
+    if (hostname.endsWith(".vercel.app")) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+// Middleware — dynamic origin so localhost:any port + Vercel previews work
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://barhop-project.vercel.app",
-      "https://hoppr.vercel.app", // Add your actual Vercel domain
-      "https://*.vercel.app",
-      "https://hoppr-socket-project.onrender.com", // Allow itself
-    ],
+    origin: (origin, callback) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      if (isAllowedCorsOrigin(origin)) {
+        callback(null, origin);
+        return;
+      }
+      callback(new Error(`CORS blocked origin: ${origin}`));
+    },
     credentials: true,
   })
 );
@@ -563,15 +591,19 @@ export class SocketService {
 
     this.io = new SocketServer(httpServer, {
       cors: {
-        origin: [
-          "http://localhost:3000",
-          "https://barhop-project.vercel.app",
-          "https://hoppr.vercel.app", // Add your actual Vercel domain
-          "https://*.vercel.app",
-          "https://hoppr-socket-project.onrender.com", // Allow itself
-        ],
+        origin: (origin, callback) => {
+          if (!origin) {
+            callback(null, true);
+            return;
+          }
+          if (isAllowedCorsOrigin(origin)) {
+            callback(null, origin);
+            return;
+          }
+          callback(new Error(`Socket.IO CORS blocked origin: ${origin}`));
+        },
         methods: ["GET", "POST"],
-        credentials: true, // ADD THIS
+        credentials: true,
       },
       addTrailingSlash: false,
     });

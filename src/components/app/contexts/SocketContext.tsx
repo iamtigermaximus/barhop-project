@@ -375,7 +375,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           auth: {
             token: token,
           },
-          transports: ["websocket", "polling"],
+          // Polling first avoids generic "websocket error" when WS upgrade is blocked (proxy, CORS, etc.)
+          transports: ["polling", "websocket"],
           timeout: 10000,
           forceNew: true,
           reconnection: true,
