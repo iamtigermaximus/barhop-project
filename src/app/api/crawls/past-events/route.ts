@@ -1,3 +1,5 @@
+// // app/api/crawls/past-events/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -119,7 +121,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching past crawls:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,3 +1,5 @@
+//src/app/api/chat/[chatroomId]/participants/routes.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { PrismaClient } from "@prisma/client";
@@ -34,7 +36,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     if (!userParticipant) {
       return NextResponse.json(
         { error: "Not a participant in this chatroom" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -75,7 +77,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     console.error("❌ Error fetching participants:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

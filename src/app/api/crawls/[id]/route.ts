@@ -1,3 +1,5 @@
+// // app/api/crawls/[id]/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -27,7 +29,7 @@ interface SelectedBarInput {
 // GET /api/crawls/[id] - Get a specific crawl by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -99,7 +101,7 @@ export async function GET(
     if (!hasAccess) {
       return NextResponse.json(
         { error: "You don't have access to this crawl" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -108,7 +110,7 @@ export async function GET(
     console.error("Error fetching crawl:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -116,7 +118,7 @@ export async function GET(
 // PUT /api/crawls/[id] - Update a specific crawl with selectedBars
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -157,7 +159,7 @@ export async function PUT(
     if (!existingCrawl) {
       return NextResponse.json(
         { error: "Crawl not found or you don't have permission to edit it" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -193,7 +195,7 @@ export async function PUT(
             barId: sb.barId,
             orderIndex: sb.orderIndex,
             duration: sb.duration ?? 60, // default 60 minutes if not provided
-          })
+          }),
         );
 
         await tx.crawlBar.createMany({ data: newCrawlBars });
@@ -236,13 +238,13 @@ export async function PUT(
         crawl: updatedCrawl,
         message: "Crawl updated successfully!",
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error updating crawl:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -250,7 +252,7 @@ export async function PUT(
 // DELETE /api/crawls/[id] - Delete a specific crawl
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -272,7 +274,7 @@ export async function DELETE(
     if (!existingCrawl) {
       return NextResponse.json(
         { error: "Crawl not found or you don't have permission to delete it" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -297,13 +299,13 @@ export async function DELETE(
         success: true,
         message: "Crawl deleted successfully!",
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error deleting crawl:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

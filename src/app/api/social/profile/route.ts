@@ -196,6 +196,9 @@
 //     );
 //   }
 // }
+
+// app/api/social/profile/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -215,7 +218,7 @@ export async function GET(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json(
         { message: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -240,7 +243,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching social profile:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -251,7 +254,7 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json(
         { message: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -268,7 +271,7 @@ export async function POST(request: NextRequest) {
     if (existingProfile) {
       return NextResponse.json(
         { message: "Profile already exists. Use PUT to update." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -311,7 +314,7 @@ export async function POST(request: NextRequest) {
     console.error("❌ CREATE PROFILE ERROR:", error);
     return NextResponse.json(
       { message: "Failed to create profile" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -323,7 +326,7 @@ export async function PUT(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json(
         { message: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -340,7 +343,7 @@ export async function PUT(request: NextRequest) {
     if (!existingProfile) {
       return NextResponse.json(
         { message: "Profile not found. Use POST to create." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -386,7 +389,7 @@ export async function PUT(request: NextRequest) {
     console.error("❌ UPDATE PROFILE ERROR:", error);
     return NextResponse.json(
       { message: "Failed to update profile" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -397,7 +400,7 @@ export async function DELETE(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json(
         { message: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -413,7 +416,7 @@ export async function DELETE(request: NextRequest) {
     console.error("Error deleting profile:", error);
     return NextResponse.json(
       { message: "Failed to delete profile" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

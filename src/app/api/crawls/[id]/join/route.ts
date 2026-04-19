@@ -203,6 +203,9 @@
 //     );
 //   }
 // }
+
+//src/app/crawls/[id]/join/routes.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -211,7 +214,7 @@ import jwt from "jsonwebtoken"; // 🆕 ADD JWT IMPORT
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -220,7 +223,7 @@ export async function POST(
       // 🆕 ADD USER VALIDATION
       return NextResponse.json(
         { message: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -234,7 +237,7 @@ export async function POST(
         name: session.user.name,
       },
       process.env.JWT_SECRET!,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
 
     // Make HTTP call to your socket server instead of using socketService directly
@@ -252,14 +255,14 @@ export async function POST(
           userId: session.user.id,
           crawlId,
         }),
-      }
+      },
     );
 
     if (!response.ok) {
       const errorData = await response.json();
       return NextResponse.json(
         { message: errorData.error || "Failed to join crawl" },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -292,7 +295,7 @@ export async function POST(
       });
 
       console.log(
-        `✅ User ${session.user.id} auto-joined chatroom for crawl ${crawlId}`
+        `✅ User ${session.user.id} auto-joined chatroom for crawl ${crawlId}`,
       );
     }
 
@@ -301,13 +304,13 @@ export async function POST(
         message: "Successfully joined crawl",
         notification: result.notification,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error joining crawl:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

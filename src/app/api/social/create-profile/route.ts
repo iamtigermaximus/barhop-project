@@ -1,3 +1,5 @@
+// app/api/social/create-profile/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -10,7 +12,7 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json(
         { message: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -108,7 +110,7 @@ export async function POST(request: NextRequest) {
         message: "Failed to create social profile",
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -119,7 +121,7 @@ export async function GET(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json(
         { message: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -135,7 +137,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching profile:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

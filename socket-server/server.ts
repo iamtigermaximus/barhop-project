@@ -1,3 +1,4 @@
+//socket-server/server.ts
 import express, { Request, Response } from "express";
 import { createServer } from "http";
 import cors from "cors";
@@ -62,7 +63,7 @@ app.use(
       callback(new Error(`CORS blocked origin: ${origin}`));
     },
     credentials: true,
-  })
+  }),
 );
 app.use(express.json());
 
@@ -167,7 +168,7 @@ app.post(
         .status(500)
         .json({ error: "Failed to mark notification as read" });
     }
-  }
+  },
 );
 
 // Crawl join endpoint
@@ -291,7 +292,7 @@ app.post("/api/crawls/:id/leave", async (req: Request, res: Response) => {
       socketService.sendToUser(
         crawl.creatorId,
         "new_notification",
-        notification
+        notification,
       );
     }
 
@@ -427,12 +428,12 @@ app.post("/api/social/hop-in/respond", async (req: Request, res: Response) => {
       socketService.sendToUser(
         hopIn.fromUserId,
         "new_notification",
-        acceptanceNotification
+        acceptanceNotification,
       );
       socketService.sendToUser(
         hopIn.toUserId,
         "new_notification",
-        acceptorNotification
+        acceptorNotification,
       );
     }
 
@@ -623,11 +624,11 @@ export class SocketService {
         try {
           const decoded = jwt.verify(
             token,
-            process.env.JWT_SECRET!
+            process.env.JWT_SECRET!,
           ) as JwtAuthPayload;
           socket.userId = decoded.userId;
           console.log(
-            `User ID ${decoded.userId} connected with socket ${socket.id}`
+            `User ID ${decoded.userId} connected with socket ${socket.id}`,
           );
         } catch (error) {
           console.warn("Invalid token in handshake");
@@ -673,7 +674,7 @@ export class SocketService {
         "mark_notification_read",
         (data: { notificationId: string; userId: string }) => {
           this.handleNotificationRead(socket, data);
-        }
+        },
       );
 
       socket.on("join_chatroom", (data: { chatroomId: string }) => {
@@ -705,7 +706,7 @@ export class SocketService {
 
   private async handleJoinChatroom(
     socket: CustomSocket,
-    data: { chatroomId: string }
+    data: { chatroomId: string },
   ): Promise<void> {
     try {
       const { chatroomId } = data;
@@ -763,7 +764,7 @@ export class SocketService {
 
   private async handleLeaveChatroom(
     socket: CustomSocket,
-    data: { chatroomId: string }
+    data: { chatroomId: string },
   ): Promise<void> {
     try {
       const { chatroomId } = data;
@@ -806,13 +807,13 @@ export class SocketService {
 
   private async handleSendMessage(
     socket: CustomSocket,
-    data: ChatroomMessageData
+    data: ChatroomMessageData,
   ): Promise<void> {
     try {
       const { chatroomId, content, userId } = data;
 
       console.log(
-        `Sending message to chatroom ${chatroomId} from user ${userId}`
+        `Sending message to chatroom ${chatroomId} from user ${userId}`,
       );
 
       const participant = await prisma.chatroomParticipant.findFirst({
@@ -874,7 +875,7 @@ export class SocketService {
 
   private async handleNotificationRead(
     socket: CustomSocket,
-    data: { notificationId: string; userId: string }
+    data: { notificationId: string; userId: string },
   ): Promise<void> {
     try {
       const { notificationId, userId } = data;
@@ -928,7 +929,7 @@ export class SocketService {
 
   private async handleHopRequest(
     socket: CustomSocket,
-    data: HopInRequestData
+    data: HopInRequestData,
   ): Promise<void> {
     try {
       const { fromUserId, toUserId, barId, message } = data;
@@ -1012,7 +1013,7 @@ export class SocketService {
 
   private async handleWave(
     socket: CustomSocket,
-    data: WaveRequestData
+    data: WaveRequestData,
   ): Promise<void> {
     try {
       const { fromUserId, toUserId } = data;
@@ -1074,7 +1075,7 @@ export class SocketService {
 
   private async handleHopResponse(
     socket: CustomSocket,
-    data: HopInResponseData
+    data: HopInResponseData,
   ): Promise<void> {
     try {
       const { hopInId, status, userId } = data;
@@ -1089,7 +1090,7 @@ export class SocketService {
       }
 
       console.log(
-        `Processing hop response: ${status} for hopInId: ${hopInId} by user: ${userId}`
+        `Processing hop response: ${status} for hopInId: ${hopInId} by user: ${userId}`,
       );
 
       const hopIn = await prisma.hopIn.update({
@@ -1113,7 +1114,7 @@ export class SocketService {
       if (status === "ACCEPTED") {
         const chatroom = await this.createPrivateChatroom(
           hopIn.fromUserId,
-          hopIn.toUserId
+          hopIn.toUserId,
         );
 
         const acceptanceNotification = await prisma.notification.create({
@@ -1199,7 +1200,7 @@ export class SocketService {
 
   private async handleCrawlJoinRequest(
     socket: CustomSocket,
-    data: CrawlJoinRequestData
+    data: CrawlJoinRequestData,
   ): Promise<void> {
     try {
       const { crawlId, userId, message } = data;
@@ -1236,7 +1237,7 @@ export class SocketService {
       }
 
       const isAlreadyParticipant = crawl.participants.some(
-        (p) => p.userId === userId
+        (p) => p.userId === userId,
       );
       if (isAlreadyParticipant) {
         socket.emit("error", {
@@ -1346,7 +1347,7 @@ export class SocketService {
 
   private async handleCrawlJoinResponse(
     socket: CustomSocket,
-    data: CrawlJoinResponseData
+    data: CrawlJoinResponseData,
   ): Promise<void> {
     try {
       const { requestId, status, userId } = data;
@@ -1478,7 +1479,7 @@ export class SocketService {
       socket.emit("crawl_join_request_responded", respondedResponse);
 
       console.log(
-        `Crawl join request ${status.toLowerCase()} for request ${requestId}`
+        `Crawl join request ${status.toLowerCase()} for request ${requestId}`,
       );
     } catch (error) {
       console.error("Error responding to crawl join request:", error);
@@ -1491,7 +1492,7 @@ export class SocketService {
 
   private async handleUserJoinedCrawl(
     socket: CustomSocket,
-    data: UserJoinedCrawlData
+    data: UserJoinedCrawlData,
   ): Promise<void> {
     try {
       const { crawlId, userId } = data;
@@ -1538,7 +1539,7 @@ export class SocketService {
       }
 
       console.log(
-        `Creating join notification for crawl creator: ${crawl.creator.id}`
+        `Creating join notification for crawl creator: ${crawl.creator.id}`,
       );
 
       const notification = await prisma.notification.create({
@@ -1580,7 +1581,7 @@ export class SocketService {
 
   private async handleUserLeftCrawl(
     socket: CustomSocket,
-    data: UserJoinedCrawlData
+    data: UserJoinedCrawlData,
   ): Promise<void> {
     try {
       const { crawlId, userId } = data;
@@ -1627,7 +1628,7 @@ export class SocketService {
       }
 
       console.log(
-        `Creating leave notification for crawl creator: ${crawl.creator.id}`
+        `Creating leave notification for crawl creator: ${crawl.creator.id}`,
       );
 
       const notification = await prisma.notification.create({
@@ -1669,11 +1670,11 @@ export class SocketService {
 
   private async handleChatMessageNotification(
     message: ChatroomMessage,
-    chatroomId: string
+    chatroomId: string,
   ): Promise<void> {
     try {
       console.log(
-        `📢 Starting chat notification process for message ${message.id}`
+        `📢 Starting chat notification process for message ${message.id}`,
       );
 
       const participants = await prisma.chatroomParticipant.findMany({
@@ -1706,7 +1707,7 @@ export class SocketService {
       const senderName = message.user.name || "Someone";
 
       console.log(
-        `📨 Creating notifications for ${participants.length} participants`
+        `📨 Creating notifications for ${participants.length} participants`,
       );
 
       for (const participant of participants) {
@@ -1742,7 +1743,7 @@ export class SocketService {
       }
 
       console.log(
-        `🎉 Successfully sent chat notifications to ${participants.length} participants`
+        `🎉 Successfully sent chat notifications to ${participants.length} participants`,
       );
     } catch (error) {
       console.error("❌ Error sending chat notifications:", error);
@@ -1751,7 +1752,7 @@ export class SocketService {
 
   private async createPrivateChatroom(
     userId1: string,
-    userId2: string
+    userId2: string,
   ): Promise<{
     id: string;
     name: string;
@@ -1854,7 +1855,7 @@ export class SocketService {
   public async sendSystemNotification(
     userId: string,
     message: string,
-    data?: SystemNotificationData
+    data?: SystemNotificationData,
   ): Promise<void> {
     try {
       const notification = await prisma.notification.create({

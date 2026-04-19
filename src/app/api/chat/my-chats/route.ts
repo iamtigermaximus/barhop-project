@@ -1,3 +1,5 @@
+//src/app/api/chat/my-chats/routes.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -48,7 +50,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching user chats:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

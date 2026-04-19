@@ -1,3 +1,5 @@
+//src/app/api/cities/routes.ts
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -17,7 +19,7 @@ export async function GET() {
     console.error("Error fetching cities:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

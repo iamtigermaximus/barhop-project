@@ -78,6 +78,8 @@
 //     );
 //   }
 // }
+
+//src/app/api/chat/[chatroomId]/info/routes.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
@@ -112,7 +114,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     if (!participant) {
       return NextResponse.json(
         { error: "Not a participant in this chatroom" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -146,7 +148,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     if (!chatroom) {
       return NextResponse.json(
         { error: "Chatroom not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -155,7 +157,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       chatroom.name,
       "with",
       chatroom.participants.length,
-      "participants"
+      "participants",
     );
 
     return NextResponse.json(chatroom);
@@ -163,7 +165,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     console.error("❌ Error fetching chatroom info:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

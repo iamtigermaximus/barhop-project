@@ -30,7 +30,7 @@
 //     );
 //   }
 // }
-// CREATE: app/api/notifications/mark-read/route.ts
+// app/api/notifications/mark-read/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     if (!notificationId) {
       return NextResponse.json(
         { error: "Notification ID required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     console.error("Error marking notification as read:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

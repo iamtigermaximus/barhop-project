@@ -1,3 +1,5 @@
+// app/api/debug/route.ts
+
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -41,7 +43,7 @@ export async function GET() {
         error: "Debug endpoint failed",
         message: errorMessage,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

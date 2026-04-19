@@ -1,3 +1,5 @@
+// // app/api/crawls/my-crawls/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -103,7 +105,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching user crawls:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -151,7 +153,7 @@ export async function POST(request: NextRequest) {
           error:
             "Missing required fields: name, city, date, and time are required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -163,7 +165,7 @@ export async function POST(request: NextRequest) {
     if (!city) {
       return NextResponse.json(
         { error: "Selected city not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -192,7 +194,7 @@ export async function POST(request: NextRequest) {
         {
           error: `No bars found in ${city.name} matching your criteria. Try selecting different bar types.`,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -276,7 +278,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating crawl:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -306,7 +308,7 @@ export async function PUT(request: NextRequest) {
     if (!id) {
       return NextResponse.json(
         { error: "Crawl ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -321,7 +323,7 @@ export async function PUT(request: NextRequest) {
     if (!existingCrawl) {
       return NextResponse.json(
         { error: "Crawl not found or you don't have permission to edit it" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -384,13 +386,13 @@ export async function PUT(request: NextRequest) {
         crawl: updatedCrawl,
         message: "Crawl updated successfully!",
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error updating crawl:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -410,7 +412,7 @@ export async function DELETE(request: NextRequest) {
     if (!id) {
       return NextResponse.json(
         { error: "Crawl ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -425,7 +427,7 @@ export async function DELETE(request: NextRequest) {
     if (!existingCrawl) {
       return NextResponse.json(
         { error: "Crawl not found or you don't have permission to delete it" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -450,13 +452,13 @@ export async function DELETE(request: NextRequest) {
         success: true,
         message: "Crawl deleted successfully!",
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error deleting crawl:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

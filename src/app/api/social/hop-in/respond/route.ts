@@ -94,6 +94,9 @@
 //     );
 //   }
 // }
+
+// app/api/social/hop-in/respond/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
@@ -114,14 +117,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (!hopInId || !status) {
       return NextResponse.json(
         { error: "HopIn ID and status required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!["ACCEPTED", "DECLINED"].includes(status)) {
       return NextResponse.json(
         { error: "Status must be ACCEPTED or DECLINED" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -133,7 +136,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         name: session.user.name,
       },
       process.env.JWT_SECRET!,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
 
     // 🆕 MAKE HTTP CALL TO SOCKET SERVER FOR HOP RESPONSE PROCESSING
@@ -152,14 +155,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           status,
           userId: session.user.id,
         }),
-      }
+      },
     );
 
     if (!response.ok) {
       const errorData = await response.json();
       return NextResponse.json(
         { error: errorData.error || "Failed to respond to hop request" },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -204,7 +207,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.error("Error responding to hop request:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

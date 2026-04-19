@@ -137,6 +137,9 @@
 //     );
 //   }
 // }
+
+// app/api/social/hop-in/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
@@ -157,7 +160,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (!targetUserId) {
       return NextResponse.json(
         { error: "Target user ID required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -169,7 +172,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         name: session.user.name,
       },
       process.env.JWT_SECRET!,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
 
     // 🆕 MAKE HTTP CALL TO SOCKET SERVER FOR HOP REQUEST PROCESSING
@@ -193,7 +196,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const errorData = await response.json();
       return NextResponse.json(
         { error: errorData.error || "Failed to send hop request" },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -225,7 +228,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.error("Error creating hop in request:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

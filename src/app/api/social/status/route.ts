@@ -646,6 +646,9 @@
 //     );
 //   }
 // }
+
+// app/api/social/status/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
@@ -701,7 +704,7 @@ export async function POST(request: NextRequest) {
       console.log("❌ Profile not found for user:", session.user.id);
       return NextResponse.json(
         { error: "Social profile not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -764,7 +767,7 @@ export async function POST(request: NextRequest) {
     console.error("❌ Error updating social status:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -822,7 +825,7 @@ export async function GET(request: NextRequest) {
     console.error("❌ Error fetching social status:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -30,6 +30,9 @@
 //     );
 //   }
 // }
+
+// app/api/notifications/mark-all-read/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
@@ -60,7 +63,7 @@ export async function POST(request: NextRequest) {
     console.error("Error marking all notifications as read:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

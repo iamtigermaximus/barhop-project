@@ -76,6 +76,9 @@
 //     );
 //   }
 // }
+
+//src/app/crawls/[id]/leave/routes.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -84,7 +87,7 @@ import jwt from "jsonwebtoken"; // 🆕 ADD JWT IMPORT
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -93,7 +96,7 @@ export async function POST(
       // 🆕 ADD USER VALIDATION
       return NextResponse.json(
         { message: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -107,7 +110,7 @@ export async function POST(
         name: session.user.name,
       },
       process.env.JWT_SECRET!,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
 
     // 🆕 MAKE HTTP CALL TO SOCKET SERVER INSTEAD OF DIRECT SOCKET USAGE
@@ -125,14 +128,14 @@ export async function POST(
           userId: session.user.id,
           crawlId,
         }),
-      }
+      },
     );
 
     if (!response.ok) {
       const errorData = await response.json();
       return NextResponse.json(
         { message: errorData.error || "Failed to leave crawl" },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -150,7 +153,7 @@ export async function POST(
     if (!existingParticipant) {
       return NextResponse.json(
         { message: "You are not in this crawl" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -169,13 +172,13 @@ export async function POST(
 
     return NextResponse.json(
       { message: "Successfully left crawl" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error leaving crawl:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
