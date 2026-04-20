@@ -1,20 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
-// import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import styled from "styled-components";
 import Link from "next/link";
 import { HopprLoader } from "@/components/app/common/Loader/HopprLoader";
 
+// Styled Components (keep all your existing styled components)
 export const Page = styled.div`
   padding: 2rem 1rem 10rem;
   margin: 0 auto;
-  /* background: linear-gradient(
-    -45deg,
-    rgb(9, 9, 11),
-    rgb(15, 23, 42),
-    rgb(9, 9, 11),
-    rgb(15, 23, 42)
-  ); */
   background-size: 400% 400%;
   animation: gradientShift 12s ease infinite;
   min-height: calc(100vh - 70px);
@@ -23,38 +17,6 @@ export const Page = styled.div`
   @media (max-width: 768px) {
     padding: 1rem 0.5rem 10rem;
   }
-
-  /* @keyframes gradientShift {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
-  }
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(
-        circle at 30% 20%,
-        rgba(14, 165, 233, 0.1) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        circle at 70% 80%,
-        rgba(139, 92, 246, 0.1) 0%,
-        transparent 50%
-      );
-    pointer-events: none;
-  } */
 `;
 
 export const Title = styled.h1`
@@ -72,18 +34,6 @@ export const Title = styled.h1`
   @media (max-width: 768px) {
     font-size: 2rem;
     margin-bottom: 0.75rem;
-  }
-
-  @keyframes gradientShift {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
   }
 `;
 
@@ -110,17 +60,11 @@ export const ControlsContainer = styled.div`
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  background-color: transparent !important;
 
   @media (max-width: 768px) {
     gap: 0.75rem;
     margin-bottom: 0.75rem;
     padding: 0 0.5rem;
-  }
-
-  @media (max-width: 480px) {
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
   }
 `;
 
@@ -160,14 +104,6 @@ export const FilterSelect = styled.select`
     font-size: 0.8rem;
     flex: 0 1 calc(50% - 0.5rem);
   }
-
-  @media (max-width: 480px) {
-    min-width: 100px;
-    max-width: 100px;
-    padding: 0.4rem 0.6rem;
-    font-size: 0.6rem;
-    flex: 0 1 calc(50% - 0.25rem);
-  }
 `;
 
 export const FilterCheckbox = styled.label`
@@ -178,8 +114,6 @@ export const FilterCheckbox = styled.label`
   font-size: 0.9rem;
   cursor: pointer;
   padding: 0.5rem 1rem;
-  background: transparent !important;
-  /* border: 1px solid rgba(139, 92, 246, 0.3); */
   border-radius: 8px;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
@@ -200,20 +134,13 @@ export const FilterCheckbox = styled.label`
     font-size: 0.85rem;
     flex: 0 1 100%;
     justify-content: center;
-    order: 3; /* Move to bottom on mobile */
+    order: 3;
     margin-top: 0.25rem;
-  }
-
-  @media (max-width: 480px) {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.8rem;
-    gap: 0.4rem;
   }
 `;
 
 export const MobileFiltersRow = styled.div`
   display: flex;
-  background-color: transparent !important;
   gap: 1rem;
 
   @media (max-width: 768px) {
@@ -223,17 +150,12 @@ export const MobileFiltersRow = styled.div`
     justify-content: center;
     flex-wrap: wrap;
   }
-
-  @media (max-width: 480px) {
-    gap: 0.25rem;
-  }
 `;
 
 export const BarsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 2rem;
-  background-color: transparent !important;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -284,10 +206,6 @@ export const BarCard = styled(Link)`
     padding: 1.25rem;
     margin: 0 0.25rem;
   }
-
-  @media (max-width: 480px) {
-    padding: 1rem;
-  }
 `;
 
 export const BarName = styled.h3`
@@ -295,14 +213,9 @@ export const BarName = styled.h3`
   color: #f8fafc;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  background-color: transparent !important;
 
   @media (max-width: 768px) {
     font-size: 1.25rem;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 1.1rem;
   }
 `;
 
@@ -322,7 +235,6 @@ export const BarDetails = styled.div`
   gap: 0.5rem;
   margin-bottom: 1rem;
   flex-wrap: wrap;
-  background-color: transparent !important;
 
   @media (max-width: 480px) {
     gap: 0.25rem;
@@ -419,17 +331,36 @@ export const ResultsCount = styled.div`
   color: #94a3b8;
   margin-bottom: 1.5rem;
   font-size: 0.9rem;
-  background-color: transparent !important;
   padding: 0 0.5rem;
 
   @media (max-width: 768px) {
     margin-bottom: 1rem;
     font-size: 0.85rem;
   }
+`;
 
-  @media (max-width: 480px) {
-    font-size: 0.8rem;
-    margin-bottom: 0.75rem;
+const LoadMoreButton = styled.button`
+  display: block;
+  margin: 2rem auto 0;
+  padding: 0.75rem 2rem;
+  background: linear-gradient(45deg, #8b5cf6, #3b82f6);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
   }
 `;
 
@@ -437,20 +368,17 @@ interface Bar {
   id: string;
   name: string;
   description: string | null;
-  district: string;
+  district: string | null;
   type: string;
   vipEnabled: boolean;
   vipPrice: number | null;
   address: string;
-  city: {
-    name: string;
-  };
-  latitude: number;
-  longitude: number;
+  cityName: string | null;
+  latitude: number | null;
+  longitude: number | null;
   operatingHours?: {
     [key: string]: { open: string; close: string };
   };
-  // Calculated fields
   distance?: number;
   isOpen?: boolean;
 }
@@ -463,15 +391,18 @@ const formatDistance = (distance: number): string => {
 };
 
 const getTodaysHours = (
-  operatingHours: { [key: string]: { open: string; close: string } } | undefined
+  operatingHours:
+    | { [key: string]: { open: string; close: string } }
+    | undefined,
 ): { open: string; close: string } | undefined => {
   const today = new Date().toLocaleString("en-us", { weekday: "long" });
   return operatingHours?.[today];
 };
 
-// Helper function to calculate if bar is currently open
 const calculateIsOpen = (
-  operatingHours: { [key: string]: { open: string; close: string } } | undefined
+  operatingHours:
+    | { [key: string]: { open: string; close: string } }
+    | undefined,
 ): boolean => {
   if (!operatingHours) return false;
 
@@ -481,169 +412,202 @@ const calculateIsOpen = (
   if (!todaysHours) return false;
 
   const now = new Date();
-  const currentTime = now.toTimeString().slice(0, 5); // "HH:MM" format
-
-  // Handle closing times after midnight (like "04:00")
+  const currentTime = now.toTimeString().slice(0, 5);
   const openTime = todaysHours.open;
   const closeTime = todaysHours.close;
 
-  // If close time is before open time (e.g., open at 22:00, close at 04:00), it spans midnight
   if (closeTime < openTime) {
-    // If current time is after open time, it's open
     return currentTime >= openTime;
   } else {
-    // Normal case: both times on the same day
     return currentTime >= openTime && currentTime <= closeTime;
   }
 };
 
-// Helper function to calculate distance between coordinates (Haversine formula)
-const calculateDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number => {
-  const R = 6371; // Earth's radius in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c; // Distance in km
-};
-
 export default function Bars() {
+  const searchParams = useSearchParams();
+  const categoryFromUrl = searchParams.get("type");
+
   const [bars, setBars] = useState<Bar[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
+  const [locationLoaded, setLocationLoaded] = useState(false);
 
-  // Filter and sort state
-  const [sortBy, setSortBy] = useState<SortOption>("name");
+  const [sortBy, setSortBy] = useState<SortOption>("distance");
   const [filters, setFilters] = useState({
     showOpenOnly: false,
     city: "",
     type: "",
   });
 
-  // Get unique cities and types for filter dropdowns
-  const cities = [...new Set(bars.map((bar) => bar.city.name))].sort();
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalBars, setTotalBars] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Apply category from URL when component mounts
+  useEffect(() => {
+    if (categoryFromUrl) {
+      // Convert "karaoke" to "KARAOKE" (uppercase to match enum)
+      const typeValue = categoryFromUrl.toUpperCase();
+      setFilters((prev) => ({ ...prev, type: typeValue }));
+      console.log("🎯 Filtering by category from URL:", typeValue);
+    }
+  }, [categoryFromUrl]);
+
+  // Get unique cities and types from loaded bars
+  const cities = [
+    ...new Set(bars.map((bar) => bar.cityName).filter(Boolean)),
+  ].sort() as string[];
   const types = [
     ...new Set(bars.map((bar) => bar.type.replace(/_/g, " "))),
   ].sort();
 
-  // Apply sorting and filtering
-  const sortedAndFilteredBars = bars
+  // Apply open status filter locally
+  const filteredAndSortedBars = bars
     .filter((bar) => {
-      // Filter by open status
       if (filters.showOpenOnly && !bar.isOpen) return false;
-
-      // Filter by city
-      if (filters.city && bar.city.name !== filters.city) return false;
-
-      // Filter by type
-      if (filters.type && bar.type.replace(/_/g, " ") !== filters.type)
-        return false;
-
       return true;
     })
     .sort((a, b) => {
-      switch (sortBy) {
-        case "distance":
-          // Sort by distance (nearest first), bars without distance go last
-          if (!a.distance && !b.distance) return 0;
-          if (!a.distance) return 1;
-          if (!b.distance) return -1;
-          return a.distance - b.distance;
-
-        case "open":
-          // Sort by open status (open first), then by name
-          if (a.isOpen && !b.isOpen) return -1;
-          if (!a.isOpen && b.isOpen) return 1;
-          return a.name.localeCompare(b.name);
-
-        case "name":
-        default:
-          // Sort alphabetically by name
-          return a.name.localeCompare(b.name);
+      if (sortBy === "open") {
+        if (a.isOpen && !b.isOpen) return -1;
+        if (!a.isOpen && b.isOpen) return 1;
+        return a.name.localeCompare(b.name);
       }
+      return 0;
     });
 
+  // Get user location on mount
   useEffect(() => {
-    // Fetch bars function - defined inside useEffect to avoid dependency issues
-    const fetchBars = async (location: typeof userLocation) => {
-      try {
-        setLoading(true);
-        const response = await fetch("/api/bars");
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch bars: ${response.status}`);
-        }
-
-        const barsData: Bar[] = await response.json();
-
-        // Enhance bars with calculated fields
-        const enhancedBars = barsData.map((bar) => ({
-          ...bar,
-          isOpen: calculateIsOpen(bar.operatingHours),
-          distance: location
-            ? calculateDistance(
-                location.latitude,
-                location.longitude,
-                bar.latitude,
-                bar.longitude
-              )
-            : undefined,
-        }));
-
-        setBars(enhancedBars);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "An error occurred while fetching bars"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Get user location for distance calculation
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const location = {
+          console.log(
+            "📍 Location obtained:",
+            position.coords.latitude,
+            position.coords.longitude,
+          );
+          setUserLocation({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-          };
-          setUserLocation(location);
-          // Fetch bars AFTER we have location
-          fetchBars(location);
+          });
+          setLocationLoaded(true);
         },
         () => {
-          console.log(
-            "Location access denied, proceeding without distance calculation"
-          );
-          // Fetch bars without location
-          fetchBars(null);
-        }
+          console.log("📍 Location denied");
+          setLocationLoaded(true);
+        },
       );
     } else {
-      // Browser doesn't support geolocation, fetch without location
-      fetchBars(null);
+      setLocationLoaded(true);
     }
-  }, []); // ✅ EMPTY dependency array - runs only once
+  }, []);
 
-  // Add inline style to body to ensure gradient background
+  // Fetch bars when location and filters are ready
   useEffect(() => {
+    if (locationLoaded) {
+      fetchBars(1, false);
+    }
+  }, [locationLoaded, sortBy, filters.city, filters.type]);
+
+  const fetchBars = async (
+    currentPage: number = 1,
+    isLoadMore: boolean = false,
+  ) => {
+    try {
+      if (isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+
+      let url = `/api/bars?isActive=true&page=${currentPage}&limit=20`;
+
+      // Add user location for distance calculation
+      if (userLocation) {
+        url += `&userLat=${userLocation.latitude}&userLng=${userLocation.longitude}`;
+      }
+
+      // Only add sortBy if not "distance" (since API defaults to distance)
+      if (sortBy !== "distance") {
+        url += `&sortBy=${sortBy}`;
+      }
+
+      // Add filters
+      if (filters.city) {
+        url += `&cityName=${encodeURIComponent(filters.city)}`;
+      }
+      if (filters.type) {
+        const typeEnum = filters.type.toUpperCase().replace(/ /g, "_");
+        url += `&barTypes=${typeEnum}`;
+        console.log("🎯 Applying type filter:", typeEnum);
+      }
+
+      console.log("📡 Fetching bars:", url);
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch bars: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const barsArray = result.data || result.bars || result;
+      const pagination = result.pagination;
+
+      // Calculate open status for each bar
+      const enhancedBars = barsArray.map((bar: Bar) => ({
+        ...bar,
+        isOpen: calculateIsOpen(bar.operatingHours),
+      }));
+
+      if (isLoadMore) {
+        setBars((prev) => [...prev, ...enhancedBars]);
+      } else {
+        setBars(enhancedBars);
+      }
+
+      if (pagination) {
+        setTotalPages(pagination.totalPages);
+        setTotalBars(pagination.totalCount);
+        setHasMore(pagination.hasNextPage);
+        setPage(currentPage);
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while fetching bars",
+      );
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (hasMore && !loadingMore && page < totalPages) {
+      fetchBars(page + 1, true);
+    }
+  };
+
+  // Add inline style to body
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+    `;
+    document.head.appendChild(style);
+
     document.body.style.background =
       "linear-gradient(-45deg, rgb(9, 9, 11), rgb(15, 23, 42), rgb(9, 9, 11), rgb(15, 23, 42))";
     document.body.style.backgroundSize = "400% 400%";
@@ -653,10 +617,11 @@ export default function Bars() {
       document.body.style.background = "";
       document.body.style.backgroundSize = "";
       document.body.style.animation = "";
+      document.head.removeChild(style);
     };
   }, []);
 
-  if (loading) {
+  if (loading && bars.length === 0) {
     return (
       <Page>
         <Title>Explore All Bars</Title>
@@ -674,21 +639,29 @@ export default function Bars() {
     );
   }
 
+  // Show category filter description
+  const categoryName = filters.type ? filters.type.replace(/_/g, " ") : "";
+
   return (
     <Page>
       <Title>Explore All Bars</Title>
-      <Description>Discover {bars.length} bars across Finland</Description>
+      <Description>
+        {categoryName
+          ? `Showing ${categoryName} bars`
+          : `Discover ${totalBars} bars across Finland`}
+      </Description>
 
-      {/* Filter and Sort Controls */}
       <ControlsContainer>
         <MobileFiltersRow>
           <FilterSelect
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
           >
-            <option value="name">Sort by Name</option>
-            <option value="distance">Sort by Distance</option>
-            <option value="open">Sort by Open First</option>
+            <option value="distance">
+              📍 Sort by Distance (Nearest First)
+            </option>
+            <option value="name">📝 Sort by Name</option>
+            <option value="open">🟢 Sort by Open First</option>
           </FilterSelect>
 
           <FilterSelect
@@ -736,14 +709,17 @@ export default function Bars() {
       </ControlsContainer>
 
       <ResultsCount>
-        Showing {sortedAndFilteredBars.length} of {bars.length} bars
+        Showing {filteredAndSortedBars.length} of {totalBars} bars
+        {categoryName && ` • ${categoryName}`}
+        {!userLocation &&
+          sortBy === "distance" &&
+          " • Enable location for nearest bars"}
         {filters.showOpenOnly && " • Open now"}
         {filters.city && ` • In ${filters.city}`}
-        {filters.type && ` • ${filters.type}`}
       </ResultsCount>
 
       <BarsGrid>
-        {sortedAndFilteredBars.map((bar) => {
+        {filteredAndSortedBars.map((bar) => {
           const todaysHours = getTodaysHours(bar.operatingHours);
 
           return (
@@ -754,7 +730,6 @@ export default function Bars() {
                   justifyContent: "space-between",
                   alignItems: "flex-start",
                   marginBottom: "0.5rem",
-                  backgroundColor: "red !important",
                 }}
               >
                 <BarName>{bar.name}</BarName>
@@ -764,10 +739,9 @@ export default function Bars() {
                     gap: "0.5rem",
                     flexDirection: "column",
                     alignItems: "flex-end",
-                    backgroundColor: "transparent !important",
                   }}
                 >
-                  {bar.distance && (
+                  {bar.distance !== undefined && bar.distance !== null && (
                     <DistanceBadge>
                       📍 {formatDistance(bar.distance)}
                     </DistanceBadge>
@@ -792,18 +766,36 @@ export default function Bars() {
               )}
 
               <BarDetails>
-                <DetailTag>{bar.city.name}</DetailTag>
-                <DetailTag>{bar.district}</DetailTag>
+                <DetailTag>{bar.cityName || "Helsinki"}</DetailTag>
+                <DetailTag>{bar.district || "Central"}</DetailTag>
                 <DetailTag>{bar.type.replace(/_/g, " ")}</DetailTag>
-                {bar.vipEnabled && bar.vipPrice && (
-                  <VIPBadge>VIP: €{bar.vipPrice}</VIPBadge>
-                )}
+                {bar.vipEnabled && <VIPBadge>⭐ VIP Available</VIPBadge>}
               </BarDetails>
               <Address>{bar.address}</Address>
             </BarCard>
           );
         })}
       </BarsGrid>
+
+      {hasMore && !loading && bars.length > 0 && (
+        <LoadMoreButton onClick={loadMore} disabled={loadingMore}>
+          {loadingMore
+            ? "Loading more..."
+            : `Load More (${totalBars - bars.length} remaining)`}
+        </LoadMoreButton>
+      )}
+
+      {loadingMore && (
+        <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>
+          Loading more bars...
+        </div>
+      )}
+
+      {!hasMore && bars.length > 0 && (
+        <div style={{ textAlign: "center", padding: "2rem", color: "#64748b" }}>
+          You&apos;ve seen all {totalBars} bars 🎉
+        </div>
+      )}
     </Page>
   );
 }

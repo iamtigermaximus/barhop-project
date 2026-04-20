@@ -1,246 +1,13 @@
-// "use client";
-// import { useState, useEffect } from "react";
-// import { useParams } from "next/navigation";
-// import {
-//   ActionButton,
-//   Address,
-//   BackButton,
-//   BarMeta,
-//   BarName,
-//   Container,
-//   ContentGrid,
-//   Description,
-//   ErrorState,
-//   Feature,
-//   FeaturesGrid,
-//   FeatureText,
-//   Header,
-//   LoadingState,
-//   MainContent,
-//   SecondaryButton,
-//   Sidebar,
-//   Tag,
-//   VipPrice,
-//   VipTag,
-// } from "./BarDetails.styles";
-
-// interface Bar {
-//   id: string;
-//   name: string;
-//   description: string | null;
-//   address: string;
-//   district: string;
-//   type: string;
-//   vipEnabled: boolean;
-//   vipPrice: number | null;
-//   city: {
-//     id: string;
-//     name: string;
-//     country: string;
-//   };
-//   // Add fields that exist in your schema
-//   phone?: string | null;
-//   website?: string | null;
-//   imageUrl?: string | null;
-//   latitude?: number;
-//   longitude?: number;
-// }
-
-// export default function BarDetails() {
-//   const params = useParams();
-//   const [bar, setBar] = useState<Bar | null>(null);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-//   const [selectedAction, setSelectedAction] = useState<
-//     "vip" | "plan" | "group"
-//   >();
-
-//   useEffect(() => {
-//     const fetchBar = async () => {
-//       try {
-//         setLoading(true);
-//         const response = await fetch(`/api/bars/${params.id}`);
-
-//         if (!response.ok) {
-//           if (response.status === 404) {
-//             setError("Bar not found");
-//           } else {
-//             setError("Failed to fetch bar details");
-//           }
-//           return;
-//         }
-
-//         const barData = await response.json();
-//         setBar(barData);
-//       } catch (err) {
-//         setError("Error fetching bar details");
-//         console.error("Error:", err);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     if (params.id) {
-//       fetchBar();
-//     }
-//   }, [params.id]);
-
-//   // Add handler functions to use the state
-//   const handleVipClick = () => {
-//     setSelectedAction("vip");
-//     // Add your VIP logic here
-//     console.log("VIP selected");
-//   };
-
-//   const handlePlanClick = () => {
-//     setSelectedAction("plan");
-//     // Add your plan logic here
-//     console.log("Plan visit selected");
-//   };
-
-//   const handleGroupClick = () => {
-//     setSelectedAction("group");
-//     // Add your group logic here
-//     console.log("Create group selected");
-//   };
-
-//   const getBarFeatures = () => {
-//     if (!bar) return [];
-
-//     const features = [];
-
-//     if (bar.vipEnabled) {
-//       features.push({ icon: "⭐", text: "VIP Skip-the-Line" });
-//     }
-
-//     if (bar.type === "CLUB") {
-//       features.push({ icon: "💃", text: "Dance Floor" });
-//       features.push({ icon: "🎵", text: "Live DJ" });
-//     }
-
-//     if (bar.type === "LOUNGE" || bar.type === "COCKTAIL_BAR") {
-//       features.push({ icon: "🍸", text: "Craft Cocktails" });
-//     }
-
-//     if (bar.type === "SPORTS_BAR") {
-//       features.push({ icon: "📺", text: "Sports Screens" });
-//     }
-
-//     if (bar.type === "LIVE_MUSIC") {
-//       features.push({ icon: "🎤", text: "Live Music" });
-//     }
-
-//     return features;
-//   };
-
-//   if (loading) {
-//     return (
-//       <Container>
-//         <LoadingState>Loading bar details...</LoadingState>
-//       </Container>
-//     );
-//   }
-
-//   if (error || !bar) {
-//     return (
-//       <Container>
-//         <ErrorState>{error || "Bar not found"}</ErrorState>
-//       </Container>
-//     );
-//   }
-
-//   const features = getBarFeatures();
-
-//   return (
-//     <Container>
-//       <BackButton href="/bars">← Back to All Bars</BackButton>
-
-//       <Header>
-//         <BarName>{bar.name}</BarName>
-//         <BarMeta>
-//           <Tag>{bar.city.name}</Tag>
-//           <Tag>{bar.district}</Tag>
-//           <Tag>{bar.type.replace("_", " ")}</Tag>
-//           {bar.vipEnabled && <VipTag>VIP Available</VipTag>}
-//         </BarMeta>
-//         <Address>{bar.address}</Address>
-//       </Header>
-
-//       <ContentGrid>
-//         <MainContent>
-//           <Description>
-//             {bar.description ||
-//               "Experience great nightlife at this popular venue."}
-//           </Description>
-
-//           {features.length > 0 && (
-//             <>
-//               <h2
-//                 style={{
-//                   color: "#f8fafc",
-//                   fontSize: "1.5rem",
-//                   marginBottom: "1rem",
-//                 }}
-//               >
-//                 Features
-//               </h2>
-//               <FeaturesGrid>
-//                 {features.map((feature, index) => (
-//                   <Feature key={index}>
-//                     <span>{feature.icon}</span>
-//                     <FeatureText>{feature.text}</FeatureText>
-//                   </Feature>
-//                 ))}
-//               </FeaturesGrid>
-//             </>
-//           )}
-//         </MainContent>
-
-//         <Sidebar>
-//           {bar.vipEnabled && bar.vipPrice && (
-//             <>
-//               <VipPrice>VIP: €{bar.vipPrice}</VipPrice>
-//               <ActionButton onClick={handleVipClick}>Buy VIP Pass</ActionButton>
-//             </>
-//           )}
-
-//           <ActionButton onClick={handlePlanClick}>Plan Visit</ActionButton>
-
-//           <SecondaryButton onClick={handleGroupClick}>
-//             Create Group
-//           </SecondaryButton>
-
-//           {/* Quick Info */}
-//           <div
-//             style={{
-//               marginTop: "2rem",
-//               paddingTop: "2rem",
-//               borderTop: "1px solid #334155",
-//             }}
-//           >
-//             <h3 style={{ color: "#f8fafc", marginBottom: "1rem" }}>
-//               Quick Info
-//             </h3>
-//             <div style={{ color: "#e2e8f0", fontSize: "0.875rem" }}>
-//               <p>
-//                 📍 {bar.district}, {bar.city.name}
-//               </p>
-//               <p>🏷️ {bar.type.replace("_", " ")}</p>
-//               {bar.vipEnabled && <p>⭐ Skip-the-line available</p>}
-//             </div>
-//           </div>
-//         </Sidebar>
-//       </ContentGrid>
-//     </Container>
-//   );
-// }
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import styled from "styled-components";
 import Link from "next/link";
-
-// Types
+interface BarDetailsProps {
+  barId: string;
+}
+// Types based on your actual schema
 interface City {
   id: string;
   name: string;
@@ -252,55 +19,37 @@ interface SocialActivity {
   socialMeetupsCount: number;
   isHotspot: boolean;
   heatLevel: number;
+  lastActivity: string;
 }
 
 interface OperatingHours {
   [key: string]: { open: string; close: string };
 }
 
+// Fix: Replace 'any' with proper type
+interface ValidHours {
+  start: string;
+  end: string;
+}
+
 interface Promotion {
   id: string;
   title: string;
   description: string;
-  type:
-    | "HAPPY_HOUR"
-    | "LADIES_NIGHT"
-    | "LIVE_MUSIC"
-    | "THEME_NIGHT"
-    | "DRINK_SPECIAL";
-  startTime: string;
-  endTime: string;
-  discount?: string;
-  days: string[];
+  type: string;
+  discount: number | null;
+  imageUrl: string | null;
+  accentColor: string | null;
+  callToAction: string | null;
+  conditions: string[];
+  startDate: string;
+  endDate: string;
+  validDays: string[];
+  validHours: ValidHours | null; // Fixed: replaced 'any' with proper type
   isActive: boolean;
-}
-
-interface Review {
-  id: string;
-  userId: string;
-  userName: string;
-  rating: number;
-  comment: string;
-  createdAt: string;
-}
-
-interface Rating {
-  average: number;
-  count: number;
-  recentReviews: Review[];
-}
-
-interface Transport {
-  metroStations?: string[];
-  busStops?: string[];
-  parking: boolean;
-  bikeParking: boolean;
-  notes?: string;
-}
-
-interface ValidHours {
-  start: string;
-  end: string;
+  views: number;
+  clicks: number;
+  redemptions: number;
 }
 
 interface VIPPassEnhanced {
@@ -308,62 +57,76 @@ interface VIPPassEnhanced {
   name: string;
   description: string;
   priceCents: number;
-  originalPriceCents?: number;
+  originalPriceCents: number | null;
   soldCount: number;
   totalQuantity: number;
   benefits: string[];
   skipLinePriority: boolean;
   coverFeeIncluded: boolean;
   coverFeeAmount: number;
-  validityStart: Date;
-  validityEnd: Date;
+  validityStart: string;
+  validityEnd: string;
   validDays: string[];
-  validHours: ValidHours;
+  validHours: ValidHours | null; // Fixed: replaced 'any' with proper type
+  isActive: boolean;
+  type: string;
+}
+
+interface BarStaff {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
   isActive: boolean;
 }
 
-interface EnhancedBar {
+interface BarData {
   id: string;
   name: string;
   description: string | null;
-  district: string;
+  address: string;
+  district: string | null;
   type: string;
   vipEnabled: boolean;
   vipPrice: number | null;
-  address: string;
-  city: City;
-  phone?: string | null;
-  website?: string | null;
-  imageUrl?: string | null;
-  latitude: number;
-  longitude: number;
-  priceLevel?: number;
-  features?: string[];
-  socialActivity?: SocialActivity;
-  operatingHours?: OperatingHours;
-  currentPromotions?: Promotion[];
-  rating?: Rating;
-  transport?: Transport;
-  vipPassesEnhanced?: VIPPassEnhanced[];
-  distance?: number;
-  isOpen?: boolean;
-  crowdLevel?: "quiet" | "moderate" | "busy" | "very-busy";
-  estimatedWait?: number;
-  nextOpening?: string;
-  currentHappyHour?: boolean;
+  vipCapacity: number | null;
+  cityName: string | null;
+  city: City | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  instagram: string | null;
+  coverImage: string | null;
+  imageUrl: string | null;
+  logoUrl: string | null;
+  imageUrls: string[];
+  latitude: number | null;
+  longitude: number | null;
+  operatingHours: OperatingHours | null;
+  priceRange: string | null;
+  capacity: number | null;
+  amenities: string[];
+  isVerified: boolean;
+  isActive: boolean;
+  status: string;
+  profileViews: number;
+  directionClicks: number;
+  callClicks: number;
+  websiteClicks: number;
+  shareCount: number;
+  createdAt: string;
+  updatedAt: string;
+  claimedAt: string | null;
+  vipPassesEnhanced: VIPPassEnhanced[];
+  socialActivity: SocialActivity | null;
+  currentPromotions: Promotion[];
+  staff: BarStaff[];
 }
 
-// Styled Components (keep all your existing styled components exactly as they were)
+// Styled Components (keep all your existing styled components)
 const Container = styled.div`
   margin: 0 auto;
   padding: 2rem 1rem;
-  /* background: linear-gradient(
-    -45deg,
-    rgb(9, 9, 11),
-    rgb(24, 20, 31),
-    rgb(9, 9, 11),
-    rgb(21, 17, 23)
-  ); */
   min-height: 100vh;
   animation: gradientShift 8s ease infinite;
 
@@ -374,7 +137,8 @@ const Container = styled.div`
   @media (max-width: 480px) {
     padding: 1rem 2rem 10rem;
   }
-  /* @keyframes gradientShift {
+
+  @keyframes gradientShift {
     0% {
       background-position: 0% 50%;
     }
@@ -385,26 +149,6 @@ const Container = styled.div`
       background-position: 0% 50%;
     }
   }
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(
-        circle at 30% 20%,
-        rgba(14, 165, 233, 0.1) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        circle at 70% 80%,
-        rgba(139, 92, 246, 0.1) 0%,
-        transparent 50%
-      );
-    pointer-events: none;
-  } */
 `;
 
 const BackButton = styled(Link)`
@@ -563,7 +307,6 @@ const ActionButton = styled.button`
   margin-bottom: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  animation: gradientShift 4s ease infinite;
 
   &:hover {
     background: #0369a1;
@@ -574,24 +317,6 @@ const ActionButton = styled.button`
     background: #475569;
     cursor: not-allowed;
     transform: none;
-  }
-`;
-
-const SecondaryButton = styled.button`
-  width: 100%;
-  background: transparent;
-  color: #f8fafc;
-  border: 2px solid #475569;
-  padding: 1rem 2rem;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 1.125rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: #0ea5e9;
-    transform: translateY(-2px);
   }
 `;
 
@@ -633,38 +358,6 @@ const StatusBadge = styled.span<{ $isOpen: boolean }>`
   border: 1px solid
     ${(props) =>
       props.$isOpen ? "rgba(34, 197, 94, 0.3)" : "rgba(239, 68, 68, 0.3)"};
-`;
-
-const CrowdIndicator = styled.span<{ $level: string }>`
-  background: ${(props) =>
-    props.$level === "quiet"
-      ? "rgba(34, 197, 94, 0.2)"
-      : props.$level === "moderate"
-      ? "rgba(234, 179, 8, 0.2)"
-      : props.$level === "busy"
-      ? "rgba(249, 115, 22, 0.2)"
-      : "rgba(239, 68, 68, 0.2)"};
-  color: ${(props) =>
-    props.$level === "quiet"
-      ? "#22c55e"
-      : props.$level === "moderate"
-      ? "#eab308"
-      : props.$level === "busy"
-      ? "#f97316"
-      : "#ef4444"};
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border: 1px solid
-    ${(props) =>
-      props.$level === "quiet"
-        ? "rgba(34, 197, 94, 0.3)"
-        : props.$level === "moderate"
-        ? "rgba(234, 179, 8, 0.3)"
-        : props.$level === "busy"
-        ? "rgba(249, 115, 22, 0.3)"
-        : "rgba(239, 68, 68, 0.3)"};
 `;
 
 const TabNavigation = styled.div`
@@ -745,27 +438,8 @@ const OperatingHoursTable = styled.div`
 `;
 
 const PromotionCard = styled.div<{ $type: string }>`
-  background: ${(props) =>
-    props.$type === "HAPPY_HOUR"
-      ? "rgba(234, 179, 8, 0.1)"
-      : props.$type === "LADIES_NIGHT"
-      ? "rgba(236, 72, 153, 0.1)"
-      : props.$type === "LIVE_MUSIC"
-      ? "rgba(139, 92, 246, 0.1)"
-      : props.$type === "THEME_NIGHT"
-      ? "rgba(249, 115, 22, 0.1)"
-      : "rgba(16, 185, 129, 0.1)"};
-  border: 1px solid
-    ${(props) =>
-      props.$type === "HAPPY_HOUR"
-        ? "rgba(234, 179, 8, 0.2)"
-        : props.$type === "LADIES_NIGHT"
-        ? "rgba(236, 72, 153, 0.2)"
-        : props.$type === "LIVE_MUSIC"
-        ? "rgba(139, 92, 246, 0.2)"
-        : props.$type === "THEME_NIGHT"
-        ? "rgba(249, 115, 22, 0.2)"
-        : "rgba(16, 185, 129, 0.2)"};
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid #334155;
   border-radius: 8px;
   padding: 1.5rem;
 
@@ -797,9 +471,8 @@ const PromotionCard = styled.div<{ $type: string }>`
     gap: 1rem;
     flex-wrap: wrap;
 
-    .promo-time,
-    .promo-days,
-    .promo-discount {
+    .promo-date,
+    .promo-views {
       background: rgba(255, 255, 255, 0.1);
       color: #e2e8f0;
       padding: 0.25rem 0.75rem;
@@ -807,160 +480,29 @@ const PromotionCard = styled.div<{ $type: string }>`
       font-size: 0.8rem;
       font-weight: 500;
     }
-
-    .promo-discount {
-      background: rgba(34, 197, 94, 0.2);
-      color: #22c55e;
-    }
-  }
-`;
-
-const TransportDetails = styled.div`
-  background: rgba(30, 41, 59, 0.5);
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  border: 1px solid #334155;
-
-  h3 {
-    color: #f8fafc;
-    margin-bottom: 1rem;
-  }
-
-  .transport-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-  }
-
-  .transport-item {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-
-    .transport-icon {
-      font-size: 1.5rem;
-    }
-
-    .transport-title {
-      color: #94a3b8;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-
-    .transport-info {
-      color: #e2e8f0;
-      font-size: 0.9rem;
-    }
-  }
-
-  .transport-notes {
-    margin-top: 1rem;
-    padding: 1rem;
-    background: rgba(59, 130, 246, 0.1);
-    border-radius: 6px;
-    color: #3b82f6;
-    font-size: 0.9rem;
-  }
-`;
-
-const RatingSection = styled.div`
-  .rating-overview {
-    display: flex;
-    gap: 2rem;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background-color: transparent !important;
-    border-radius: 12px;
-    border: 1px solid #334155;
-
-    .rating-score {
-      text-align: center;
-
-      .rating-number {
-        font-size: 3rem;
-        font-weight: 700;
-        color: #f8fafc;
-      }
-
-      .rating-stars {
-        font-size: 1.2rem;
-        margin: 0.5rem 0;
-      }
-
-      .rating-count {
-        color: #94a3b8;
-        font-size: 0.9rem;
-      }
-    }
-  }
-
-  .reviews-list {
-    h3 {
-      color: #f8fafc;
-      margin-bottom: 1rem;
-    }
-  }
-`;
-
-const ReviewCard = styled.div`
-  background: rgba(30, 41, 59, 0.5);
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid #334155;
-
-  .review-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-
-    .reviewer-info {
-      .reviewer-name {
-        color: #f8fafc;
-        font-weight: 600;
-        margin-bottom: 0.25rem;
-      }
-
-      .review-date {
-        color: #94a3b8;
-        font-size: 0.8rem;
-      }
-    }
-
-    .review-rating {
-      color: #fbbf24;
-    }
-  }
-
-  .review-comment {
-    color: #e2e8f0;
-    line-height: 1.5;
   }
 `;
 
 const VipPassesSection = styled.div`
+  margin-top: 1rem;
+
   .vip-passes-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 1.5rem;
   }
 
   .vip-pass-card {
-    background: rgba(30, 41, 59, 0.5);
-    border-radius: 12px;
+    background: rgba(30, 41, 59, 0.6);
+    border-radius: 16px;
     padding: 1.5rem;
-    border: 1px solid #334155;
+    border: 1px solid rgba(139, 92, 246, 0.3);
     transition: all 0.3s ease;
 
     &:hover {
       border-color: #8b5cf6;
-      transform: translateY(-2px);
+      transform: translateY(-4px);
+      background: rgba(30, 41, 59, 0.8);
     }
 
     .vip-pass-header {
@@ -968,18 +510,21 @@ const VipPassesSection = styled.div`
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
 
       .vip-pass-name {
         color: #f8fafc;
         margin: 0;
-        font-size: 1.2rem;
+        font-size: 1.25rem;
+        font-weight: 700;
       }
 
       .vip-pass-price {
         text-align: right;
 
         .current-price {
-          color: #f8fafc;
+          color: #38bdf8;
           font-size: 1.5rem;
           font-weight: 700;
         }
@@ -987,7 +532,7 @@ const VipPassesSection = styled.div`
         .original-price {
           color: #94a3b8;
           text-decoration: line-through;
-          font-size: 1rem;
+          font-size: 0.9rem;
           margin-left: 0.5rem;
         }
       }
@@ -997,6 +542,7 @@ const VipPassesSection = styled.div`
       color: #94a3b8;
       margin-bottom: 1rem;
       line-height: 1.5;
+      font-size: 0.9rem;
     }
 
     .vip-pass-benefits {
@@ -1008,18 +554,22 @@ const VipPassesSection = styled.div`
         gap: 0.5rem;
         color: #e2e8f0;
         margin-bottom: 0.5rem;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
       }
     }
 
     .vip-pass-details {
-      display: grid;
-      gap: 0.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
       margin-bottom: 1.5rem;
+      padding: 0.75rem 0;
+      border-top: 1px solid #334155;
+      border-bottom: 1px solid #334155;
 
       .detail-item {
         color: #94a3b8;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
 
         strong {
           color: #e2e8f0;
@@ -1029,27 +579,71 @@ const VipPassesSection = styled.div`
 
     .buy-vip-button {
       width: 100%;
-      background: linear-gradient(45deg, #8b5cf6, #a855f7);
+      background: linear-gradient(135deg, #8b5cf6, #6d28d9);
       color: white;
       border: none;
-      padding: 1rem 2rem;
-      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
 
       &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
       }
     }
   }
 `;
 
-const ImageGallery = styled.div`
-  h2 {
-    color: #f8fafc;
-    margin-bottom: 1rem;
+const PhotosSection = styled.div`
+  margin-top: 1rem;
+
+  .photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .photo-card {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #1e293b;
+
+    &:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .cover-photo {
+    margin-bottom: 2rem;
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: scale(1.01);
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
   }
 `;
 
@@ -1069,151 +663,142 @@ const MapSection = styled.div`
   }
 `;
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+`;
+
+const ModalImage = styled.img`
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+`;
+
+// Helper functions
+const calculateIsOpen = (operatingHours?: OperatingHours | null): boolean => {
+  if (!operatingHours) return false;
+
+  const today = new Date().toLocaleString("en-us", { weekday: "long" });
+  const todaysHours = operatingHours[today];
+
+  if (!todaysHours || todaysHours.open === "Closed") return false;
+
+  const now = new Date();
+  const currentTime = now.toTimeString().slice(0, 5);
+
+  if (todaysHours.close < todaysHours.open) {
+    return currentTime >= todaysHours.open;
+  } else {
+    return currentTime >= todaysHours.open && currentTime <= todaysHours.close;
+  }
+};
+
+const getTodayHours = (operatingHours?: OperatingHours | null) => {
+  if (!operatingHours) return undefined;
+  const today = new Date().toLocaleString("en-us", { weekday: "long" });
+  return operatingHours[today];
+};
+
 // Main Component
-export default function BarDetails() {
-  const params = useParams();
+const BarDetails = ({ barId }: BarDetailsProps) => {
+  // const params = useParams();
   const router = useRouter();
-  const [bar, setBar] = useState<EnhancedBar | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [bar, setBar] = useState<BarData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedAction, setSelectedAction] = useState<
-    "vip" | "plan" | "group"
-  >();
-  const [activeTab, setActiveTab] = useState<
-    "overview" | "reviews" | "photos" | "vip"
-  >("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "vip" | "photos">(
+    "overview",
+  );
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+
+  // Fetch bar data - wrapped in useCallback to avoid dependency issues
+  const fetchBar = useCallback(async (): Promise<void> => {
+    try {
+      setLoading(true);
+
+      if (!barId) {
+        throw new Error("Bar ID is required");
+      }
+
+      const response = await fetch(`/api/bars/${barId}`);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Bar not found");
+        }
+        throw new Error(`Failed to fetch bar: ${response.status}`);
+      }
+
+      const barData: BarData = await response.json();
+      setBar(barData);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Error fetching bar details",
+      );
+      console.error("Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [barId]);
 
   useEffect(() => {
-    const fetchBar = async () => {
-      try {
-        setLoading(true);
-
-        if (!params.id) {
-          throw new Error("Bar ID is required");
-        }
-
-        const response = await fetch(`/api/bars/${params.id}`);
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error("Bar not found");
-          }
-          throw new Error(`Failed to fetch bar: ${response.status}`);
-        }
-
-        const barData: EnhancedBar = await response.json();
-
-        // Enhance bar with calculated fields
-        const enhancedBar = {
-          ...barData,
-          isOpen: calculateIsOpen(barData.operatingHours),
-          crowdLevel: calculateCrowdLevel(barData.socialActivity),
-          estimatedWait: calculateEstimatedWait(barData.socialActivity),
-          currentHappyHour: calculateCurrentHappyHour(
-            barData.currentPromotions
-          ),
-        };
-
-        setBar(enhancedBar);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Error fetching bar details"
-        );
-        console.error("Error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchBar();
-  }, [params.id]);
+  }, [fetchBar]);
 
-  // Helper functions for calculated fields
-  const calculateIsOpen = (operatingHours?: OperatingHours): boolean => {
-    if (!operatingHours) return false;
-
-    const today = new Date().toLocaleString("en-us", { weekday: "long" });
-    const todaysHours = operatingHours[today];
-
-    if (!todaysHours || todaysHours.open === "Closed") return false;
-
-    const now = new Date();
-    const currentTime = now.toTimeString().slice(0, 5);
-
-    // Handle closing times after midnight
-    if (todaysHours.close < todaysHours.open) {
-      return currentTime >= todaysHours.open;
-    } else {
-      return (
-        currentTime >= todaysHours.open && currentTime <= todaysHours.close
-      );
-    }
-  };
-
-  const calculateCrowdLevel = (
-    socialActivity?: SocialActivity
-  ): "quiet" | "moderate" | "busy" | "very-busy" => {
-    if (!socialActivity) return "quiet";
-
-    if (socialActivity.activeUsersCount >= 20) return "very-busy";
-    if (socialActivity.activeUsersCount >= 10) return "busy";
-    if (socialActivity.activeUsersCount >= 5) return "moderate";
-    return "quiet";
-  };
-
-  const calculateEstimatedWait = (socialActivity?: SocialActivity): number => {
-    if (!socialActivity) return 0;
-
-    if (socialActivity.activeUsersCount >= 20) return 30;
-    if (socialActivity.activeUsersCount >= 10) return 15;
-    if (socialActivity.activeUsersCount >= 5) return 5;
-    return 0;
-  };
-
-  const calculateCurrentHappyHour = (promotions?: Promotion[]): boolean => {
-    if (!promotions) return false;
-
-    const now = new Date();
-    const currentDay = now.toLocaleString("en-us", { weekday: "long" });
-    const currentTime = now.toTimeString().slice(0, 5);
-
-    return promotions.some(
-      (promo) =>
-        promo.type === "HAPPY_HOUR" &&
-        promo.isActive &&
-        promo.days.includes(currentDay) &&
-        currentTime >= promo.startTime &&
-        currentTime <= promo.endTime
-    );
-  };
-
-  const handleVipClick = () => {
-    setSelectedAction("vip");
+  const handleVipClick = (): void => {
     setActiveTab("vip");
   };
 
-  const handlePlanClick = () => {
-    setSelectedAction("plan");
-    router.push(`/plan-visit?bar=${bar?.id}`);
+  const handlePhotoClick = (url: string): void => {
+    setSelectedPhoto(url);
   };
 
-  // const handleGroupClick = () => {
-  //   setSelectedAction("group");
-  //   router.push(`/groups/create?bar=${bar?.id}`);
-  // };
-
-  const getTodayHours = (): { open: string; close: string } | undefined => {
-    if (!bar?.operatingHours) return undefined;
-    const today = new Date().toLocaleString("en-us", { weekday: "long" });
-    return bar.operatingHours[today];
+  const handleCloseModal = (): void => {
+    setSelectedPhoto(null);
   };
+
+  const formatPrice = (cents: number): string => {
+    return `€${(cents / 100).toFixed(2)}`;
+  };
+
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const getAllImages = (): string[] => {
+    const images: string[] = [];
+    if (bar?.coverImage) images.push(bar.coverImage);
+    if (bar?.imageUrls && bar.imageUrls.length > 0) {
+      images.push(...bar.imageUrls);
+    }
+    return images;
+  };
+
+  const isOpen = calculateIsOpen(bar?.operatingHours);
+  const todayHours = getTodayHours(bar?.operatingHours);
+  const allImages = getAllImages();
+  const hasVipPasses =
+    bar?.vipPassesEnhanced && bar.vipPassesEnhanced.length > 0;
 
   if (loading) {
     return (
       <Container>
         <LoadingState>
           <div style={{ textAlign: "center" }}>
-            {/* <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🎪</div> */}
             <p>Loading bar details...</p>
           </div>
         </LoadingState>
@@ -1228,27 +813,29 @@ export default function BarDetails() {
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>❌</div>
             <p>{error || "Bar not found"}</p>
-            <BackButton href="/bars">← Back to All Bars</BackButton>
+            <BackButton href="/app/bars">← Back to All Bars</BackButton>
           </div>
         </ErrorState>
       </Container>
     );
   }
 
-  const todayHours = getTodayHours();
-  const isOpen = calculateIsOpen(bar.operatingHours);
-
   return (
     <Container>
-      <BackButton href="/bars">← Back to All Bars</BackButton>
+      <BackButton href="/app/bars">← Back to All Bars</BackButton>
 
       <Header>
         <BarName>{bar.name}</BarName>
         <BarMeta>
-          <Tag>{bar.city.name}</Tag>
-          <Tag>{bar.district}</Tag>
-          <Tag>{bar.type.replace("_", " ")}</Tag>
+          <Tag>{bar.cityName || "Helsinki"}</Tag>
+          {bar.district && <Tag>{bar.district}</Tag>}
+          <Tag>{bar.type.replace(/_/g, " ")}</Tag>
           {bar.vipEnabled && <VipTag>VIP Available</VipTag>}
+          {bar.isVerified && (
+            <Tag style={{ background: "#22c55e", color: "white" }}>
+              ✓ Verified
+            </Tag>
+          )}
           {bar.socialActivity?.isHotspot && (
             <Tag
               style={{
@@ -1263,7 +850,6 @@ export default function BarDetails() {
         </BarMeta>
         <Address>{bar.address}</Address>
 
-        {/* Quick Status Bar */}
         <div
           style={{
             display: "flex",
@@ -1281,32 +867,19 @@ export default function BarDetails() {
               Today: {todayHours.open} - {todayHours.close}
             </span>
           )}
-          {bar.crowdLevel && (
-            <CrowdIndicator $level={bar.crowdLevel}>
-              {bar.crowdLevel === "quiet" && "😴 Quiet"}
-              {bar.crowdLevel === "moderate" && "😊 Moderate"}
-              {bar.crowdLevel === "busy" && "🔥 Busy"}
-              {bar.crowdLevel === "very-busy" && "💥 Very Busy"}
-            </CrowdIndicator>
-          )}
-          {bar.estimatedWait && (
-            <span
+          {bar.socialActivity && (
+            <Tag
               style={{
                 background: "rgba(59, 130, 246, 0.2)",
                 color: "#3b82f6",
-                padding: "0.25rem 0.75rem",
-                borderRadius: "12px",
-                fontSize: "0.8rem",
-                fontWeight: "600",
               }}
             >
-              ⏱️ {bar.estimatedWait} min wait
-            </span>
+              👥 {bar.socialActivity.activeUsersCount} people here
+            </Tag>
           )}
         </div>
       </Header>
 
-      {/* Navigation Tabs */}
       <TabNavigation>
         <Tab
           $isActive={activeTab === "overview"}
@@ -1314,33 +887,31 @@ export default function BarDetails() {
         >
           Overview
         </Tab>
-        <Tab
-          $isActive={activeTab === "reviews"}
-          onClick={() => setActiveTab("reviews")}
-        >
-          Reviews ({bar.rating?.count || 0})
-        </Tab>
-        <Tab
-          $isActive={activeTab === "vip"}
-          onClick={() => setActiveTab("vip")}
-        >
-          VIP Passes ({bar.vipPassesEnhanced?.length || 0})
-        </Tab>
-        <Tab
-          $isActive={activeTab === "photos"}
-          onClick={() => setActiveTab("photos")}
-        >
-          Photos
-        </Tab>
+        {hasVipPasses && (
+          <Tab
+            $isActive={activeTab === "vip"}
+            onClick={() => setActiveTab("vip")}
+          >
+            VIP Passes ({bar.vipPassesEnhanced.length})
+          </Tab>
+        )}
+        {allImages.length > 0 && (
+          <Tab
+            $isActive={activeTab === "photos"}
+            onClick={() => setActiveTab("photos")}
+          >
+            Photos ({allImages.length})
+          </Tab>
+        )}
       </TabNavigation>
 
       <ContentGrid>
         <MainContent>
+          {/* OVERVIEW TAB */}
           {activeTab === "overview" && (
             <>
-              <Description>{bar.description}</Description>
+              {bar.description && <Description>{bar.description}</Description>}
 
-              {/* Social Activity */}
               {bar.socialActivity && (
                 <SocialActivityPanel>
                   <h3>Live Activity</h3>
@@ -1381,12 +952,27 @@ export default function BarDetails() {
                         </div>
                       </div>
                     </div>
+                    {bar.socialActivity.heatLevel > 0 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                        }}
+                      >
+                        <span style={{ fontSize: "1.5rem" }}>🔥</span>
+                        <div>
+                          <div style={{ fontWeight: "600", color: "#f8fafc" }}>
+                            Heat Level {bar.socialActivity.heatLevel}/10
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </SocialActivityPanel>
               )}
 
-              {/* Features */}
-              {bar.features && bar.features.length > 0 && (
+              {bar.amenities && bar.amenities.length > 0 && (
                 <>
                   <h2
                     style={{
@@ -1396,20 +982,19 @@ export default function BarDetails() {
                       marginTop: "2rem",
                     }}
                   >
-                    Features & Amenities
+                    Amenities
                   </h2>
                   <FeaturesGrid>
-                    {bar.features.map((feature, index) => (
+                    {bar.amenities.map((amenity, index) => (
                       <Feature key={index}>
                         <span>✅</span>
-                        <FeatureText>{feature}</FeatureText>
+                        <FeatureText>{amenity.replace(/_/g, " ")}</FeatureText>
                       </Feature>
                     ))}
                   </FeaturesGrid>
                 </>
               )}
 
-              {/* Operating Hours */}
               {bar.operatingHours && (
                 <OperatingHoursTable>
                   <h3>Operating Hours</h3>
@@ -1417,9 +1002,7 @@ export default function BarDetails() {
                     <div key={day} className="hours-row">
                       <span className="day">{day}</span>
                       <span
-                        className={`hours ${
-                          hours.open === "Closed" ? "closed" : ""
-                        }`}
+                        className={`hours ${hours.open === "Closed" ? "closed" : ""}`}
                       >
                         {hours.open === "Closed"
                           ? "Closed"
@@ -1430,7 +1013,6 @@ export default function BarDetails() {
                 </OperatingHoursTable>
               )}
 
-              {/* Current Promotions */}
               {bar.currentPromotions && bar.currentPromotions.length > 0 && (
                 <>
                   <h2
@@ -1459,6 +1041,8 @@ export default function BarDetails() {
                             {promo.type === "LIVE_MUSIC" && "🎵"}
                             {promo.type === "THEME_NIGHT" && "🎭"}
                             {promo.type === "DRINK_SPECIAL" && "🍹"}
+                            {promo.type === "FOOD_SPECIAL" && "🍽️"}
+                            {promo.type === "VIP_OFFER" && "👑"}
                           </span>
                           <div>
                             <h4 className="promo-title">{promo.title}</h4>
@@ -1468,17 +1052,18 @@ export default function BarDetails() {
                           </div>
                         </div>
                         <div className="promo-details">
-                          <span className="promo-time">
-                            {promo.startTime} - {promo.endTime}
-                          </span>
-                          <span className="promo-days">
-                            {promo.days.join(", ")}
+                          <span className="promo-date">
+                            {formatDate(promo.startDate)} -{" "}
+                            {formatDate(promo.endDate)}
                           </span>
                           {promo.discount && (
-                            <span className="promo-discount">
-                              {promo.discount}
+                            <span className="promo-date">
+                              {promo.discount}% OFF
                             </span>
                           )}
+                          <span className="promo-views">
+                            👁️ {promo.views} views
+                          </span>
                         </div>
                       </PromotionCard>
                     ))}
@@ -1486,224 +1071,189 @@ export default function BarDetails() {
                 </>
               )}
 
-              {/* Transport Information */}
-              {bar.transport && (
-                <TransportDetails>
-                  <h3>Getting Here</h3>
-                  <div className="transport-grid">
-                    {bar.transport.metroStations &&
-                      bar.transport.metroStations.length > 0 && (
-                        <div className="transport-item">
-                          <span className="transport-icon">🚇</span>
-                          <div>
-                            <div className="transport-title">Metro</div>
-                            <div className="transport-info">
-                              {bar.transport.metroStations.join(", ")}
-                            </div>
+              {bar.staff && bar.staff.length > 0 && (
+                <>
+                  <h2
+                    style={{
+                      color: "#f8fafc",
+                      fontSize: "1.5rem",
+                      marginBottom: "1rem",
+                      marginTop: "2rem",
+                    }}
+                  >
+                    Staff
+                  </h2>
+                  <FeaturesGrid>
+                    {bar.staff.map((member) => (
+                      <Feature key={member.id}>
+                        <span>👤</span>
+                        <div>
+                          <FeatureText>{member.name}</FeatureText>
+                          <div
+                            style={{ fontSize: "0.75rem", color: "#94a3b8" }}
+                          >
+                            {member.role.replace(/_/g, " ")}
                           </div>
                         </div>
-                      )}
-                    {bar.transport.busStops &&
-                      bar.transport.busStops.length > 0 && (
-                        <div className="transport-item">
-                          <span className="transport-icon">🚌</span>
-                          <div>
-                            <div className="transport-title">Bus</div>
-                            <div className="transport-info">
-                              {bar.transport.busStops.join(", ")}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    <div className="transport-item">
-                      <span className="transport-icon">🅿️</span>
-                      <div>
-                        <div className="transport-title">Parking</div>
-                        <div className="transport-info">
-                          {bar.transport.parking
-                            ? "Available"
-                            : "Limited/Street parking"}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="transport-item">
-                      <span className="transport-icon">🚲</span>
-                      <div>
-                        <div className="transport-title">Bike Parking</div>
-                        <div className="transport-info">
-                          {bar.transport.bikeParking
-                            ? "Available"
-                            : "Not available"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {bar.transport.notes && (
-                    <div className="transport-notes">
-                      <strong>Note:</strong> {bar.transport.notes}
-                    </div>
-                  )}
-                </TransportDetails>
+                      </Feature>
+                    ))}
+                  </FeaturesGrid>
+                </>
               )}
             </>
           )}
 
-          {activeTab === "reviews" && bar.rating && (
-            <RatingSection>
-              <div className="rating-overview">
-                <div className="rating-score">
-                  <div className="rating-number">
-                    {bar.rating.average.toFixed(1)}
-                  </div>
-                  <div className="rating-stars">{"⭐".repeat(5)}</div>
-                  <div className="rating-count">{bar.rating.count} reviews</div>
-                </div>
-              </div>
-              <div className="reviews-list">
-                <h3>Recent Reviews</h3>
-                {bar.rating.recentReviews.map((review) => (
-                  <ReviewCard key={review.id}>
-                    <div className="review-header">
-                      <div className="reviewer-info">
-                        <div className="reviewer-name">{review.userName}</div>
-                        <div className="review-date">
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <div className="review-rating">
-                        {"⭐".repeat(review.rating)}
+          {/* VIP PASSES TAB */}
+          {activeTab === "vip" && hasVipPasses && (
+            <VipPassesSection>
+              <h2 style={{ color: "#f8fafc", marginBottom: "0.5rem" }}>
+                VIP Passes
+              </h2>
+              <p style={{ color: "#94a3b8", marginBottom: "2rem" }}>
+                Skip the line and enjoy exclusive benefits
+              </p>
+              <div className="vip-passes-grid">
+                {bar.vipPassesEnhanced.map((pass) => (
+                  <div key={pass.id} className="vip-pass-card">
+                    <div className="vip-pass-header">
+                      <h3 className="vip-pass-name">{pass.name}</h3>
+                      <div className="vip-pass-price">
+                        <span className="current-price">
+                          {formatPrice(pass.priceCents)}
+                        </span>
+                        {pass.originalPriceCents &&
+                          pass.originalPriceCents > pass.priceCents && (
+                            <span className="original-price">
+                              {formatPrice(pass.originalPriceCents)}
+                            </span>
+                          )}
                       </div>
                     </div>
-                    <div className="review-comment">{review.comment}</div>
-                  </ReviewCard>
+                    <p className="vip-pass-description">{pass.description}</p>
+                    <div className="vip-pass-benefits">
+                      {pass.benefits.slice(0, 3).map((benefit, index) => (
+                        <div key={index} className="benefit-item">
+                          <span>✅</span>
+                          {benefit}
+                        </div>
+                      ))}
+                      {pass.benefits.length > 3 && (
+                        <div
+                          className="benefit-item"
+                          style={{ color: "#8b5cf6" }}
+                        >
+                          +{pass.benefits.length - 3} more benefits
+                        </div>
+                      )}
+                    </div>
+                    <div className="vip-pass-details">
+                      <div className="detail-item">
+                        <strong>Valid:</strong> {pass.validDays.join(", ")}
+                      </div>
+                      <div className="detail-item">
+                        <strong>Available:</strong>{" "}
+                        {pass.totalQuantity - pass.soldCount} left
+                      </div>
+                    </div>
+                    <button
+                      className="buy-vip-button"
+                      onClick={() => router.push(`/checkout?pass=${pass.id}`)}
+                    >
+                      Buy Now - {formatPrice(pass.priceCents)}
+                    </button>
+                  </div>
                 ))}
               </div>
-            </RatingSection>
+            </VipPassesSection>
           )}
 
-          {activeTab === "vip" &&
-            bar.vipPassesEnhanced &&
-            bar.vipPassesEnhanced.length > 0 && (
-              <VipPassesSection>
-                <h2>VIP Passes</h2>
-                <p style={{ color: "#94a3b8", marginBottom: "2rem" }}>
-                  Skip the line and enjoy exclusive benefits with our VIP passes
-                </p>
-                <div className="vip-passes-grid">
-                  {bar.vipPassesEnhanced.map((pass) => (
-                    <div key={pass.id} className="vip-pass-card">
-                      <div className="vip-pass-header">
-                        <h3 className="vip-pass-name">{pass.name}</h3>
-                        <div className="vip-pass-price">
-                          <span className="current-price">
-                            €{(pass.priceCents / 100).toFixed(2)}
-                          </span>
-                          {pass.originalPriceCents &&
-                            pass.originalPriceCents > pass.priceCents && (
-                              <span className="original-price">
-                                €{(pass.originalPriceCents / 100).toFixed(2)}
-                              </span>
-                            )}
-                        </div>
-                      </div>
-                      <p className="vip-pass-description">{pass.description}</p>
-                      <div className="vip-pass-benefits">
-                        {pass.benefits.map((benefit, index) => (
-                          <div key={index} className="benefit-item">
-                            <span>✅</span>
-                            {benefit}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="vip-pass-details">
-                        <div className="detail-item">
-                          <strong>Valid:</strong> {pass.validDays.join(", ")}
-                        </div>
-                        <div className="detail-item">
-                          <strong>Hours:</strong> {pass.validHours.start} -{" "}
-                          {pass.validHours.end}
-                        </div>
-                        <div className="detail-item">
-                          <strong>Availability:</strong> {pass.soldCount}/
-                          {pass.totalQuantity} sold
-                        </div>
-                      </div>
-                      <button
-                        className="buy-vip-button"
-                        onClick={() =>
-                          router.push(`/marketplace?pass=${pass.id}`)
-                        }
-                      >
-                        Buy Now - €{(pass.priceCents / 100).toFixed(2)}
-                      </button>
+          {/* PHOTOS TAB */}
+          {activeTab === "photos" && allImages.length > 0 && (
+            <PhotosSection>
+              <h2 style={{ color: "#f8fafc", marginBottom: "0.5rem" }}>
+                Photos
+              </h2>
+              <p style={{ color: "#94a3b8", marginBottom: "2rem" }}>
+                Explore the atmosphere of {bar.name}
+              </p>
+
+              {bar.coverImage && (
+                <div
+                  className="cover-photo"
+                  onClick={() => handlePhotoClick(bar.coverImage!)}
+                >
+                  <img src={bar.coverImage} alt={`${bar.name} cover`} />
+                </div>
+              )}
+
+              {bar.imageUrls && bar.imageUrls.length > 0 && (
+                <div className="photos-grid">
+                  {bar.imageUrls.map((url, index) => (
+                    <div
+                      key={index}
+                      className="photo-card"
+                      onClick={() => handlePhotoClick(url)}
+                    >
+                      <img src={url} alt={`${bar.name} ${index + 1}`} />
                     </div>
                   ))}
                 </div>
-              </VipPassesSection>
-            )}
-
-          {activeTab === "photos" && (
-            <ImageGallery>
-              <h2>Photos</h2>
-              <p style={{ color: "#94a3b8", marginBottom: "2rem" }}>
-                Coming soon - Photo gallery feature
-              </p>
-              <div
-                style={{
-                  background: "rgba(30, 41, 59, 0.5)",
-                  borderRadius: "12px",
-                  padding: "3rem",
-                  textAlign: "center",
-                  color: "#94a3b8",
-                  border: "2px dashed #334155",
-                }}
-              >
-                🏗️ Photo Gallery Coming Soon
-              </div>
-            </ImageGallery>
+              )}
+            </PhotosSection>
           )}
         </MainContent>
 
         <Sidebar>
-          {bar.vipEnabled && bar.vipPrice && (
+          {bar.vipEnabled && (
             <>
-              <VipPrice>VIP from €{bar.vipPrice}</VipPrice>
+              {bar.vipPrice && (
+                <VipPrice>VIP from {formatPrice(bar.vipPrice * 100)}</VipPrice>
+              )}
               <ActionButton onClick={handleVipClick}>
-                View VIP Passes
+                {hasVipPasses ? "View VIP Passes" : "Get VIP Access"}
               </ActionButton>
             </>
           )}
 
-          {/* <ActionButton onClick={handlePlanClick}>Plan Visit</ActionButton>
-
-          <SecondaryButton onClick={handleGroupClick}>
-            Create Group
-          </SecondaryButton> */}
-
-          {/* Quick Info */}
           <div className="quick-info">
             <h3>Quick Info</h3>
             <div className="info-grid">
               <div className="info-item">
-                <strong>📍 District:</strong>
-                <span>
-                  {bar.district}, {bar.city.name}
-                </span>
+                <strong>📍 Location:</strong>
+                <span>{bar.cityName || "Helsinki"}</span>
               </div>
+              {bar.district && (
+                <div className="info-item">
+                  <strong>🏘️ District:</strong>
+                  <span>{bar.district}</span>
+                </div>
+              )}
               <div className="info-item">
                 <strong>🏷️ Type:</strong>
-                <span>{bar.type.replace("_", " ")}</span>
+                <span>{bar.type.replace(/_/g, " ")}</span>
               </div>
-              {bar.priceLevel && (
+              {bar.priceRange && (
                 <div className="info-item">
-                  <strong>💰 Price Level:</strong>
-                  <span>{"€".repeat(bar.priceLevel)}</span>
+                  <strong>💰 Price Range:</strong>
+                  <span>{bar.priceRange.replace(/_/g, " ")}</span>
+                </div>
+              )}
+              {bar.capacity && (
+                <div className="info-item">
+                  <strong>👥 Capacity:</strong>
+                  <span>{bar.capacity} people</span>
                 </div>
               )}
               {bar.phone && (
                 <div className="info-item">
                   <strong>📞 Phone:</strong>
                   <span>{bar.phone}</span>
+                </div>
+              )}
+              {bar.email && (
+                <div className="info-item">
+                  <strong>📧 Email:</strong>
+                  <span>{bar.email}</span>
                 </div>
               )}
               {bar.website && (
@@ -1714,14 +1264,57 @@ export default function BarDetails() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Visit Website
+                    Visit
+                  </a>
+                </div>
+              )}
+              {bar.instagram && (
+                <div className="info-item">
+                  <strong>📷 Instagram:</strong>
+                  <a
+                    href={`https://instagram.com/${bar.instagram.replace("@", "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    @{bar.instagram.replace("@", "")}
                   </a>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Map Section */}
+          {(bar.profileViews > 0 || bar.directionClicks > 0) && (
+            <div className="quick-info">
+              <h3>Engagement</h3>
+              <div className="info-grid">
+                {bar.profileViews > 0 && (
+                  <div className="info-item">
+                    <strong>👁️ Profile Views:</strong>
+                    <span>{bar.profileViews.toLocaleString()}</span>
+                  </div>
+                )}
+                {bar.directionClicks > 0 && (
+                  <div className="info-item">
+                    <strong>📍 Direction Clicks:</strong>
+                    <span>{bar.directionClicks.toLocaleString()}</span>
+                  </div>
+                )}
+                {bar.callClicks > 0 && (
+                  <div className="info-item">
+                    <strong>📞 Call Clicks:</strong>
+                    <span>{bar.callClicks.toLocaleString()}</span>
+                  </div>
+                )}
+                {bar.shareCount > 0 && (
+                  <div className="info-item">
+                    <strong>🔄 Shares:</strong>
+                    <span>{bar.shareCount.toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <MapSection>
             <h3>Location</h3>
             <div className="map-placeholder">
@@ -1735,15 +1328,34 @@ export default function BarDetails() {
                   border: "1px solid #334155",
                 }}
               >
-                🗺️ Interactive Map
+                🗺️ Map View
                 <div style={{ fontSize: "0.8rem", marginTop: "0.5rem" }}>
                   {bar.address}
                 </div>
+                {bar.latitude && bar.longitude && (
+                  <div
+                    style={{
+                      fontSize: "0.7rem",
+                      marginTop: "0.25rem",
+                      color: "#64748b",
+                    }}
+                  >
+                    📍 {bar.latitude.toFixed(4)}, {bar.longitude.toFixed(4)}
+                  </div>
+                )}
               </div>
             </div>
           </MapSection>
         </Sidebar>
       </ContentGrid>
+
+      {selectedPhoto && (
+        <ModalOverlay onClick={handleCloseModal}>
+          <ModalImage src={selectedPhoto} alt="Full size" />
+        </ModalOverlay>
+      )}
     </Container>
   );
-}
+};
+
+export default BarDetails;

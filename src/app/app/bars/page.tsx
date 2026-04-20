@@ -1,12 +1,17 @@
+// src/app/app/bars/page.tsx
+import { Suspense } from "react";
 import Bars from "@/components/app/bars/Bars";
-import React from "react";
 
-const BarsPage = () => {
+export default function BarsPage() {
   return (
-    <div>
+    <Suspense
+      fallback={
+        <div style={{ padding: "2rem", textAlign: "center", color: "#e2e8f0" }}>
+          Loading...
+        </div>
+      }
+    >
       <Bars />
-    </div>
+    </Suspense>
   );
-};
-
-export default BarsPage;
+}
