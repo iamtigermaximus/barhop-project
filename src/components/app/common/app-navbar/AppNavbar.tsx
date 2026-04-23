@@ -634,12 +634,12 @@ const AppNavbar = () => {
     { name: "Social", href: "/app/social" },
     { name: "Bars", href: "/app/bars" },
     { name: "VIP Passes", href: "/app/vip-pass" },
-    { name: "Plan a Crawl", href: "/app/crawl-planner" },
-    ...(session ? [{ name: "My Crawls", href: "/app/my-crawls" }] : []),
+    { name: "Create Event", href: "/app/crawl-planner" },
+    ...(session ? [{ name: "My Events", href: "/app/my-crawls" }] : []),
     ...(session
       ? [{ name: "My VIP Passes", href: "/app/vip-pass/vip-wallet" }]
       : []),
-    { name: "Discover Crawls", href: "/app/crawls-dashboard" },
+    { name: "Discover Events", href: "/app/crawls-dashboard" },
   ];
 
   // Mobile bottom navigation - WITHOUT CHATS (moved to top navbar)
@@ -817,14 +817,14 @@ const AppNavbar = () => {
                 $isActive={isActive("/app/crawl-planner")}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Plan a Crawl
+                Plan an Event
               </MobileNavLink>
               <MobileNavLink
                 href="/app/crawls-dashboard"
                 $isActive={isActive("/app/crawls-dashboard")}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Discover Crawls
+                Discover Events
               </MobileNavLink>
             </MobileMenu>
           )}

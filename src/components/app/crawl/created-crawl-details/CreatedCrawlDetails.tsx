@@ -129,7 +129,7 @@ const calculateDistance = (
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number
+  lon2: number,
 ): number => {
   const R = 6371; // Earth's radius in km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -191,7 +191,7 @@ const CreatedCrawlDetails = () => {
           // Fetch mock weather data
           const weatherData = getMockWeather(
             crawlData.city.name,
-            crawlData.date
+            crawlData.date,
           );
           setWeather(weatherData);
         } else {
@@ -215,7 +215,7 @@ const CreatedCrawlDetails = () => {
       if (!crawl?.crawlBars.length) return;
 
       const sortedBars = [...crawl.crawlBars].sort(
-        (a, b) => a.orderIndex - b.orderIndex
+        (a, b) => a.orderIndex - b.orderIndex,
       );
       const enhanced: BarWithDistance[] = [];
 
@@ -244,7 +244,7 @@ const CreatedCrawlDetails = () => {
             currentBar.bar.latitude,
             currentBar.bar.longitude,
             nextBar.bar.latitude,
-            nextBar.bar.longitude
+            nextBar.bar.longitude,
           );
 
           // Convert to miles (1km = 0.621371 miles)
@@ -304,7 +304,7 @@ const CreatedCrawlDetails = () => {
       if (response.ok) {
         // Refresh crawl data to update participants
         const updatedCrawl = await fetch(
-          `/api/crawls/${crawlId}?includeChat=true`
+          `/api/crawls/${crawlId}?includeChat=true`,
         ).then((res) => res.json());
         setCrawl(updatedCrawl);
       } else {
@@ -365,15 +365,15 @@ const CreatedCrawlDetails = () => {
   const getRideShareLink = (
     fromAddress: string,
     toAddress: string,
-    service: "uber" | "lyft"
+    service: "uber" | "lyft",
   ) => {
     if (service === "uber") {
       return `https://m.uber.com/ul/?action=setPickup&pickup[formatted_address]=${encodeURIComponent(
-        fromAddress
+        fromAddress,
       )}&dropoff[formatted_address]=${encodeURIComponent(toAddress)}`;
     } else {
       return `https://lyft.com/ride?id=lyft&pickup[formatted_address]=${encodeURIComponent(
-        fromAddress
+        fromAddress,
       )}&destination[formatted_address]=${encodeURIComponent(toAddress)}`;
     }
   };
@@ -406,12 +406,12 @@ const CreatedCrawlDetails = () => {
   const getBackButtonProps = () => {
     if (session) {
       return {
-        text: "Back to My Crawls",
+        text: "Back to My Events",
         href: "/app/my-crawls",
       };
     } else {
       return {
-        text: "Back to Crawls",
+        text: "Back to Events",
         href: "/app/crawls-dashboard",
       };
     }
@@ -477,7 +477,7 @@ const CreatedCrawlDetails = () => {
   if (error || !crawl) {
     return (
       <Page>
-        <Title>Crawl Not Found</Title>
+        <Title>Event Not Found</Title>
         <CrawlContainer style={{ textAlign: "center" }}>
           <p style={{ color: "#e2e8f0", marginBottom: "2rem" }}>
             {error || "The crawl you're looking for doesn't exist."}
@@ -492,7 +492,7 @@ const CreatedCrawlDetails = () => {
 
   return (
     <Page>
-      <Title>Bar Crawl Details</Title>
+      <Title>Event Details</Title>
 
       <CrawlContainer>
         <CrawlHeader>
@@ -543,7 +543,7 @@ const CreatedCrawlDetails = () => {
         )}
 
         <BarsSection>
-          <SectionTitle>Crawl Route</SectionTitle>
+          <SectionTitle>Event Route</SectionTitle>
 
           {/* Route Summary */}
           <RouteSummary>
@@ -637,7 +637,7 @@ const CreatedCrawlDetails = () => {
                             href={getRideShareLink(
                               crawlBar.bar.address,
                               enhancedBars[index + 1].bar.address,
-                              "uber"
+                              "uber",
                             )}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -648,7 +648,7 @@ const CreatedCrawlDetails = () => {
                             href={getRideShareLink(
                               crawlBar.bar.address,
                               enhancedBars[index + 1].bar.address,
-                              "lyft"
+                              "lyft",
                             )}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -700,21 +700,21 @@ const CreatedCrawlDetails = () => {
 
           {isCrawlFull && !isUserParticipant && (
             <JoinButton $joined={false} disabled>
-              Crawl Full
+              Event Full
             </JoinButton>
           )}
 
           {/* Creator actions */}
           {isUserCreator && (
             <>
-              <EditButton href={`/crawl-planner/edit/${crawlId}`}>
-                Edit Crawl
+              <EditButton href={`/app/crawl-planner/edit/${crawlId}`}>
+                Edit Event
               </EditButton>
               <DeleteButton
                 onClick={() => setShowDeleteModal(true)}
                 disabled={isDeleting}
               >
-                {isDeleting ? "Deleting..." : "Delete Crawl"}
+                {isDeleting ? "Deleting..." : "Delete Event"}
               </DeleteButton>
             </>
           )}
@@ -751,11 +751,11 @@ const CreatedCrawlDetails = () => {
       {showDeleteModal && (
         <ModalOverlay>
           <ModalContent>
-            <ModalTitle>Delete Crawl</ModalTitle>
+            <ModalTitle>Delete Event</ModalTitle>
             <ModalMessage>
               Are you sure you want to delete &quot;{crawl.name}&quot;? This
               action cannot be undone and all participants will be removed from
-              the crawl.
+              the event.
             </ModalMessage>
             <ModalButtons>
               <CancelButton onClick={() => setShowDeleteModal(false)}>

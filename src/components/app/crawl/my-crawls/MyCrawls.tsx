@@ -58,10 +58,10 @@ export const Notification = styled.div<{
     props.$type === "success"
       ? "linear-gradient(45deg, #10b981, #059669)"
       : props.$type === "error"
-      ? "linear-gradient(45deg, #ef4444, #dc2626)"
-      : props.$type === "warning"
-      ? "linear-gradient(45deg, #f59e0b, #d97706)"
-      : "linear-gradient(45deg, #8b5cf6, #3b82f6)"};
+        ? "linear-gradient(45deg, #ef4444, #dc2626)"
+        : props.$type === "warning"
+          ? "linear-gradient(45deg, #f59e0b, #d97706)"
+          : "linear-gradient(45deg, #8b5cf6, #3b82f6)"};
   color: white;
   padding: 1rem 1.5rem;
   border-radius: 12px;
@@ -184,13 +184,13 @@ const MyCrawls = () => {
         }, 5000);
       }
     },
-    []
+    [],
   );
 
   // Remove notification
   const removeNotification = useCallback((id: string) => {
     setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id)
+      prev.filter((notification) => notification.id !== id),
     );
   }, []);
 
@@ -207,7 +207,7 @@ const MyCrawls = () => {
         fetch("/api/crawls?public=true")
           .then((res) => (res.ok ? res.json() : []))
           .then((data) => setDiscoverCrawls(data))
-          .catch(() => setDiscoverCrawls([]))
+          .catch(() => setDiscoverCrawls([])),
       );
 
       if (isAuthenticated) {
@@ -217,11 +217,11 @@ const MyCrawls = () => {
             .then((res) => (res.ok ? res.json() : []))
             .then((data) => {
               const upcomingCrawls = data.filter(
-                (crawl: Crawl) => !isCrawlPast(crawl)
+                (crawl: Crawl) => !isCrawlPast(crawl),
               );
               setMyUpcomingCrawls(upcomingCrawls);
             })
-            .catch(() => setMyUpcomingCrawls([]))
+            .catch(() => setMyUpcomingCrawls([])),
         );
 
         // Fetch past public events
@@ -229,7 +229,7 @@ const MyCrawls = () => {
           fetch("/api/crawls/past-events?public=true")
             .then((res) => (res.ok ? res.json() : []))
             .then((data) => setPastPublicCrawls(data))
-            .catch(() => setPastPublicCrawls([]))
+            .catch(() => setPastPublicCrawls([])),
         );
 
         // Fetch user's past events
@@ -237,7 +237,7 @@ const MyCrawls = () => {
           fetch("/api/crawls/past-events")
             .then((res) => (res.ok ? res.json() : []))
             .then((data) => setMyPastCrawls(data))
-            .catch(() => setMyPastCrawls([]))
+            .catch(() => setMyPastCrawls([])),
         );
       } else {
         // If not authenticated, clear user-specific data
@@ -278,7 +278,7 @@ const MyCrawls = () => {
         if (response.ok) {
           const data = await response.json();
           const upcomingCrawls = data.filter(
-            (crawl: Crawl) => !isCrawlPast(crawl)
+            (crawl: Crawl) => !isCrawlPast(crawl),
           );
           setMyUpcomingCrawls(upcomingCrawls);
         }
@@ -332,10 +332,10 @@ const MyCrawls = () => {
 
         // Optimistically remove the crawl from the UI
         setMyUpcomingCrawls((prev) =>
-          prev.filter((crawl) => crawl.id !== crawlId)
+          prev.filter((crawl) => crawl.id !== crawlId),
         );
         setDiscoverCrawls((prev) =>
-          prev.filter((crawl) => crawl.id !== crawlId)
+          prev.filter((crawl) => crawl.id !== crawlId),
         );
 
         addNotification({
@@ -439,7 +439,7 @@ const MyCrawls = () => {
                 `/api/crawls/${crawlId}/leave`,
                 {
                   method: "POST",
-                }
+                },
               );
 
               if (leaveResponse.ok) {
@@ -595,10 +595,10 @@ const MyCrawls = () => {
     activeTab === "discover"
       ? discoverCrawls
       : activeTab === "my-crawls"
-      ? myUpcomingCrawls
-      : activeTab === "past-events"
-      ? pastPublicCrawls
-      : myPastCrawls;
+        ? myUpcomingCrawls
+        : activeTab === "past-events"
+          ? pastPublicCrawls
+          : myPastCrawls;
 
   const isPastTab =
     activeTab === "past-events" || activeTab === "my-past-events";
@@ -606,8 +606,8 @@ const MyCrawls = () => {
   if (status === "loading") {
     return (
       <Page>
-        <Title>My Bar Crawls</Title>
-        <Description>Manage your bar crawls and discover new ones</Description>
+        <Title>My Events</Title>
+        <Description>Manage your events and discover new ones</Description>
         <CrawlsGrid>
           <LoadingContainer>
             <HopprLoader />
@@ -623,7 +623,7 @@ const MyCrawls = () => {
       {deleteModal && (
         <ModalOverlay>
           <ModalContent>
-            <ModalTitle>Delete Crawl</ModalTitle>
+            <ModalTitle>Delete Event</ModalTitle>
             <ModalMessage>
               Are you sure you want to delete &quot;{deleteModal.crawlName}
               &quot;? This action cannot be undone.
@@ -669,11 +669,11 @@ const MyCrawls = () => {
         ))}
       </NotificationContainer>
 
-      <Title>My Bar Crawls</Title>
+      <Title>My Events</Title>
       <Description>
         {isAuthenticated
-          ? "Manage your bar crawls and discover new adventures!"
-          : "Sign in to view and manage your bar crawls"}
+          ? "Manage your events and discover new adventures!"
+          : "Sign in to view and manage your events"}
       </Description>
 
       <TabContainer>
@@ -690,7 +690,7 @@ const MyCrawls = () => {
               $active={activeTab === "my-crawls"}
               onClick={() => setActiveTab("my-crawls")}
             >
-              My Crawls ({tabCounts["my-crawls"]})
+              My Events ({tabCounts["my-crawls"]})
             </Tab>
             {/* <Tab
               $active={activeTab === "past-events"}
@@ -721,14 +721,14 @@ const MyCrawls = () => {
               (isAuthenticated ? (
                 <CreateCrawlCardMobileHidden href="/app/crawl-planner">
                   <CreateIcon>🎯</CreateIcon>
-                  <CreateText>Create New Crawl</CreateText>
-                  <CreateSubtext>Plan your own bar adventure</CreateSubtext>
+                  <CreateText>Create New Event</CreateText>
+                  <CreateSubtext>Plan your own adventure</CreateSubtext>
                 </CreateCrawlCardMobileHidden>
               ) : (
                 <CreateCrawlCardMobileHidden href="/app/auth/signup">
                   <CreateIcon>🔐</CreateIcon>
-                  <CreateText>Sign Up to Create Crawls</CreateText>
-                  <CreateSubtext>Join to start planning crawls</CreateSubtext>
+                  <CreateText>Sign Up to Create Events</CreateText>
+                  <CreateSubtext>Join to start planning events</CreateSubtext>
                 </CreateCrawlCardMobileHidden>
               ))}
 
@@ -756,8 +756,8 @@ const MyCrawls = () => {
                       {isPastCrawl
                         ? "Past"
                         : crawl.status === "PLANNING"
-                        ? "Joinable"
-                        : crawl.status.toLowerCase()}
+                          ? "Joinable"
+                          : crawl.status.toLowerCase()}
                     </CrawlStatus>
                   </CrawlHeader>
 
@@ -786,10 +786,10 @@ const MyCrawls = () => {
                     <BarCount>
                       {Math.floor(
                         (crawl._count.participants / crawl.maxParticipants) *
-                          100
+                          100,
                       )}
                       % full • {crawl.isPublic ? "Public" : "Private"}
-                      {userIsCreator && " • Your Crawl"}
+                      {userIsCreator && " • Your Event"}
                       {isPastCrawl && " • Past Event"}
                     </BarCount>
                   </BarPreview>
@@ -837,38 +837,38 @@ const MyCrawls = () => {
                               {isJoining === crawl.id
                                 ? "Joining..."
                                 : isLeaving === crawl.id
-                                ? "Leaving..."
-                                : userInCrawl && userIsCreator
-                                ? "Your Crawl"
-                                : userInCrawl && canLeave
-                                ? "Leave Crawl"
-                                : crawlFull
-                                ? "Full"
-                                : !isAuthenticated
-                                ? "Sign Up to Join"
-                                : !canJoin
-                                ? "Cannot Join"
-                                : "Join Crawl"}
+                                  ? "Leaving..."
+                                  : userInCrawl && userIsCreator
+                                    ? "Your Crawl"
+                                    : userInCrawl && canLeave
+                                      ? "Leave Crawl"
+                                      : crawlFull
+                                        ? "Full"
+                                        : !isAuthenticated
+                                          ? "Sign Up to Join"
+                                          : !canJoin
+                                            ? "Cannot Join"
+                                            : "Join Crawl"}
                             </JoinButton>
 
-                            {crawlFull && <Tooltip>This crawl is full</Tooltip>}
+                            {crawlFull && <Tooltip>This event is full</Tooltip>}
                             {!isAuthenticated && !crawlFull && (
-                              <Tooltip>Sign up to join this crawl</Tooltip>
+                              <Tooltip>Sign up to join this event</Tooltip>
                             )}
                             {isAuthenticated &&
                               userInCrawl &&
                               userIsCreator && (
-                                <Tooltip>You created this crawl</Tooltip>
+                                <Tooltip>You created this event</Tooltip>
                               )}
                             {isAuthenticated && userInCrawl && canLeave && (
-                              <Tooltip>Click to leave this crawl</Tooltip>
+                              <Tooltip>Click to leave this event</Tooltip>
                             )}
                             {isAuthenticated &&
                               !userInCrawl &&
                               !crawlFull &&
                               !canJoin && (
                                 <Tooltip>
-                                  This crawl is no longer joinable
+                                  This event is no longer joinable
                                 </Tooltip>
                               )}
                           </JoinButtonWrapper>
@@ -899,26 +899,26 @@ const MyCrawls = () => {
                   {activeTab === "discover"
                     ? "🔍"
                     : activeTab === "my-crawls"
-                    ? ""
-                    : activeTab === "past-events"
-                    ? "🏁"
-                    : "📖"}
+                      ? ""
+                      : activeTab === "past-events"
+                        ? "🏁"
+                        : "📖"}
                 </div>
                 <h3 style={{ color: "#e2e8f0", marginBottom: "0.5rem" }}>
-                  {activeTab === "discover" && "No upcoming crawls available"}
-                  {activeTab === "my-crawls" && "No upcoming crawls"}
+                  {activeTab === "discover" && "No upcoming events available"}
+                  {activeTab === "my-crawls" && "No upcoming events"}
                   {activeTab === "past-events" && "No past events found"}
                   {activeTab === "my-past-events" && "No past events joined"}
                 </h3>
                 <p>
                   {activeTab === "discover" &&
-                    "Check back later for new crawl opportunities!"}
+                    "Check back later for new events!"}
                   {activeTab === "my-crawls" &&
-                    "Join a crawl from the Discover tab or create your own!"}
+                    "Join an event from the Discover tab or create your own!"}
                   {activeTab === "past-events" &&
                     "Past public events will appear here"}
                   {activeTab === "my-past-events" &&
-                    "Your past crawl history will appear here"}
+                    "Your past event history will appear here"}
                 </p>
                 {/* {!isPastTab && (
                   <CreateCrawlCard
