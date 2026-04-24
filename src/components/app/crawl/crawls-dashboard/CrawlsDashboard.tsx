@@ -446,12 +446,12 @@ const CrawlStatus = styled.span<{
     props.$status === "PLANNING"
       ? "linear-gradient(45deg, #0ea5e9, #3b82f6)"
       : props.$status === "UPCOMING"
-      ? "linear-gradient(45deg, #8b5cf6, #a855f7)"
-      : props.$status === "ACTIVE"
-      ? "linear-gradient(45deg, #10b981, #059669)"
-      : props.$status === "COMPLETED"
-      ? "linear-gradient(45deg, #6b7280, #4b5563)"
-      : "linear-gradient(45deg, #ef4444, #dc2626)"};
+        ? "linear-gradient(45deg, #8b5cf6, #a855f7)"
+        : props.$status === "ACTIVE"
+          ? "linear-gradient(45deg, #10b981, #059669)"
+          : props.$status === "COMPLETED"
+            ? "linear-gradient(45deg, #6b7280, #4b5563)"
+            : "linear-gradient(45deg, #ef4444, #dc2626)"};
   color: white;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
@@ -628,15 +628,15 @@ const JoinButton = styled.button<{
     props.$isLeaving
       ? "linear-gradient(45deg, #f59e0b, #d97706)"
       : props.$requiresAuth
-      ? "linear-gradient(45deg, #6b7280, #4b5563)"
-      : "linear-gradient(45deg, #10b981, #059669)"};
+        ? "linear-gradient(45deg, #6b7280, #4b5563)"
+        : "linear-gradient(45deg, #10b981, #059669)"};
   border: 1px solid
     ${(props) =>
       props.$isLeaving
         ? "rgba(245, 158, 11, 0.3)"
         : props.$requiresAuth
-        ? "rgba(107, 114, 128, 0.3)"
-        : "rgba(16, 185, 129, 0.3)"};
+          ? "rgba(107, 114, 128, 0.3)"
+          : "rgba(16, 185, 129, 0.3)"};
   color: white;
   padding: 0.75rem 1rem;
   border-radius: 8px;
@@ -668,15 +668,15 @@ const JoinButton = styled.button<{
       props.$isLeaving
         ? "linear-gradient(45deg, #d97706, #b45309)"
         : props.$requiresAuth
-        ? "linear-gradient(45deg, #7c3aed, #2563eb)" // Hover effect for auth buttons
-        : "linear-gradient(45deg, #059669, #047857)"};
+          ? "linear-gradient(45deg, #7c3aed, #2563eb)" // Hover effect for auth buttons
+          : "linear-gradient(45deg, #059669, #047857)"};
     transform: ${(props) => (props.disabled ? "none" : "translateY(-1px)")};
     box-shadow: ${(props) =>
       props.$isLeaving
         ? "0 4px 12px rgba(245, 158, 11, 0.3)"
         : props.$requiresAuth
-        ? "0 4px 12px rgba(139, 92, 246, 0.3)" // Shadow for auth buttons
-        : "0 4px 12px rgba(16, 185, 129, 0.3)"};
+          ? "0 4px 12px rgba(139, 92, 246, 0.3)" // Shadow for auth buttons
+          : "0 4px 12px rgba(16, 185, 129, 0.3)"};
   }
 
   /* Reduce hover on mobile */
@@ -846,10 +846,10 @@ const Notification = styled.div<{
     props.$type === "success"
       ? "linear-gradient(45deg, #10b981, #059669)"
       : props.$type === "error"
-      ? "linear-gradient(45deg, #ef4444, #dc2626)"
-      : props.$type === "warning"
-      ? "linear-gradient(45deg, #f59e0b, #d97706)"
-      : "linear-gradient(45deg, #8b5cf6, #3b82f6)"};
+        ? "linear-gradient(45deg, #ef4444, #dc2626)"
+        : props.$type === "warning"
+          ? "linear-gradient(45deg, #f59e0b, #d97706)"
+          : "linear-gradient(45deg, #8b5cf6, #3b82f6)"};
   color: white;
   padding: 1rem 1.5rem;
   border-radius: 12px;
@@ -1014,13 +1014,13 @@ export default function CrawlsDashboard() {
         }, 5000);
       }
     },
-    []
+    [],
   );
 
   // Remove notification
   const removeNotification = useCallback((id: string) => {
     setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id)
+      prev.filter((notification) => notification.id !== id),
     );
   }, []);
 
@@ -1037,7 +1037,7 @@ export default function CrawlsDashboard() {
         fetch("/api/crawls?public=true")
           .then((res) => (res.ok ? res.json() : []))
           .then((data) => setDiscoverCrawls(data))
-          .catch(() => setDiscoverCrawls([]))
+          .catch(() => setDiscoverCrawls([])),
       );
 
       if (isAuthenticated) {
@@ -1047,11 +1047,11 @@ export default function CrawlsDashboard() {
             .then((res) => (res.ok ? res.json() : []))
             .then((data) => {
               const upcomingCrawls = data.filter(
-                (crawl: Crawl) => !isCrawlPast(crawl)
+                (crawl: Crawl) => !isCrawlPast(crawl),
               );
               setMyUpcomingCrawls(upcomingCrawls);
             })
-            .catch(() => setMyUpcomingCrawls([]))
+            .catch(() => setMyUpcomingCrawls([])),
         );
 
         // Fetch past public events
@@ -1059,7 +1059,7 @@ export default function CrawlsDashboard() {
           fetch("/api/crawls/past-events?public=true")
             .then((res) => (res.ok ? res.json() : []))
             .then((data) => setPastPublicCrawls(data))
-            .catch(() => setPastPublicCrawls([]))
+            .catch(() => setPastPublicCrawls([])),
         );
 
         // Fetch user's past events
@@ -1067,7 +1067,7 @@ export default function CrawlsDashboard() {
           fetch("/api/crawls/past-events")
             .then((res) => (res.ok ? res.json() : []))
             .then((data) => setMyPastCrawls(data))
-            .catch(() => setMyPastCrawls([]))
+            .catch(() => setMyPastCrawls([])),
         );
       } else {
         // If not authenticated, clear user-specific data
@@ -1108,7 +1108,7 @@ export default function CrawlsDashboard() {
         if (response.ok) {
           const data = await response.json();
           const upcomingCrawls = data.filter(
-            (crawl: Crawl) => !isCrawlPast(crawl)
+            (crawl: Crawl) => !isCrawlPast(crawl),
           );
           setMyUpcomingCrawls(upcomingCrawls);
         }
@@ -1175,7 +1175,7 @@ export default function CrawlsDashboard() {
                 `/api/crawls/${crawlId}/leave`,
                 {
                   method: "POST",
-                }
+                },
               );
 
               if (leaveResponse.ok) {
@@ -1327,10 +1327,10 @@ export default function CrawlsDashboard() {
     activeTab === "discover"
       ? discoverCrawls
       : activeTab === "my-crawls"
-      ? myUpcomingCrawls
-      : activeTab === "past-events"
-      ? pastPublicCrawls
-      : myPastCrawls;
+        ? myUpcomingCrawls
+        : activeTab === "past-events"
+          ? pastPublicCrawls
+          : myPastCrawls;
 
   const isPastTab =
     activeTab === "past-events" || activeTab === "my-past-events";
@@ -1338,8 +1338,8 @@ export default function CrawlsDashboard() {
   if (status === "loading") {
     return (
       <Page>
-        <Title>Bar Crawls</Title>
-        <Description>Discover amazing bar crawls in your city</Description>
+        <Title>Events</Title>
+        <Description>Discover amazing events in your city</Description>
         <CrawlsGrid>
           <LoadingContainer>
             <HopprLoader />
@@ -1378,11 +1378,11 @@ export default function CrawlsDashboard() {
         ))}
       </NotificationContainer>
 
-      <Title>Bar Crawls</Title>
+      <Title>Events</Title>
       <Description>
         {isAuthenticated
-          ? "Discover amazing bar crawls or create your own adventure!"
-          : "Discover amazing bar crawls in your city. Sign up to join or create your own!"}
+          ? "Discover amazing events or create your own adventure!"
+          : "Discover amazing events in your city. Sign up to join or create your own!"}
       </Description>
 
       <TabContainer>
@@ -1399,7 +1399,7 @@ export default function CrawlsDashboard() {
               $active={activeTab === "my-crawls"}
               onClick={() => setActiveTab("my-crawls")}
             >
-              My Crawls ({tabCounts["my-crawls"]})
+              My Events ({tabCounts["my-crawls"]})
             </Tab>
             {/* <Tab
               $active={activeTab === "past-events"}
@@ -1430,14 +1430,14 @@ export default function CrawlsDashboard() {
               (isAuthenticated ? (
                 <CreateCrawlCardMobileHidden href="/app/crawl-planner">
                   <CreateIcon>🎯</CreateIcon>
-                  <CreateText>Create New Crawl</CreateText>
-                  <CreateSubtext>Plan your own bar adventure</CreateSubtext>
+                  <CreateText>Create New Event</CreateText>
+                  <CreateSubtext>Plan your own event</CreateSubtext>
                 </CreateCrawlCardMobileHidden>
               ) : (
                 <CreateCrawlCardMobileHidden href="/app/auth/signup">
                   <CreateIcon>🔐</CreateIcon>
-                  <CreateText>Sign Up to Create Crawls</CreateText>
-                  <CreateSubtext>Join to start planning crawls</CreateSubtext>
+                  <CreateText>Sign Up to Create Events</CreateText>
+                  <CreateSubtext>Join to start planning events</CreateSubtext>
                 </CreateCrawlCardMobileHidden>
               ))}
 
@@ -1464,8 +1464,8 @@ export default function CrawlsDashboard() {
                       {isPastCrawl
                         ? "Past"
                         : crawl.status === "PLANNING"
-                        ? "Joinable"
-                        : crawl.status.toLowerCase()}
+                          ? "Joinable"
+                          : crawl.status.toLowerCase()}
                     </CrawlStatus>
                   </CrawlHeader>
 
@@ -1494,7 +1494,7 @@ export default function CrawlsDashboard() {
                     <BarCount>
                       {Math.floor(
                         (crawl._count.participants / crawl.maxParticipants) *
-                          100
+                          100,
                       )}
                       % full • {crawl.isPublic ? "Public" : "Private"}
                       {userIsCreator && " • Your Crawl"}
@@ -1535,38 +1535,38 @@ export default function CrawlsDashboard() {
                           {isJoining === crawl.id
                             ? "Joining..."
                             : isLeaving === crawl.id
-                            ? "Leaving..."
-                            : userInCrawl && userIsCreator
-                            ? "Your Crawl"
-                            : userInCrawl && canLeave
-                            ? "Leave Crawl"
-                            : crawlFull
-                            ? "Full"
-                            : !isAuthenticated
-                            ? "Login to Join"
-                            : !canJoin
-                            ? "Cannot Join"
-                            : "Join Crawl"}
+                              ? "Leaving..."
+                              : userInCrawl && userIsCreator
+                                ? "Your Event"
+                                : userInCrawl && canLeave
+                                  ? "Leave Event"
+                                  : crawlFull
+                                    ? "Full"
+                                    : !isAuthenticated
+                                      ? "Login to Join"
+                                      : !canJoin
+                                        ? "Cannot Join"
+                                        : "Join Event"}
                         </JoinButton>
 
                         {/* Update tooltips */}
-                        {crawlFull && <Tooltip>This crawl is full</Tooltip>}
+                        {crawlFull && <Tooltip>This event is full</Tooltip>}
                         {!isAuthenticated && !crawlFull && (
                           <Tooltip>
-                            Click to sign up and join this crawl
+                            Click to sign up and join this event
                           </Tooltip>
                         )}
                         {isAuthenticated && userInCrawl && userIsCreator && (
-                          <Tooltip>You created this crawl</Tooltip>
+                          <Tooltip>You created this event</Tooltip>
                         )}
                         {isAuthenticated && userInCrawl && canLeave && (
-                          <Tooltip>Click to leave this crawl</Tooltip>
+                          <Tooltip>Click to leave this event</Tooltip>
                         )}
                         {isAuthenticated &&
                           !userInCrawl &&
                           !crawlFull &&
                           !canJoin && (
-                            <Tooltip>This crawl is no longer joinable</Tooltip>
+                            <Tooltip>This event is no longer joinable</Tooltip>
                           )}
                       </JoinButtonWrapper>
                     )}
@@ -1591,26 +1591,26 @@ export default function CrawlsDashboard() {
                   {activeTab === "discover"
                     ? "🔍"
                     : activeTab === "my-crawls"
-                    ? "📅"
-                    : activeTab === "past-events"
-                    ? "🏁"
-                    : "📖"}
+                      ? "📅"
+                      : activeTab === "past-events"
+                        ? "🏁"
+                        : "📖"}
                 </div>
                 <h3 style={{ color: "#e2e8f0", marginBottom: "0.5rem" }}>
-                  {activeTab === "discover" && "No upcoming crawls available"}
-                  {activeTab === "my-crawls" && "No upcoming crawls"}
+                  {activeTab === "discover" && "No upcoming events available"}
+                  {activeTab === "my-crawls" && "No upcoming events"}
                   {activeTab === "past-events" && "No past events found"}
                   {activeTab === "my-past-events" && "No past events joined"}
                 </h3>
                 <p>
                   {activeTab === "discover" &&
-                    "Check back later for new crawl opportunities!"}
+                    "Check back later for new event opportunities!"}
                   {activeTab === "my-crawls" &&
-                    "Join a crawl from the Discover tab to get started!"}
+                    "Join an event from the Discover tab to get started!"}
                   {activeTab === "past-events" &&
                     "Past public events will appear here"}
                   {activeTab === "my-past-events" &&
-                    "Your past crawl history will appear here"}
+                    "Your past event history will appear here"}
                 </p>
                 {!isPastTab && (
                   <CreateCrawlCard
@@ -1627,7 +1627,7 @@ export default function CrawlsDashboard() {
                   >
                     <CreateText>
                       {isAuthenticated
-                        ? "Create Your First Crawl"
+                        ? "Create Your First Event"
                         : "Be the first to create one!"}
                     </CreateText>
                   </CreateCrawlCard>

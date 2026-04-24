@@ -982,7 +982,7 @@ const AppNavbar = () => {
                       href="/app/my-crawls"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
-                      My Crawls
+                      My Events
                     </DropdownItem>
                     <DropdownItem
                       href="/app/vip-pass/vip-wallet"

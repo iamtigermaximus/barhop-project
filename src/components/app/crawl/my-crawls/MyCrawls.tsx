@@ -248,7 +248,7 @@ const MyCrawls = () => {
 
       await Promise.all(promises);
     } catch (error) {
-      console.error("Error fetching crawls:", error);
+      console.error("Error fetching events:", error);
       // Reset all states on error
       setDiscoverCrawls([]);
       setMyUpcomingCrawls([]);
@@ -635,7 +635,7 @@ const MyCrawls = () => {
                 $isDeleting={deleteModal.isDeleting}
                 disabled={deleteModal.isDeleting}
               >
-                {deleteModal.isDeleting ? "Deleting..." : "Delete Crawl"}
+                {deleteModal.isDeleting ? "Deleting..." : "Delete Event"}
               </ConfirmDeleteButton>
             </ModalActions>
           </ModalContent>
@@ -814,7 +814,7 @@ const MyCrawls = () => {
                                 ? "Deleting..."
                                 : "Delete"}
                             </DeleteButton>
-                            <Tooltip>Delete this crawl permanently</Tooltip>
+                            <Tooltip>Delete this event permanently</Tooltip>
                           </DeleteButtonWrapper>
                         ) : (
                           <JoinButtonWrapper>
@@ -839,16 +839,16 @@ const MyCrawls = () => {
                                 : isLeaving === crawl.id
                                   ? "Leaving..."
                                   : userInCrawl && userIsCreator
-                                    ? "Your Crawl"
+                                    ? "Your Event"
                                     : userInCrawl && canLeave
-                                      ? "Leave Crawl"
+                                      ? "Leave Event"
                                       : crawlFull
                                         ? "Full"
                                         : !isAuthenticated
                                           ? "Sign Up to Join"
                                           : !canJoin
                                             ? "Cannot Join"
-                                            : "Join Crawl"}
+                                            : "Join Event"}
                             </JoinButton>
 
                             {crawlFull && <Tooltip>This event is full</Tooltip>}

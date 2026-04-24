@@ -44,7 +44,7 @@ export default function AppProfile() {
               <div>
                 <h3 className="font-semibold text-lg">My Crawls</h3>
                 <p className="text-blue-100 text-sm">
-                  View and manage your bar crawls
+                  View and manage your events
                 </p>
               </div>
               <div className="text-2xl">🎯</div>
@@ -84,10 +84,8 @@ export default function AppProfile() {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-lg">Plan New Crawl</h3>
-                <p className="text-green-100 text-sm">
-                  Create a new bar crawl adventure
-                </p>
+                <h3 className="font-semibold text-lg">Plan New Event</h3>
+                <p className="text-green-100 text-sm">Create a new event</p>
               </div>
               <div className="text-2xl">✨</div>
             </div>

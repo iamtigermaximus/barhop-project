@@ -309,11 +309,11 @@ const CreatedCrawlDetails = () => {
         setCrawl(updatedCrawl);
       } else {
         const errorData = await response.json();
-        setError(errorData.message || "Failed to join crawl");
+        setError(errorData.message || "Failed to join event");
       }
     } catch (error) {
       console.error("Error joining crawl:", error);
-      setError("Failed to join crawl");
+      setError("Failed to join event");
     } finally {
       setIsJoining(false);
     }
@@ -331,12 +331,12 @@ const CreatedCrawlDetails = () => {
         router.refresh();
       } else {
         const errorData = await response.json();
-        setError(errorData.message || "Failed to delete crawl");
+        setError(errorData.message || "Failed to delete event");
         setShowDeleteModal(false);
       }
     } catch (error) {
-      console.error("Error deleting crawl:", error);
-      setError("Failed to delete crawl");
+      console.error("Error deleting event:", error);
+      setError("Failed to delete event");
       setShowDeleteModal(false);
     } finally {
       setIsDeleting(false);
@@ -350,12 +350,12 @@ const CreatedCrawlDetails = () => {
       if (navigator.share) {
         await navigator.share({
           title: `Join ${crawl.name}`,
-          text: `Join this amazing bar crawl in ${crawl.city.name}!`,
+          text: `Join this amazing event in ${crawl.city.name}!`,
           url: window.location.href,
         });
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        alert("Crawl link copied to clipboard! 📋");
+        alert("Event link copied to clipboard! 📋");
       }
     } catch (error) {
       console.error("Error sharing:", error);
@@ -441,7 +441,7 @@ const CreatedCrawlDetails = () => {
 
   // Get the appropriate join button text and behavior
   const getJoinButtonProps = () => {
-    if (!crawl) return { text: "Join Crawl", onClick: () => {} };
+    if (!crawl) return { text: "Join Event", onClick: () => {} };
 
     if (isJoining) {
       return { text: "Joining...", onClick: () => {} };
@@ -459,7 +459,7 @@ const CreatedCrawlDetails = () => {
 
     // For logged-in users who can join
     return {
-      text: "Join Crawl",
+      text: "Join Event",
       onClick: handleJoinCrawl,
     };
   };
@@ -739,7 +739,7 @@ const CreatedCrawlDetails = () => {
             </JoinButton>
           )}
 
-          <ShareButton onClick={handleShareCrawl}>Share Crawl</ShareButton>
+          <ShareButton onClick={handleShareCrawl}>Share Event</ShareButton>
 
           <BackButton href={backButtonProps.href}>
             {backButtonProps.text}
