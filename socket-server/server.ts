@@ -1597,14 +1597,15 @@ export class SocketService {
               name: true,
             },
           },
+          chatroom: true,
         },
       });
 
       if (!crawl) {
-        console.error("Crawl not found for ID:", crawlId);
+        console.error("Event not found for ID:", crawlId);
         socket.emit("error", {
-          message: "Crawl not found",
-          code: "CRAWL_NOT_FOUND",
+          message: "Event not found",
+          code: "EVENT_NOT_FOUND",
         });
         return;
       }
@@ -1627,16 +1628,31 @@ export class SocketService {
         return;
       }
 
-      console.log(
-        `Creating leave notification for crawl creator: ${crawl.creator.id}`,
-      );
+      //  Remove user from chatroom participants
+      if (crawl.chatroom) {
+        await prisma.chatroomParticipant.deleteMany({
+          where: {
+            chatroomId: crawl.chatroom.id,
+            userId: userId,
+          },
+        });
+        console.log(
+          `✅ Removed user ${userId} from chatroom ${crawl.chatroom.id}`,
+        );
+
+        // Notify other participants that user left the chat
+        socket.to(`chatroom_${crawl.chatroom.id}`).emit("user_left_chatroom", {
+          userId: userId,
+          userName: leavingUser.name,
+        });
+      }
 
       const notification = await prisma.notification.create({
         data: {
           userId: crawl.creatorId,
           fromUserId: userId,
           type: "SYSTEM",
-          message: `${leavingUser.name || "Someone"} left your crawl "${
+          message: `${leavingUser.name || "Someone"} left your event "${
             crawl.name
           }"`,
           crawlId: crawlId,
@@ -1660,7 +1676,7 @@ export class SocketService {
 
       console.log(`Leave notification sent to creator: ${crawl.creator.id}`);
     } catch (error) {
-      console.error("Error handling user left crawl:", error);
+      console.error("Error handling user left event:", error);
       socket.emit("error", {
         message: "Failed to send leave notification",
         code: "LEAVE_NOTIFICATION_ERROR",

@@ -9,7 +9,8 @@ interface PageProps {
 const PrivateChatPage = async ({ params }: PageProps) => {
   const { chatroomId } = await params;
 
-  return <Chatroom />;
+  // Pass chatroomId as a prop directly
+  return <Chatroom chatroomId={chatroomId} />;
 };
 
 export default PrivateChatPage;

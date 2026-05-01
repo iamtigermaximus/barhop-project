@@ -356,9 +356,9 @@ import styled from "styled-components";
 import Link from "next/link";
 
 export const Nav = styled.nav<{ $isMobile?: boolean }>`
-  background: rgba(15, 23, 42, 0.95);
+  background: ${({ theme }) => theme.colors?.secondaryBackground || "#1e1e2f"};
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid #334155;
+  /* border-bottom: 1px solid #334155; */
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -381,7 +381,6 @@ export const NavContainer = styled.div`
   justify-content: space-between;
   height: 70px;
 `;
-
 export const Logo = styled(Link)`
   font-size: 1.5rem;
   font-weight: 700;
@@ -408,6 +407,32 @@ export const Logo = styled(Link)`
     }
   }
 `;
+// export const Logo = styled(Link)`
+//   font-size: 1.5rem;
+//   font-weight: 700;
+//   background: linear-gradient(-45deg, #0ea5e9, #8b5cf6, #ec4899, #0ea5e9);
+//   background-size: 400% 400%;
+//   -webkit-background-clip: text;
+//   -webkit-text-fill-color: transparent;
+//   background-clip: text;
+//   text-decoration: none;
+//   display: flex;
+//   align-items: center;
+//   gap: 0.5rem;
+//   animation: gradientShift 8s ease infinite;
+
+//   @keyframes gradientShift {
+//     0% {
+//       background-position: 0% 50%;
+//     }
+//     50% {
+//       background-position: 100% 50%;
+//     }
+//     100% {
+//       background-position: 0% 50%;
+//     }
+//   }
+// `;
 
 // export const LogoIcon = styled.span`
 //   font-size: 1.75rem;
@@ -848,11 +873,18 @@ export const PlanButtonIcon = styled.div`
   margin-bottom: 0.1rem;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 `;
+// export const LogoIcon = styled.span`
+//   font-size: 1.5rem;
+//   margin-right: 0.5rem;
+//   display: flex;
+//   align-items: center;
+// `;
+
 export const LogoIcon = styled.span`
-  font-size: 1.5rem;
-  margin-right: 0.5rem;
-  display: flex;
-  align-items: center;
+  font-size: 1.75rem;
+`;
+export const SidebarLogoIcon = styled.span`
+  font-size: 3rem;
 `;
 
 export const NotificationBell = styled.button<{ $isMobile?: boolean }>`

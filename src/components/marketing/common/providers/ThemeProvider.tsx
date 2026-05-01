@@ -1,6 +1,7 @@
 "use client";
+import { theme } from "@/theme/Theme";
 import { ThemeProvider as StyledThemeProvider } from "styled-components";
-import { theme } from "@/lib/theme";
+// import { theme } from "@/lib/theme";
 
 interface ThemeProviderProps {
   children: React.ReactNode;

@@ -1,4 +1,4 @@
-//src/app/api/chat/[chatroomId]/messages/routes.ts
+//src/app/api/chat/[chatroomId]/messages/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";

@@ -4,6 +4,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import StyledComponentsRegistry from "@/lib/registry";
 import { AuthProvider } from "@/components/marketing/common/providers/Providers";
 import "./globals.css"; // Import your single global CSS here
+import { ThemeProvider } from "@/theme/ThemeProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -47,7 +48,9 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body>
         <StyledComponentsRegistry>
-          <AuthProvider>{children}</AuthProvider>
+          <ThemeProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </ThemeProvider>
         </StyledComponentsRegistry>
       </body>
     </html>
