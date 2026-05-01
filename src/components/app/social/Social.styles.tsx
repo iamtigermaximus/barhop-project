@@ -372,10 +372,10 @@ export const UserStatusBadge = styled.div<{ $status: string }>`
     props.$status === "ONLINE"
       ? "#10b981"
       : props.$status === "SOCIAL_MODE"
-      ? "#8b5cf6"
-      : props.$status === "IN_MEETUP"
-      ? "#f59e0b"
-      : "#6b7280"};
+        ? "#8b5cf6"
+        : props.$status === "IN_MEETUP"
+          ? "#f59e0b"
+          : "#6b7280"};
   border: 2px solid rgba(15, 23, 42, 0.9);
 
   /* Mobile - smaller badge */

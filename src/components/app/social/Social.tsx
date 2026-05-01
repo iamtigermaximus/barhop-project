@@ -2,74 +2,670 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-// import Image from "next/image";
+import dynamic from "next/dynamic";
+import styled from "styled-components";
 import SocialToggle from "./social-toggle/SocialToggle";
-// import SocialMap from "./social-map/SocialMap";
+import SetupSocialProfile from "../social-profile/setup-social-profile/SetupSocialProfile";
+import { useSocket } from "../contexts/SocketContext";
 import { UserSocialProfileWithRelations } from "@/types/social";
 import { SocialVibe } from "@prisma/client";
-import SetupSocialProfile from "../social-profile/setup-social-profile/SetupSocialProfile";
 
-import dynamic from "next/dynamic";
-import {
-  ActionButton,
-  CityBadge,
-  CityDetection,
-  DesktopNotificationBell,
-  DistanceBadge,
-  EditProfileButton,
-  EmptyUsersState,
-  ErrorState,
-  HeaderActions,
-  HowItWorks,
-  HowItWorksTitle,
-  LoadingState,
-  LocationInfo,
-  MapContainer,
-  ModalActions,
-  ModalBio,
-  ModalButton,
-  ModalContent,
-  ModalHeader,
-  ModalInterests,
-  ModalInterestTag,
-  ModalOverlay,
-  ModalSection,
-  ModalSectionTitle,
-  ModalUserImage,
-  ModalUserInfo,
-  ModalUserName,
-  ModalUserVibe,
-  QuickActions,
-  SocialContainer,
-  SocialHeader,
-  StatCard,
-  StatLabel,
-  StatNumber,
-  StatsContainer,
-  Step,
-  StepDescription,
-  StepIcon,
-  StepsContainer,
-  StepTitle,
-  Subtitle,
-  SuccessState,
-  Title,
-  UserAge,
-  UserCard,
-  UserDetails,
-  UserHeader,
-  UserImage,
-  UserImageContainer,
-  UserInfo,
-  UserName,
-  UsersGrid,
-  UserStatusBadge,
-  UserVibeBadge,
-  ViewButton,
-  ViewToggle,
-} from "./Social.styles";
-import { useSocket } from "../contexts/SocketContext";
-// import { NotificationData } from "@/types/socket";
+// ============================================
+// STYLED COMPONENTS (Integrated)
+// ============================================
+
+export const getVibeColor = (vibe: string) => {
+  switch (vibe) {
+    case "PARTY":
+      return "#ec4899";
+    case "CHILL":
+      return "#0ea5e9";
+    case "NETWORKING":
+      return "#10b981";
+    case "ADVENTUROUS":
+      return "#f59e0b";
+    default:
+      return "#8b5cf6";
+  }
+};
+
+const getVibeEmoji = (vibe: string) => {
+  switch (vibe) {
+    case "PARTY":
+      return "🎉";
+    case "CHILL":
+      return "😌";
+    case "NETWORKING":
+      return "🤝";
+    case "ADVENTUROUS":
+      return "🌍";
+    default:
+      return "💜";
+  }
+};
+
+const SocialContainer = styled.div`
+  padding: 1rem 1rem 10rem;
+  min-height: 100vh;
+  background: ${({ theme }) => theme.colors.primaryBackground};
+
+  @media (min-width: 768px) {
+    margin-left: 240px;
+    padding: 2rem 2rem 8rem;
+  }
+
+  @media (max-width: 767px) {
+    padding-bottom: 80px;
+  }
+`;
+
+const SocialHeader = styled.div`
+  text-align: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+  background-color: transparent !important;
+`;
+
+const Title = styled.h1`
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(-45deg, #0ea5e9, #8b5cf6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: ${({ theme }) => theme.fonts.dm};
+
+  @media (min-width: 768px) {
+    font-size: 2.5rem;
+  }
+`;
+
+const Subtitle = styled.p`
+  color: ${({ theme }) => theme.colors.textSecondary};
+  font-size: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
+  font-family: ${({ theme }) => theme.fonts.dm};
+
+  @media (min-width: 768px) {
+    font-size: 1.125rem;
+  }
+`;
+
+const HeaderActions = styled.div`
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    position: static;
+    justify-content: flex-end;
+    margin-top: 1rem;
+  }
+`;
+
+const EditProfileButton = styled.button`
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: ${({ theme }) => theme.colors.primaryAccent};
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: ${({ theme }) => theme.fonts.dm};
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+    background: rgba(139, 92, 246, 0.2);
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+`;
+
+const HowItWorks = styled.div`
+  background: ${({ theme }) => theme.colors.secondaryBackground};
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
+const HowItWorksTitle = styled.h2`
+  color: ${({ theme }) => theme.colors.textPrimary};
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-family: ${({ theme }) => theme.fonts.dm};
+`;
+
+const StepsContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+`;
+
+const Step = styled.div`
+  text-align: center;
+  padding: 1rem;
+`;
+
+const StepIcon = styled.div`
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+`;
+
+const StepTitle = styled.h3`
+  color: ${({ theme }) => theme.colors.textPrimary};
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  font-family: ${({ theme }) => theme.fonts.dm};
+`;
+
+const StepDescription = styled.p`
+  color: ${({ theme }) => theme.colors.textSecondary};
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-family: ${({ theme }) => theme.fonts.dm};
+`;
+
+const ViewToggle = styled.div`
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+  gap: 0.5rem;
+  background-color: transparent !important;
+`;
+
+const ViewButton = styled.button<{ $active: boolean }>`
+  background: ${(props) =>
+    props.$active
+      ? "linear-gradient(45deg, #8b5cf6, #0ea5e9)"
+      : props.theme.colors.secondaryBackground};
+  border: 1px solid
+    ${(props) => (props.$active ? "#8b5cf6" : props.theme.colors.border)};
+  color: ${(props) =>
+    props.$active ? "white" : props.theme.colors.textSecondary};
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-family: ${({ theme }) => theme.fonts.dm};
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  }
+`;
+
+const CityDetection = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  background-color: transparent !important;
+`;
+
+const CityBadge = styled.div`
+  background: linear-gradient(45deg, #8b5cf6, #0ea5e9);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: ${({ theme }) => theme.fonts.dm};
+`;
+
+const MapContainer = styled.div<{ $show: boolean }>`
+  display: ${(props) => (props.$show ? "block" : "none")};
+  margin: 1.5rem 0;
+  height: 400px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
+const UsersGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+  background-color: transparent !important;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.375rem;
+  }
+`;
+
+const UserCard = styled.div`
+  background: ${({ theme }) => theme.colors.secondaryBackground};
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: ${({ theme }) => theme.colors.primaryAccent};
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+  }
+`;
+
+const UserImageContainer = styled.div`
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background: linear-gradient(45deg, #8b5cf6, #0ea5e9);
+
+  @media (max-width: 768px) {
+    height: 120px;
+  }
+  @media (max-width: 480px) {
+    height: 100px;
+  }
+`;
+
+const UserImage = styled.div<{ $imageUrl?: string }>`
+  width: 100%;
+  height: 100%;
+  background: ${(props) =>
+    props.$imageUrl
+      ? `url(${props.$imageUrl}) center/cover`
+      : "linear-gradient(45deg, #8b5cf6, #0ea5e9)"};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: white;
+  font-weight: 600;
+`;
+
+const UserStatusBadge = styled.div<{ $status: string }>`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: ${(props) =>
+    props.$status === "ONLINE"
+      ? "#10b981"
+      : props.$status === "SOCIAL_MODE"
+        ? "#8b5cf6"
+        : props.$status === "IN_MEETUP"
+          ? "#f59e0b"
+          : "#6b7280"};
+  border: 2px solid ${({ theme }) => theme.colors.secondaryBackground};
+`;
+
+const UserVibeBadge = styled.div<{ $vibe: string }>`
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: ${(props) => getVibeColor(props.$vibe)};
+  color: white;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+`;
+
+const UserInfo = styled.div`
+  padding: 0.75rem;
+  @media (max-width: 768px) {
+    padding: 0.5rem;
+  }
+`;
+
+const UserName = styled.h3`
+  color: ${({ theme }) => theme.colors.textPrimary};
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: ${({ theme }) => theme.fonts.dm};
+`;
+
+const UserHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+`;
+
+const UserAge = styled.span`
+  color: ${({ theme }) => theme.colors.textMuted};
+  font-size: 0.75rem;
+  font-weight: 500;
+`;
+
+const UserDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+const DistanceBadge = styled.div`
+  color: #10b981;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+`;
+
+const LocationInfo = styled.div`
+  color: ${({ theme }) => theme.colors.textMuted};
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const QuickActions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+`;
+
+const ActionButton = styled.button<{ $variant: "primary" | "secondary" }>`
+  flex: 1;
+  background: ${(props) =>
+    props.$variant === "primary"
+      ? "linear-gradient(45deg, #8b5cf6, #0ea5e9)"
+      : "rgba(139, 92, 246, 0.1)"};
+  border: ${(props) =>
+    props.$variant === "primary"
+      ? "none"
+      : `1px solid ${props.theme.colors.border}`};
+  border-radius: 6px;
+  padding: 0.5rem;
+  color: ${(props) =>
+    props.$variant === "primary" ? "white" : props.theme.colors.primaryAccent};
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+`;
+
+const LoadingState = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: ${({ theme }) => theme.colors.textSecondary};
+`;
+
+const ErrorState = styled.div`
+  text-align: center;
+  padding: 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #ef4444;
+  margin: 1rem 0;
+`;
+
+const SuccessState = styled.div`
+  text-align: center;
+  padding: 1rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  color: #10b981;
+  margin: 1rem 0;
+`;
+
+const StatsContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+
+  @media (min-width: 768px) {
+    gap: 1rem;
+  }
+`;
+
+const StatCard = styled.div`
+  padding: 0.5rem;
+  background: ${({ theme }) => theme.colors.secondaryBackground};
+  text-align: center;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 8px;
+`;
+
+const StatNumber = styled.div`
+  font-size: 1rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.secondaryAccent};
+  margin-bottom: 0.25rem;
+
+  @media (min-width: 768px) {
+    font-size: 1.25rem;
+  }
+`;
+
+const StatLabel = styled.div`
+  font-size: 0.6rem;
+  color: ${({ theme }) => theme.colors.textMuted};
+  font-weight: 500;
+
+  @media (min-width: 768px) {
+    font-size: 0.7rem;
+  }
+`;
+
+const EmptyUsersState = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: ${({ theme }) => theme.colors.textMuted};
+`;
+
+// Modal Styles
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+`;
+
+const ModalContent = styled.div`
+  background: ${({ theme }) => theme.colors.secondaryBackground};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+`;
+
+const ModalUserImage = styled.div<{ $imageUrl?: string }>`
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: ${(props) =>
+    props.$imageUrl
+      ? `url(${props.$imageUrl}) center/cover`
+      : "linear-gradient(45deg, #8b5cf6, #0ea5e9)"};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: white;
+  font-weight: 600;
+`;
+
+const ModalUserInfo = styled.div`
+  flex: 1;
+`;
+
+const ModalUserName = styled.h3`
+  color: ${({ theme }) => theme.colors.textPrimary};
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  font-family: ${({ theme }) => theme.fonts.dm};
+`;
+
+const ModalUserVibe = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(139, 92, 246, 0.2);
+  color: ${({ theme }) => theme.colors.primaryAccent};
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+`;
+
+const ModalSection = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+const ModalSectionTitle = styled.h4`
+  color: ${({ theme }) => theme.colors.textPrimary};
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+`;
+
+const ModalBio = styled.p`
+  color: ${({ theme }) => theme.colors.textSecondary};
+  line-height: 1.6;
+  margin: 0;
+`;
+
+const ModalInterests = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`;
+
+const ModalInterestTag = styled.span`
+  background: rgba(139, 92, 246, 0.2);
+  color: #c4b5fd;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+`;
+
+const ModalButton = styled.button<{ $variant: "primary" | "secondary" }>`
+  flex: 1;
+  background: ${(props) =>
+    props.$variant === "primary"
+      ? "linear-gradient(45deg, #8b5cf6, #0ea5e9)"
+      : "rgba(139, 92, 246, 0.1)"};
+  border: ${(props) =>
+    props.$variant === "primary"
+      ? "none"
+      : `1px solid ${props.theme.colors.border}`};
+  border-radius: 8px;
+  padding: 1rem;
+  color: ${(props) =>
+    props.$variant === "primary" ? "white" : props.theme.colors.primaryAccent};
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+`;
+
+// Dynamic imports
+const SocialMap = dynamic(() => import("./social-map/SocialMap"), {
+  ssr: false,
+  loading: () => (
+    <div
+      style={{
+        background: "rgba(30, 41, 59, 0.6)",
+        borderRadius: "12px",
+        height: "400px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#e2e8f0",
+        margin: "1.5rem 0",
+      }}
+    >
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🗺️</div>
+        <p>Loading interactive map...</p>
+      </div>
+    </div>
+  ),
+});
+
+// ============================================
+// TYPES & ENUMS
+// ============================================
 
 export enum NotificationType {
   HOP_REQUEST = "HOP_REQUEST",
@@ -78,10 +674,6 @@ export enum NotificationType {
   WAVE = "WAVE",
   MESSAGE = "MESSAGE",
   SYSTEM = "SYSTEM",
-  MEETUP_INVITE = "MEETUP_INVITE",
-  CRAWL_JOIN_REQUEST = "CRAWL_JOIN_REQUEST",
-  CRAWL_JOIN_APPROVED = "CRAWL_JOIN_APPROVED",
-  CRAWL_JOIN_REJECTED = "CRAWL_JOIN_REJECTED",
 }
 
 export enum HopInStatus {
@@ -105,103 +697,26 @@ export interface NotificationData {
   readAt?: Date;
   createdAt: Date;
   hopInId?: string;
-  meetupId?: string;
-  fromUser?: {
-    id: string;
-    name: string | null;
-    image: string | null;
-  };
+  fromUser?: { id: string; name: string | null; image: string | null };
   hopIn?: {
     id: string;
     barId?: string;
-    bar?: {
-      id: string;
-      name: string;
-    };
+    bar?: { id: string; name: string };
     status: HopInStatus;
   };
-  crawl?: {
-    id: string;
-    name: string;
-  };
+  crawl?: { id: string; name: string };
 }
-export const SocialMap = dynamic(() => import("./social-map/SocialMap"), {
-  ssr: false,
-  loading: () => (
-    <div
-      style={{
-        background: "rgba(30, 41, 59, 0.6)",
-        borderRadius: "12px",
-        border: "1px solid rgba(139, 92, 246, 0.2)",
-        height: "400px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#e2e8f0",
-        margin: "1.5rem 0",
-      }}
-    >
-      <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🗺️</div>
-        <p>Loading interactive map...</p>
-      </div>
-    </div>
-  ),
-});
 
-// Helper functions
-export const getVibeColor = (vibe: string) => {
-  switch (vibe) {
-    case "PARTY":
-      return "#ec4899";
-    case "CHILL":
-      return "#0ea5e9";
-    case "NETWORKING":
-      return "#10b981";
-    case "ADVENTUROUS":
-      return "#f59e0b";
-    default:
-      return "#8b5cf6";
-  }
-};
+interface LocationData {
+  locationLat?: number;
+  locationLng?: number;
+}
 
-export const getVibeEmoji = (vibe: string) => {
-  switch (vibe) {
-    case "PARTY":
-      return "🎉";
-    case "CHILL":
-      return "😌";
-    case "NETWORKING":
-      return "🤝";
-    case "ADVENTUROUS":
-      return "🌍";
-    default:
-      return "💜";
-  }
-};
+interface NearbyUsersData {
+  users: UserSocialProfileWithRelations[];
+}
 
-export const getSocialStatusText = (status: string) => {
-  switch (status) {
-    case "ONLINE":
-      return "Online";
-    case "SOCIAL_MODE":
-      return "Social";
-    case "IN_MEETUP":
-      return "In Meetup";
-    case "OFFLINE":
-      return "Offline";
-    default:
-      return "Available";
-  }
-};
-
-// Calculate age from birth date if available, otherwise use a default
-const calculateAge = (user: UserSocialProfileWithRelations): number => {
-  const hash = user.userId.split("").reduce((a, b) => a + b.charCodeAt(0), 0);
-  return 22 + (hash % 15);
-};
-
-// Finnish cities with their approximate coordinates and bounds
+// Finnish cities coordinates
 const FINNISH_CITIES = {
   Helsinki: {
     lat: 60.1699,
@@ -228,34 +743,8 @@ const FINNISH_CITIES = {
     lng: 25.4651,
     bounds: { north: 65.1, south: 64.9, west: 25.3, east: 25.7 },
   },
-  Vantaa: {
-    lat: 60.2934,
-    lng: 25.0378,
-    bounds: { north: 60.4, south: 60.2, west: 24.85, east: 25.25 },
-  },
-  Lahti: {
-    lat: 60.9827,
-    lng: 25.6612,
-    bounds: { north: 61.05, south: 60.9, west: 25.55, east: 25.8 },
-  },
-  Kuopio: {
-    lat: 62.8924,
-    lng: 27.677,
-    bounds: { north: 63.0, south: 62.75, west: 27.5, east: 27.9 },
-  },
-  Jyväskylä: {
-    lat: 62.2426,
-    lng: 25.7473,
-    bounds: { north: 62.3, south: 62.15, west: 25.65, east: 25.85 },
-  },
-  Pori: {
-    lat: 61.4851,
-    lng: 21.7975,
-    bounds: { north: 61.55, south: 61.4, west: 21.7, east: 21.9 },
-  },
 };
 
-// Helper function to detect which Finnish city the coordinates are in
 const detectFinnishCity = (lat: number, lng: number): string => {
   for (const [city, data] of Object.entries(FINNISH_CITIES)) {
     const bounds = data.bounds;
@@ -268,123 +757,86 @@ const detectFinnishCity = (lat: number, lng: number): string => {
       return city;
     }
   }
-
-  // If no city matched, use reverse geocoding as fallback
   return "Unknown";
 };
 
-// Enhanced reverse geocoding for Finnish cities
 const getCityFromCoordinates = async (
   lat: number,
-  lng: number
+  lng: number,
 ): Promise<string> => {
   try {
-    // First try to detect using our bounds
     const detectedCity = detectFinnishCity(lat, lng);
-    if (detectedCity !== "Unknown") {
-      return detectedCity;
-    }
+    if (detectedCity !== "Unknown") return detectedCity;
 
-    // Fallback to API for more accurate detection
     const response = await fetch(
-      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
     );
-
     if (!response.ok) throw new Error("Geocoding API failed");
-
     const data = await response.json();
-
-    // Check if the city is in Finland
-    if (data.countryName === "Finland") {
+    if (data.countryName === "Finland")
       return data.city || data.locality || "Unknown City in Finland";
-    }
-
     return "Not in Finland";
   } catch (error) {
-    console.error("Error getting city from coordinates:", error);
-
-    // Final fallback - check if coordinates are roughly in Finland
-    if (lat > 59.5 && lat < 70.0 && lng > 19.0 && lng < 31.0) {
+    if (lat > 59.5 && lat < 70.0 && lng > 19.0 && lng < 31.0)
       return "Unknown City in Finland";
-    }
-
     return "Location not in Finland";
   }
 };
 
-// Filter users by city
 const filterUsersByCity = (
   users: UserSocialProfileWithRelations[],
-  targetCity: string
+  targetCity: string,
 ): UserSocialProfileWithRelations[] => {
   if (
     targetCity === "Not in Finland" ||
     targetCity === "Location not in Finland"
-  ) {
-    return []; // No users if not in Finland
-  }
-
+  )
+    return [];
   return users.filter((user) => {
     if (!user.locationLat || !user.locationLng) return false;
-
-    try {
-      const userCity = detectFinnishCity(user.locationLat, user.locationLng);
-
-      // Direct city match
-      if (userCity === targetCity) {
-        return true;
-      }
-
-      // Handle "Unknown City in Finland" case - include them if we're also in an unknown Finnish location
-      if (targetCity === "Unknown City in Finland" && userCity === "Unknown") {
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error("Error filtering user by city:", error);
-      return false;
-    }
+    const userCity = detectFinnishCity(user.locationLat, user.locationLng);
+    if (userCity === targetCity) return true;
+    if (targetCity === "Unknown City in Finland" && userCity === "Unknown")
+      return true;
+    return false;
   });
 };
 
-interface LocationData {
-  locationLat?: number;
-  locationLng?: number;
-}
+const calculateAge = (user: UserSocialProfileWithRelations): number => {
+  const hash = user.userId.split("").reduce((a, b) => a + b.charCodeAt(0), 0);
+  return 22 + (hash % 15);
+};
 
-interface NearbyUsersData {
-  users: UserSocialProfileWithRelations[];
-}
+const calculateDistance = (
+  userLat: number,
+  userLng: number,
+  currentLat: number,
+  currentLng: number,
+): string => {
+  const R = 6371;
+  const dLat = ((userLat - currentLat) * Math.PI) / 180;
+  const dLon = ((userLng - currentLng) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((currentLat * Math.PI) / 180) *
+      Math.cos((userLat * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
+  if (distance < 0.1) return "Very close";
+  if (distance < 0.5) return `${Math.round(distance * 1000)}m`;
+  if (distance < 1) return "<1km";
+  return `${distance.toFixed(1)}km`;
+};
 
-// Fixed DebugInfo interface with all possible properties
-interface DebugInfo {
-  type: string;
-  loading?: boolean;
-  success?: boolean;
-  data?: unknown;
-  error?: string;
-  message?: string;
-  source?: string;
-  count?: number;
-  users?: unknown[];
-  hasProfile?: boolean;
-  profile?: unknown;
-  timestamp?: string;
-  status?: number;
-  result?: unknown;
-  // Added missing properties
-  city?: string;
-  coordinates?: { lat: number; lng: number };
-  totalUsers?: number;
-  filteredCount?: number;
-}
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 const Social = () => {
   const { data: session } = useSession();
   const router = useRouter();
-
-  // NOTIFICATION SYSTEM STATE
   const {
     socket,
     isConnected,
@@ -394,10 +846,8 @@ const Social = () => {
     unreadCount,
   } = useSocket();
 
-  // Remove showNotifications state since we're navigating to page instead
-  // const [showNotifications, setShowNotifications] = useState(false);
-
-  // const [isSocialMode, setIsSocialMode] = useState(false);
+  // State
+  const [isSocialMode, setIsSocialMode] = useState(false);
   const [activeUsers, setActiveUsers] = useState<
     UserSocialProfileWithRelations[]
   >([]);
@@ -413,79 +863,45 @@ const Social = () => {
   const [hasSocialProfile, setHasSocialProfile] = useState(false);
   const [userSocialProfile, setUserSocialProfile] =
     useState<UserSocialProfileWithRelations | null>(null);
-  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [selectedView, setSelectedView] = useState<"grid" | "map">("grid");
   const [selectedUser, setSelectedUser] =
     useState<UserSocialProfileWithRelations | null>(null);
   const [showHopInModal, setShowHopInModal] = useState(false);
   const [isSendingHopIn, setIsSendingHopIn] = useState(false);
-
-  // Add new state for city detection
   const [currentCity, setCurrentCity] = useState<string>("");
   const [isDetectingCity, setIsDetectingCity] = useState(false);
   const [allUsers, setAllUsers] = useState<UserSocialProfileWithRelations[]>(
-    []
+    [],
   );
   const [filteredUsers, setFilteredUsers] = useState<
     UserSocialProfileWithRelations[]
   >([]);
   const [showLocationWarning, setShowLocationWarning] = useState(false);
 
-  // Initialize isSocialMode from localStorage first, then update from API
-  // const [isSocialMode, setIsSocialMode] = useState(() => {
-  //   if (typeof window !== "undefined") {
-  //     const saved = localStorage.getItem("socialMode");
-  //     return saved ? JSON.parse(saved) : false;
-  //   }
-  //   return false;
-  // });
-  const [isSocialMode, setIsSocialMode] = useState(false);
-
-  // Helper functions for user status display
+  // Helper functions
   const getUserStatusDisplay = (
-    user: UserSocialProfileWithRelations
+    user: UserSocialProfileWithRelations,
   ): string => {
-    // If user has a current bar, they're at a venue
-    if (user.currentBar) {
-      return "🍻 At a venue";
-    }
-
-    // If user has location but no bar, they're out exploring
-    if (user.locationLat && user.locationLng) {
-      return "📍 Out exploring";
-    }
-
-    // If user is in social mode but no specific location
-    if (user.isSocialMode) {
-      return "🔍 Looking for spots";
-    }
-
-    // Default fallback
+    if (user.currentBar) return "🍻 At a venue";
+    if (user.locationLat && user.locationLng) return "📍 Out exploring";
+    if (user.isSocialMode) return "🔍 Looking for spots";
     return "📍 Nearby";
   };
 
-  const getUserDetailedStatus = (
-    user: UserSocialProfileWithRelations
-  ): string => {
-    if (user.currentBar) {
-      return `🍻 At a venue in ${currentCity} (${calculateDistance(user)})`;
-    }
-
-    if (user.locationLat && user.locationLng) {
-      return `📍 Exploring ${currentCity} (${calculateDistance(user)})`;
-    }
-
-    if (user.isSocialMode) {
-      return `🔍 Looking for places in ${currentCity}`;
-    }
-
-    return `📍 In ${currentCity}`;
+  const getUserDistance = (user: UserSocialProfileWithRelations): string => {
+    if (!currentLocation || !user.locationLat || !user.locationLng)
+      return "Nearby";
+    return calculateDistance(
+      user.locationLat,
+      user.locationLng,
+      currentLocation.lat,
+      currentLocation.lng,
+    );
   };
 
-  // Add this useEffect to handle logout cleanup
+  // Effects
   useEffect(() => {
     if (!session) {
-      // User logged out - reset everything
       setIsSocialMode(false);
       setAllUsers([]);
       setFilteredUsers([]);
@@ -495,98 +911,53 @@ const Social = () => {
   }, [session]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      const editMode = urlParams.get("edit");
-
-      // If we came from UserProfile with ?edit=true, open edit mode
-      if (editMode === "true" && userSocialProfile) {
-        setShowProfileSetup(true);
-
-        // Clean the URL so we don't get stuck in edit mode
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, "", newUrl);
-      }
-    }
-  }, [userSocialProfile]);
-
-  // NOTIFICATION SYSTEM: Socket connection and event listeners
-  // In your Social component, update the socket useEffect to only handle accepts:
-  // useEffect(() => {
-  //   if (!socket || !session?.user?.id) return;
-
-  //   // Join user's private room
-  //   socket.emit("join_user_room", session.user.id);
-
-  //   // Listen for new notifications
-  //   socket.on("new_notification", (notification: NotificationData) => {
-  //     console.log("📨 New notification received:", notification);
-  //     addNotification(notification);
-  //     setSuccess(`New notification: ${notification.message}`);
-  //   });
-
-  //   // Listen for hop request responses (when someone accepts YOUR request)
-  //   socket.on("hop_request_accepted", (data) => {
-  //     console.log("✅ Your hop request was accepted:", data);
-  //     setSuccess(
-  //       `${data.toUser?.name || "Someone"} accepted your hop in request! 🎉`
-  //     );
-  //   });
-
-  //   // REMOVE decline notifications - silent declines
-  //   // socket.on("hop_request_declined", (data) => {
-  //   //   setSuccess(`${data.toUser?.name || 'Someone'} declined your hop in request`);
-  //   // });
-
-  //   // Listen for errors
-  //   socket.on("error", (error) => {
-  //     console.error("Socket error:", error);
-  //     setError(error);
-  //   });
-
-  //   return () => {
-  //     socket.off("new_notification");
-  //     socket.off("hop_request_accepted");
-  //     // socket.off("hop_request_declined"); // Remove this
-  //     socket.off("error");
-  //   };
-  // }, [socket, session, addNotification]);
+    checkSocialProfile();
+  }, []);
 
   useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    setActiveUsers(filteredUsers);
+  }, [filteredUsers]);
+
+  useEffect(() => {
+    if (isSocialMode) {
+      fetchNearbyUsers();
+      const interval = setInterval(fetchNearbyUsers, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isSocialMode, currentLocation, currentCity]);
+
+  // Socket effects
+  useEffect(() => {
     if (!socket || !session?.user?.id) return;
-
-    // Join user's private room
     socket.emit("join_user_room", session.user.id);
-
-    // Listen for new notifications
     socket.on("new_notification", (notification: NotificationData) => {
-      console.log("📨 New notification received:", notification);
       addNotification(notification);
-
-      // 🆕 UPDATED: Show success but DON'T auto-navigate
       if (notification.type === "HOP_ACCEPTED") {
         setSuccess(
-          `You have a new chat invitation! Check your notifications to start chatting.`
+          `You have a new chat invitation! Check your notifications to start chatting.`,
         );
       }
     });
-
-    // Listen for hop request responses (when someone accepts YOUR request)
     socket.on("hop_request_accepted", (data) => {
-      console.log("✅ Your hop request was accepted:", data);
       setSuccess(
-        `${
-          data.toUser?.name || "Someone"
-        } accepted your hop in request! Check notifications to start chatting. 💬`
+        `${data.toUser?.name || "Someone"} accepted your hop in request! Check notifications to start chatting. 💬`,
       );
     });
-
-    // Listen for errors
-    socket.on("error", (error) => {
-      console.error("Socket error:", error);
-      setError(error);
-    });
-
+    socket.on("error", (error) => setError(error));
     return () => {
       socket.off("new_notification");
       socket.off("hop_request_accepted");
@@ -594,138 +965,16 @@ const Social = () => {
     };
   }, [socket, session, addNotification]);
 
-  // NOTIFICATION SYSTEM: Fetch existing notifications on mount
-  useEffect(() => {
-    if (session?.user?.id) {
-      fetchNotifications();
-    }
-  }, [session]);
-
-  // NOTIFICATION SYSTEM: Fetch notifications from API
-  const fetchNotifications = async () => {
-    try {
-      console.log("📡 Fetching notifications...");
-      const response = await fetch("/api/notifications");
-      console.log("📨 API Response status:", response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log(
-          "✅ Notifications data received:",
-          data.notifications?.length
-        );
-
-        // Clear existing notifications by fetching fresh data
-        // The SocketContext will handle deduplication
-        data.notifications?.forEach((notification: NotificationData) => {
-          addNotification(notification);
-        });
-      } else {
-        console.error("❌ API Error:", response.status);
-      }
-    } catch (error) {
-      console.error("💥 Error fetching notifications:", error);
-    }
-  };
-
-  // NOTIFICATION SYSTEM: Send wave to user
-  const sendWave = async (user: UserSocialProfileWithRelations) => {
-    if (!socket || !session?.user?.id) {
-      setError("Not connected to server");
-      return;
-    }
-
-    try {
-      socket.emit("send_wave", {
-        fromUserId: session.user.id,
-        toUserId: user.userId,
-      });
-
-      setSuccess(`You waved at ${user.user.name || "user"}! 👋`);
-    } catch (err) {
-      setError("Failed to send wave");
-    }
-  };
-
-  // Check if user has social profile on component mount
-  useEffect(() => {
-    checkSocialProfile();
-  }, []);
-
-  // Auto-clear success messages after 5 seconds
-  useEffect(() => {
-    if (success) {
-      const timer = setTimeout(() => {
-        setSuccess(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [success]);
-
-  // Fixed useEffect with proper null check for error
-  useEffect(() => {
-    if (error) {
-      if (
-        error.includes("Using Helsinki as default") ||
-        error.includes("Geolocation not supported")
-      ) {
-        const timer = setTimeout(() => {
-          setError(null);
-          setShowLocationWarning(false);
-        }, 8000);
-        return () => clearTimeout(timer);
-      } else {
-        const timer = setTimeout(() => {
-          setError(null);
-        }, 8000);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [error]);
-
-  const calculateDistance = (user: UserSocialProfileWithRelations): string => {
-    if (!currentLocation || !user.locationLat || !user.locationLng) {
-      return "Nearby";
-    }
-
-    const R = 6371;
-    const dLat = ((user.locationLat - currentLocation.lat) * Math.PI) / 180;
-    const dLon = ((user.locationLng - currentLocation.lng) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((currentLocation.lat * Math.PI) / 180) *
-        Math.cos((user.locationLat * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
-
-    if (distance < 0.1) return "Very close";
-    if (distance < 0.5) return `${Math.round(distance * 1000)}m`;
-    if (distance < 1) return "<1km";
-    return `${distance.toFixed(1)}km`;
-  };
-
+  // API calls
   const checkSocialProfile = async () => {
     try {
-      console.log("🔍 Checking social profile...");
       const response = await fetch("/api/social/profile");
-      console.log("📨 Profile check response status:", response.status);
-
       if (response.ok) {
         const data = await response.json();
-        console.log("✅ Profile check data:", data);
-
         setHasSocialProfile(!!data.socialProfile);
         setUserSocialProfile(data.socialProfile);
-
-        // Only update social mode if we have a fresh value from DB
-        // Don't reset it to false if it's already true locally
         if (data.socialProfile?.isSocialMode) {
-          console.log("🎯 Setting social mode to ACTIVE from database");
           setIsSocialMode(true);
-
-          // If social mode is active, also set location and fetch users
           if (
             data.socialProfile.locationLat &&
             data.socialProfile.locationLng
@@ -739,44 +988,25 @@ const Social = () => {
             await fetchNearbyUsers();
           }
         }
-        // DON'T set to false automatically - preserve current state
-        // This prevents resetting social mode when just updating profile
       }
     } catch (error) {
-      console.error("💥 Error checking social profile:", error);
+      console.error("Error checking social profile:", error);
     }
   };
 
-  // Enhanced city detection function
   const detectUserCity = async (lat: number, lng: number): Promise<void> => {
     setIsDetectingCity(true);
-    setError(null);
-
     try {
-      console.log("🌍 Detecting city for coordinates:", { lat, lng });
-
       const city = await getCityFromCoordinates(lat, lng);
-      console.log("📍 Detected city:", city);
-
       setCurrentCity(city);
-
-      setDebugInfo({
-        type: "city_detected",
-        city: city,
-        coordinates: { lat, lng },
-        timestamp: new Date().toISOString(),
-      });
-
-      // Show success message if in Finland
       if (city !== "Not in Finland" && city !== "Location not in Finland") {
         setSuccess(`Welcome to ${city}! Showing users in your city.`);
       } else {
         setError(
-          "You appear to be outside Finland. Social mode may not work properly."
+          "You appear to be outside Finland. Social mode may not work properly.",
         );
       }
     } catch (error) {
-      console.error("Error detecting city:", error);
       setCurrentCity("Unknown");
       setError("Could not detect your city. Showing all Finnish users.");
     } finally {
@@ -784,47 +1014,26 @@ const Social = () => {
     }
   };
 
-  // Update fetchNearbyUsers to filter by current city
   const fetchNearbyUsers = async () => {
     if (!isSocialMode) return;
     setIsLoadingUsers(true);
     try {
-      // Use a larger radius to get users from wider area in Finland
       const url = currentLocation
-        ? `/api/social/status?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=100000` // 100km radius
+        ? `/api/social/status?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=100000`
         : "/api/social/status";
-
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch nearby users");
-
       const data: NearbyUsersData = await response.json();
-
-      console.log("🌍 Fetched all users:", data.users.length);
-
-      // Store all users
       setAllUsers(data.users);
-
-      // Filter users by current city
       if (currentCity) {
         const usersInCity = filterUsersByCity(data.users, currentCity);
         setFilteredUsers(usersInCity);
-
-        console.log(`📍 Filtered users in ${currentCity}:`, usersInCity.length);
-
-        setDebugInfo({
-          type: "users_filtered_by_city",
-          totalUsers: data.users.length,
-          filteredCount: usersInCity.length,
-          city: currentCity,
-          timestamp: new Date().toISOString(),
-        });
       } else {
-        // If no city detected, show all users (fallback)
         setFilteredUsers(data.users);
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to fetch nearby users"
+        err instanceof Error ? err.message : "Failed to fetch nearby users",
       );
     } finally {
       setIsLoadingUsers(false);
@@ -832,31 +1041,21 @@ const Social = () => {
   };
 
   const toggleSocialMode = async (status: boolean) => {
-    // Early return if no session
     if (!session?.user?.id) {
-      console.log("🚫 No session - cannot toggle social mode");
       setIsSocialMode(false);
       return;
     }
-
-    console.log("🔘 toggleSocialMode called:", { status });
-
     setIsLoading(true);
     setError(null);
-    setSuccess(null);
     setShowLocationWarning(false);
-
     try {
       if (status && !hasSocialProfile && !userSocialProfile) {
-        console.log("🚫 No profile found, showing setup");
         setShowProfileSetup(true);
         setIsLoading(false);
         return;
       }
-
       let locationData: LocationData = {};
       let usedFallbackLocation = false;
-
       if (status && navigator.geolocation) {
         try {
           const position = await new Promise<GeolocationPosition>(
@@ -864,32 +1063,27 @@ const Social = () => {
               navigator.geolocation.getCurrentPosition(resolve, reject, {
                 enableHighAccuracy: true,
                 timeout: 10000,
-                maximumAge: 300000,
               });
-            }
+            },
           );
-
           locationData = {
             locationLat: position.coords.latitude,
             locationLng: position.coords.longitude,
           };
-
           const newLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           };
-
           setCurrentLocation(newLocation);
           await detectUserCity(newLocation.lat, newLocation.lng);
         } catch (geoError) {
-          console.error("Geolocation error:", geoError);
           const fallbackLocation = { lat: 60.1699, lng: 24.9384 };
           setCurrentLocation(fallbackLocation);
           setCurrentCity("Helsinki");
           usedFallbackLocation = true;
           setShowLocationWarning(true);
           setError(
-            "Using Helsinki as default location. Enable location services for accurate city detection."
+            "Using Helsinki as default location. Enable location services for accurate city detection.",
           );
         }
       } else if (status) {
@@ -897,12 +1091,10 @@ const Social = () => {
         setCurrentLocation(fallbackLocation);
         setCurrentCity("Helsinki");
         usedFallbackLocation = true;
-        setShowLocationWarning(true);
         setError(
-          "Geolocation not supported. Using Helsinki as default location."
+          "Geolocation not supported. Using Helsinki as default location.",
         );
       }
-
       const response = await fetch("/api/social/status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -913,31 +1105,19 @@ const Social = () => {
           interests: userSocialProfile?.interests,
         }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update social status");
-      }
-
+      if (!response.ok) throw new Error("Failed to update social status");
       const result = await response.json();
       setUserSocialProfile(result.socialProfile);
       setIsSocialMode(status);
-
       if (status) {
         if (
           currentCity &&
           currentCity !== "Not in Finland" &&
           currentCity !== "Location not in Finland"
         ) {
-          if (usedFallbackLocation) {
-            setSuccess(
-              `Social mode activated in ${currentCity}! Finding users nearby...`
-            );
-          } else {
-            setSuccess(
-              `Social mode activated in ${currentCity}! Finding users nearby...`
-            );
-          }
+          setSuccess(
+            `Social mode activated in ${currentCity}! Finding users nearby...`,
+          );
         } else {
           setSuccess("Social mode activated! Finding users nearby...");
         }
@@ -948,7 +1128,6 @@ const Social = () => {
         setFilteredUsers([]);
       }
     } catch (err) {
-      // If API call fails, revert localStorage
       setIsSocialMode(!status);
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -956,56 +1135,18 @@ const Social = () => {
     }
   };
 
-  // NOTIFICATION SYSTEM: Updated hop in function using Socket.io
-  const handleHopIn = async (user: UserSocialProfileWithRelations) => {
-    setSelectedUser(user);
-    setShowHopInModal(true);
-  };
-
-  // NOTIFICATION SYSTEM: Updated send hop in request using Socket.io
-  // const sendHopInRequest = async () => {
-  //   if (!selectedUser || !socket || !session?.user?.id) return;
-
-  //   setIsSendingHopIn(true);
-  //   try {
-  //     socket.emit("send_hop_request", {
-  //       fromUserId: session.user.id,
-  //       toUserId: selectedUser.userId,
-  //       barId: selectedUser.currentBarId,
-  //       message: `Hey ${
-  //         selectedUser.user.name || "there"
-  //       }! I'd like to join you.`,
-  //     });
-
-  //     setSuccess(`Hop in request sent to ${selectedUser.user.name || "user"}!`);
-  //     setShowHopInModal(false);
-  //     setSelectedUser(null);
-  //   } catch (err) {
-  //     setError("Failed to send hop in request");
-  //   } finally {
-  //     setIsSendingHopIn(false);
-  //   }
-  // };
-
   const sendHopInRequest = async () => {
     if (!selectedUser || !socket || !session?.user?.id) return;
-
     setIsSendingHopIn(true);
     try {
       socket.emit("send_hop_request", {
         fromUserId: session.user.id,
         toUserId: selectedUser.userId,
         barId: selectedUser.currentBarId,
-        message: `Hey ${
-          selectedUser.user.name || "there"
-        }! I'd like to join you.`,
+        message: `Hey ${selectedUser.user.name || "there"}! I'd like to join you.`,
       });
-
-      // 🆕 UPDATED SUCCESS MESSAGE
       setSuccess(
-        `Hop in request sent to ${
-          selectedUser.user.name || "user"
-        }! You'll get a notification with a chat link if they accept.`
+        `Hop in request sent to ${selectedUser.user.name || "user"}! You'll get a notification with a chat link if they accept.`,
       );
       setShowHopInModal(false);
       setSelectedUser(null);
@@ -1016,13 +1157,28 @@ const Social = () => {
     }
   };
 
+  const sendWave = async (user: UserSocialProfileWithRelations) => {
+    if (!socket || !session?.user?.id) {
+      setError("Not connected to server");
+      return;
+    }
+    try {
+      socket.emit("send_wave", {
+        fromUserId: session.user.id,
+        toUserId: user.userId,
+      });
+      setSuccess(`You waved at ${user.user.name || "user"}! 👋`);
+    } catch (err) {
+      setError("Failed to send wave");
+    }
+  };
+
   const handleProfileSetupComplete = async (profileData: {
     bio: string;
     vibe: SocialVibe;
     interests: string[];
   }) => {
     setIsLoading(true);
-    setError(null);
     try {
       const response = await fetch("/api/social/profile", {
         method: "POST",
@@ -1043,33 +1199,24 @@ const Social = () => {
       setIsLoading(false);
     }
   };
+
   const handleProfileUpdate = async (profileData: {
     bio: string;
     vibe: SocialVibe;
     interests: string[];
   }) => {
     setIsLoading(true);
-    setError(null);
-
     try {
       const response = await fetch("/api/social/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profileData),
       });
-
       if (!response.ok) throw new Error("Failed to update profile");
-
       const result = await response.json();
-
-      // 1. CLOSE THE EDIT MODAL
       setShowProfileSetup(false);
-
-      // 2. Update the profile data
       setUserSocialProfile(result.socialProfile);
       setSuccess("Profile updated successfully!");
-
-      // 3. Refresh to make sure social mode is active
       await checkSocialProfile();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update profile");
@@ -1078,217 +1225,24 @@ const Social = () => {
     }
   };
 
-  const handleEditProfile = () => {
-    setShowProfileSetup(true);
-  };
-
-  const handleDeleteProfile = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to delete your social profile? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/social/profile", {
-        method: "DELETE",
-      });
-
-      if (!response.ok) throw new Error("Failed to delete profile");
-
-      setUserSocialProfile(null);
-      setHasSocialProfile(false);
-      setIsSocialMode(false);
-      setSuccess("Social profile deleted successfully!");
-      await checkSocialProfile();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete profile");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // NOTIFICATION SYSTEM: Notification handlers
-  const handleMarkAsRead = async (notificationId: string) => {
-    try {
-      const response = await fetch("/api/notifications", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notificationId, read: true }),
-      });
-
-      if (response.ok) {
-        markAsRead(notificationId); // This will update the context state
-      }
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-    }
-  };
-
-  const handleNotificationClick = async (notification: NotificationData) => {
-    try {
-      console.log("🔔 Notification clicked:", notification);
-
-      // Mark as read first
-      if (!notification.read) {
-        await markAsRead(notification.id);
-      }
-
-      let targetUrl = "";
-
-      switch (notification.type) {
-        case "HOP_ACCEPTED":
-          // 🆕 OPEN PRIVATE CHAT WHEN HOP-IN IS ACCEPTED
-          if (notification.chatroomId) {
-            targetUrl = `/app/chat/private/${notification.chatroomId}`;
-            console.log("💬 Opening private chat:", targetUrl);
-          } else {
-            console.warn("No chatroomId found in HOP_ACCEPTED notification");
-          }
-          break;
-
-        case "MESSAGE":
-          if (notification.crawlId) {
-            targetUrl = `/app/chat/${notification.crawlId}`;
-          } else if (notification.chatroomId) {
-            // 🆕 HANDLE PRIVATE CHAT MESSAGES TOO
-            targetUrl = `/app/chat/private/${notification.chatroomId}`;
-          }
-          break;
-
-        case "HOP_REQUEST":
-          // Stay on social page to see the request
-          targetUrl = "/app/social";
-          break;
-
-        case "CRAWL_JOIN_REQUEST":
-        case "CRAWL_JOIN_APPROVED":
-          if (notification.crawlId) {
-            targetUrl = `/app/crawls/${notification.crawlId}`;
-          }
-          break;
-
-        default:
-          console.log(
-            "No specific action for notification type:",
-            notification.type
-          );
-          return;
-      }
-
-      if (targetUrl) {
-        console.log("🎯 Navigating to:", targetUrl);
-        // Use window.location for reliable navigation
-        window.location.href = targetUrl;
-      }
-    } catch (error) {
-      console.error("💥 Error handling notification click:", error);
-    }
-  };
-
-  // const handleAcceptHop = async (notification: NotificationData) => {
-  //   if (!socket || !session?.user?.id) return;
-
-  //   try {
-  //     socket.emit("respond_hop_request", {
-  //       hopInId: notification.hopInId,
-  //       status: "ACCEPTED",
-  //       userId: session.user.id,
-  //     });
-
-  //     handleMarkAsRead(notification.id);
-  //     setSuccess(`You accepted the hop in request!`);
-  //   } catch (err) {
-  //     setError("Failed to accept hop request");
-  //   }
-  // };
-
-  const handleAcceptHop = async (notification: NotificationData) => {
-    if (
-      !socket ||
-      !isConnected ||
-      !notification.hopInId ||
-      !session?.user?.id
-    ) {
-      return;
-    }
-
-    try {
-      console.log("✅ Accepting hop request:", notification.hopInId);
-
-      socket.emit("respond_hop_request", {
-        hopInId: notification.hopInId,
-        status: "ACCEPTED",
-        userId: session.user.id,
-      });
-
-      await markAsRead(notification.id);
-
-      // 🆕 UPDATED SUCCESS MESSAGE
-      setSuccess(
-        `Hop request accepted! Check your notifications for the chat link when you're ready to talk.`
-      );
-    } catch (err) {
-      console.error("Error accepting hop request:", err);
-      setError("Failed to accept hop request");
-    }
-  };
-
-  const handleDeclineHop = async (notification: NotificationData) => {
-    if (!socket || !session?.user?.id) return;
-
-    try {
-      socket.emit("respond_hop_request", {
-        hopInId: notification.hopInId,
-        status: "DECLINED",
-        userId: session.user.id,
-      });
-
-      handleMarkAsRead(notification.id);
-      setSuccess(`You declined the hop in request`);
-    } catch (err) {
-      setError("Failed to decline hop request");
-    }
-  };
-
-  // NOTIFICATION SYSTEM: Replace modal with page navigation
-  const handleNotificationsClick = () => {
-    router.push("/app/notifications");
-  };
-
-  // Update useEffect to use filteredUsers
-  useEffect(() => {
-    setActiveUsers(filteredUsers);
-  }, [filteredUsers]);
-
-  useEffect(() => {
-    if (isSocialMode) {
-      fetchNearbyUsers();
-      const interval = setInterval(fetchNearbyUsers, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [isSocialMode, currentLocation, currentCity]);
-
   const activeUsersCount = filteredUsers.length;
   const nearbyBars = [
     ...new Set(
-      filteredUsers.map((user) => user.currentBar?.name).filter(Boolean)
+      filteredUsers.map((user) => user.currentBar?.name).filter(Boolean),
     ),
   ].length;
-  const popularVibes = filteredUsers.reduce((acc, user) => {
-    const vibe = user.vibe || "CASUAL";
-    acc[vibe] = (acc[vibe] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const popularVibes = filteredUsers.reduce(
+    (acc, user) => {
+      const vibe = user.vibe || "CASUAL";
+      acc[vibe] = (acc[vibe] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
   const mostPopularVibe = Object.keys(popularVibes).reduce(
     (a, b) => (popularVibes[a] > popularVibes[b] ? a : b),
-    "CHILL"
+    "CHILL",
   );
-
-  // Determine when to show "How it works" section
   const showHowItWorks = !isSocialMode;
 
   return (
@@ -1298,12 +1252,10 @@ const Social = () => {
         <Subtitle>
           See who&apos;s out tonight and connect with people nearby
         </Subtitle>
-        {/* NOTIFICATION SYSTEM: Header Actions - Only show notification bell on desktop */}
       </SocialHeader>
 
       {success && <SuccessState>{success}</SuccessState>}
-      {error && showLocationWarning && <ErrorState>{error}</ErrorState>}
-      {error && !showLocationWarning && <ErrorState>{error}</ErrorState>}
+      {error && <ErrorState>{error}</ErrorState>}
 
       {showProfileSetup && (
         <SetupSocialProfile
@@ -1318,13 +1270,11 @@ const Social = () => {
 
       {!showProfileSetup && (
         <>
-          {/* Social Toggle - Always at the top when not in profile setup */}
           <div
             style={{
               display: "flex",
               justifyContent: "center",
               margin: "1.5rem 0",
-              background: "transparent ",
             }}
           >
             <SocialToggle
@@ -1333,7 +1283,7 @@ const Social = () => {
               isLoading={isLoading}
             />
           </div>
-          {/* City Detection Display - Only show when we have a detected city and social mode is active */}
+
           {isSocialMode && currentCity && !isDetectingCity && (
             <CityDetection>
               <CityBadge>
@@ -1343,7 +1293,6 @@ const Social = () => {
             </CityDetection>
           )}
 
-          {/* How it works section - Show below Social Toggle when relevant */}
           {showHowItWorks && (
             <HowItWorks>
               <HowItWorksTitle>How Social Mode Works</HowItWorksTitle>
@@ -1353,7 +1302,7 @@ const Social = () => {
                   <StepTitle>Create Your Profile</StepTitle>
                   <StepDescription>
                     Set up your social profile with your vibe, interests, and
-                    bio to let others know what you&apos;re about.
+                    bio.
                   </StepDescription>
                 </Step>
                 <Step>
@@ -1361,7 +1310,7 @@ const Social = () => {
                   <StepTitle>Enable Social Mode</StepTitle>
                   <StepDescription>
                     Turn on social mode to appear on the map and see other users
-                    nearby in your city.
+                    nearby.
                   </StepDescription>
                 </Step>
                 <Step>
@@ -1376,7 +1325,6 @@ const Social = () => {
             </HowItWorks>
           )}
 
-          {/* Social Mode Active Content */}
           {isSocialMode && (
             <>
               <StatsContainer>
@@ -1412,7 +1360,7 @@ const Social = () => {
               <MapContainer $show={selectedView === "map"}>
                 <SocialMap
                   users={filteredUsers}
-                  onUserClick={handleHopIn}
+                  onUserClick={setSelectedUser}
                   currentLocation={
                     currentLocation || { lat: 60.1699, lng: 24.9384 }
                   }
@@ -1429,13 +1377,12 @@ const Social = () => {
                       </p>
                     </LoadingState>
                   )}
-
                   {!isLoadingUsers && filteredUsers.length > 0 && (
                     <UsersGrid>
                       {filteredUsers.map((user) => (
                         <UserCard
                           key={user.id}
-                          onClick={() => handleHopIn(user)}
+                          onClick={() => setSelectedUser(user)}
                         >
                           <UserImageContainer>
                             <UserImage $imageUrl={user.user.image || undefined}>
@@ -1455,7 +1402,7 @@ const Social = () => {
                             </UserHeader>
                             <UserDetails>
                               <DistanceBadge>
-                                📍 {calculateDistance(user)}
+                                📍 {getUserDistance(user)}
                               </DistanceBadge>
                               <LocationInfo>
                                 {getUserStatusDisplay(user)}
@@ -1466,12 +1413,12 @@ const Social = () => {
                                 $variant="primary"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleHopIn(user);
+                                  setSelectedUser(user);
+                                  setShowHopInModal(true);
                                 }}
                               >
                                 Hop In
                               </ActionButton>
-                              {/* NOTIFICATION SYSTEM: Updated wave button */}
                               <ActionButton
                                 $variant="secondary"
                                 onClick={(e) => {
@@ -1487,7 +1434,6 @@ const Social = () => {
                       ))}
                     </UsersGrid>
                   )}
-
                   {!isLoadingUsers && filteredUsers.length === 0 && (
                     <EmptyUsersState>
                       <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>
@@ -1528,14 +1474,12 @@ const Social = () => {
                 </ModalUserVibe>
               </ModalUserInfo>
             </ModalHeader>
-
             {selectedUser.bio && (
               <ModalSection>
                 <ModalSectionTitle>About</ModalSectionTitle>
                 <ModalBio>{selectedUser.bio}</ModalBio>
               </ModalSection>
             )}
-
             {selectedUser.interests && selectedUser.interests.length > 0 && (
               <ModalSection>
                 <ModalSectionTitle>Interests</ModalSectionTitle>
@@ -1546,11 +1490,10 @@ const Social = () => {
                 </ModalInterests>
               </ModalSection>
             )}
-
             <ModalSection>
               <ModalSectionTitle>Current Status</ModalSectionTitle>
               <p style={{ color: "#cbd5e1", margin: 0 }}>
-                {getUserDetailedStatus(selectedUser)}
+                {getUserStatusDisplay(selectedUser)}
               </p>
               <p
                 style={{
@@ -1564,7 +1507,6 @@ const Social = () => {
                   : "They're exploring the area"}
               </p>
             </ModalSection>
-
             <ModalActions>
               <ModalButton
                 $variant="secondary"
@@ -1588,6 +1530,1596 @@ const Social = () => {
 };
 
 export default Social;
+
+// import { useState, useEffect } from "react";
+// import { useSession } from "next-auth/react";
+// import { useRouter } from "next/navigation";
+// // import Image from "next/image";
+// import SocialToggle from "./social-toggle/SocialToggle";
+// // import SocialMap from "./social-map/SocialMap";
+// import { UserSocialProfileWithRelations } from "@/types/social";
+// import { SocialVibe } from "@prisma/client";
+// import SetupSocialProfile from "../social-profile/setup-social-profile/SetupSocialProfile";
+
+// import dynamic from "next/dynamic";
+// import {
+//   ActionButton,
+//   CityBadge,
+//   CityDetection,
+//   DesktopNotificationBell,
+//   DistanceBadge,
+//   EditProfileButton,
+//   EmptyUsersState,
+//   ErrorState,
+//   HeaderActions,
+//   HowItWorks,
+//   HowItWorksTitle,
+//   LoadingState,
+//   LocationInfo,
+//   MapContainer,
+//   ModalActions,
+//   ModalBio,
+//   ModalButton,
+//   ModalContent,
+//   ModalHeader,
+//   ModalInterests,
+//   ModalInterestTag,
+//   ModalOverlay,
+//   ModalSection,
+//   ModalSectionTitle,
+//   ModalUserImage,
+//   ModalUserInfo,
+//   ModalUserName,
+//   ModalUserVibe,
+//   QuickActions,
+//   SocialContainer,
+//   SocialHeader,
+//   StatCard,
+//   StatLabel,
+//   StatNumber,
+//   StatsContainer,
+//   Step,
+//   StepDescription,
+//   StepIcon,
+//   StepsContainer,
+//   StepTitle,
+//   Subtitle,
+//   SuccessState,
+//   Title,
+//   UserAge,
+//   UserCard,
+//   UserDetails,
+//   UserHeader,
+//   UserImage,
+//   UserImageContainer,
+//   UserInfo,
+//   UserName,
+//   UsersGrid,
+//   UserStatusBadge,
+//   UserVibeBadge,
+//   ViewButton,
+//   ViewToggle,
+// } from "./Social.styles";
+// import { useSocket } from "../contexts/SocketContext";
+// // import { NotificationData } from "@/types/socket";
+
+// export enum NotificationType {
+//   HOP_REQUEST = "HOP_REQUEST",
+//   HOP_ACCEPTED = "HOP_ACCEPTED",
+//   HOP_DECLINED = "HOP_DECLINED",
+//   WAVE = "WAVE",
+//   MESSAGE = "MESSAGE",
+//   SYSTEM = "SYSTEM",
+//   MEETUP_INVITE = "MEETUP_INVITE",
+//   CRAWL_JOIN_REQUEST = "CRAWL_JOIN_REQUEST",
+//   CRAWL_JOIN_APPROVED = "CRAWL_JOIN_APPROVED",
+//   CRAWL_JOIN_REJECTED = "CRAWL_JOIN_REJECTED",
+// }
+
+// export enum HopInStatus {
+//   PENDING = "PENDING",
+//   ACCEPTED = "ACCEPTED",
+//   DECLINED = "DECLINED",
+//   CANCELLED = "CANCELLED",
+//   EXPIRED = "EXPIRED",
+// }
+
+// export interface NotificationData {
+//   id: string;
+//   userId: string;
+//   type: NotificationType;
+//   fromUserId: string;
+//   message?: string;
+//   barId?: string;
+//   crawlId?: string;
+//   chatroomId?: string;
+//   read: boolean;
+//   readAt?: Date;
+//   createdAt: Date;
+//   hopInId?: string;
+//   meetupId?: string;
+//   fromUser?: {
+//     id: string;
+//     name: string | null;
+//     image: string | null;
+//   };
+//   hopIn?: {
+//     id: string;
+//     barId?: string;
+//     bar?: {
+//       id: string;
+//       name: string;
+//     };
+//     status: HopInStatus;
+//   };
+//   crawl?: {
+//     id: string;
+//     name: string;
+//   };
+// }
+// export const SocialMap = dynamic(() => import("./social-map/SocialMap"), {
+//   ssr: false,
+//   loading: () => (
+//     <div
+//       style={{
+//         background: "rgba(30, 41, 59, 0.6)",
+//         borderRadius: "12px",
+//         border: "1px solid rgba(139, 92, 246, 0.2)",
+//         height: "400px",
+//         display: "flex",
+//         alignItems: "center",
+//         justifyContent: "center",
+//         color: "#e2e8f0",
+//         margin: "1.5rem 0",
+//       }}
+//     >
+//       <div style={{ textAlign: "center" }}>
+//         <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🗺️</div>
+//         <p>Loading interactive map...</p>
+//       </div>
+//     </div>
+//   ),
+// });
+
+// // Helper functions
+// export const getVibeColor = (vibe: string) => {
+//   switch (vibe) {
+//     case "PARTY":
+//       return "#ec4899";
+//     case "CHILL":
+//       return "#0ea5e9";
+//     case "NETWORKING":
+//       return "#10b981";
+//     case "ADVENTUROUS":
+//       return "#f59e0b";
+//     default:
+//       return "#8b5cf6";
+//   }
+// };
+
+// export const getVibeEmoji = (vibe: string) => {
+//   switch (vibe) {
+//     case "PARTY":
+//       return "🎉";
+//     case "CHILL":
+//       return "😌";
+//     case "NETWORKING":
+//       return "🤝";
+//     case "ADVENTUROUS":
+//       return "🌍";
+//     default:
+//       return "💜";
+//   }
+// };
+
+// export const getSocialStatusText = (status: string) => {
+//   switch (status) {
+//     case "ONLINE":
+//       return "Online";
+//     case "SOCIAL_MODE":
+//       return "Social";
+//     case "IN_MEETUP":
+//       return "In Meetup";
+//     case "OFFLINE":
+//       return "Offline";
+//     default:
+//       return "Available";
+//   }
+// };
+
+// // Calculate age from birth date if available, otherwise use a default
+// const calculateAge = (user: UserSocialProfileWithRelations): number => {
+//   const hash = user.userId.split("").reduce((a, b) => a + b.charCodeAt(0), 0);
+//   return 22 + (hash % 15);
+// };
+
+// // Finnish cities with their approximate coordinates and bounds
+// const FINNISH_CITIES = {
+//   Helsinki: {
+//     lat: 60.1699,
+//     lng: 24.9384,
+//     bounds: { north: 60.2978, south: 60.1094, west: 24.7386, east: 25.2542 },
+//   },
+//   Espoo: {
+//     lat: 60.2055,
+//     lng: 24.6559,
+//     bounds: { north: 60.35, south: 60.1, west: 24.5, east: 24.9 },
+//   },
+//   Tampere: {
+//     lat: 61.4978,
+//     lng: 23.761,
+//     bounds: { north: 61.6, south: 61.4, west: 23.5, east: 24.1 },
+//   },
+//   Turku: {
+//     lat: 60.4518,
+//     lng: 22.2666,
+//     bounds: { north: 60.55, south: 60.35, west: 22.1, east: 22.5 },
+//   },
+//   Oulu: {
+//     lat: 65.0121,
+//     lng: 25.4651,
+//     bounds: { north: 65.1, south: 64.9, west: 25.3, east: 25.7 },
+//   },
+//   Vantaa: {
+//     lat: 60.2934,
+//     lng: 25.0378,
+//     bounds: { north: 60.4, south: 60.2, west: 24.85, east: 25.25 },
+//   },
+//   Lahti: {
+//     lat: 60.9827,
+//     lng: 25.6612,
+//     bounds: { north: 61.05, south: 60.9, west: 25.55, east: 25.8 },
+//   },
+//   Kuopio: {
+//     lat: 62.8924,
+//     lng: 27.677,
+//     bounds: { north: 63.0, south: 62.75, west: 27.5, east: 27.9 },
+//   },
+//   Jyväskylä: {
+//     lat: 62.2426,
+//     lng: 25.7473,
+//     bounds: { north: 62.3, south: 62.15, west: 25.65, east: 25.85 },
+//   },
+//   Pori: {
+//     lat: 61.4851,
+//     lng: 21.7975,
+//     bounds: { north: 61.55, south: 61.4, west: 21.7, east: 21.9 },
+//   },
+// };
+
+// // Helper function to detect which Finnish city the coordinates are in
+// const detectFinnishCity = (lat: number, lng: number): string => {
+//   for (const [city, data] of Object.entries(FINNISH_CITIES)) {
+//     const bounds = data.bounds;
+//     if (
+//       lat >= bounds.south &&
+//       lat <= bounds.north &&
+//       lng >= bounds.west &&
+//       lng <= bounds.east
+//     ) {
+//       return city;
+//     }
+//   }
+
+//   // If no city matched, use reverse geocoding as fallback
+//   return "Unknown";
+// };
+
+// // Enhanced reverse geocoding for Finnish cities
+// const getCityFromCoordinates = async (
+//   lat: number,
+//   lng: number
+// ): Promise<string> => {
+//   try {
+//     // First try to detect using our bounds
+//     const detectedCity = detectFinnishCity(lat, lng);
+//     if (detectedCity !== "Unknown") {
+//       return detectedCity;
+//     }
+
+//     // Fallback to API for more accurate detection
+//     const response = await fetch(
+//       `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
+//     );
+
+//     if (!response.ok) throw new Error("Geocoding API failed");
+
+//     const data = await response.json();
+
+//     // Check if the city is in Finland
+//     if (data.countryName === "Finland") {
+//       return data.city || data.locality || "Unknown City in Finland";
+//     }
+
+//     return "Not in Finland";
+//   } catch (error) {
+//     console.error("Error getting city from coordinates:", error);
+
+//     // Final fallback - check if coordinates are roughly in Finland
+//     if (lat > 59.5 && lat < 70.0 && lng > 19.0 && lng < 31.0) {
+//       return "Unknown City in Finland";
+//     }
+
+//     return "Location not in Finland";
+//   }
+// };
+
+// // Filter users by city
+// const filterUsersByCity = (
+//   users: UserSocialProfileWithRelations[],
+//   targetCity: string
+// ): UserSocialProfileWithRelations[] => {
+//   if (
+//     targetCity === "Not in Finland" ||
+//     targetCity === "Location not in Finland"
+//   ) {
+//     return []; // No users if not in Finland
+//   }
+
+//   return users.filter((user) => {
+//     if (!user.locationLat || !user.locationLng) return false;
+
+//     try {
+//       const userCity = detectFinnishCity(user.locationLat, user.locationLng);
+
+//       // Direct city match
+//       if (userCity === targetCity) {
+//         return true;
+//       }
+
+//       // Handle "Unknown City in Finland" case - include them if we're also in an unknown Finnish location
+//       if (targetCity === "Unknown City in Finland" && userCity === "Unknown") {
+//         return true;
+//       }
+
+//       return false;
+//     } catch (error) {
+//       console.error("Error filtering user by city:", error);
+//       return false;
+//     }
+//   });
+// };
+
+// interface LocationData {
+//   locationLat?: number;
+//   locationLng?: number;
+// }
+
+// interface NearbyUsersData {
+//   users: UserSocialProfileWithRelations[];
+// }
+
+// // Fixed DebugInfo interface with all possible properties
+// interface DebugInfo {
+//   type: string;
+//   loading?: boolean;
+//   success?: boolean;
+//   data?: unknown;
+//   error?: string;
+//   message?: string;
+//   source?: string;
+//   count?: number;
+//   users?: unknown[];
+//   hasProfile?: boolean;
+//   profile?: unknown;
+//   timestamp?: string;
+//   status?: number;
+//   result?: unknown;
+//   // Added missing properties
+//   city?: string;
+//   coordinates?: { lat: number; lng: number };
+//   totalUsers?: number;
+//   filteredCount?: number;
+// }
+
+// const Social = () => {
+//   const { data: session } = useSession();
+//   const router = useRouter();
+
+//   // NOTIFICATION SYSTEM STATE
+//   const {
+//     socket,
+//     isConnected,
+//     addNotification,
+//     markAsRead,
+//     notifications,
+//     unreadCount,
+//   } = useSocket();
+
+//   // Remove showNotifications state since we're navigating to page instead
+//   // const [showNotifications, setShowNotifications] = useState(false);
+
+//   // const [isSocialMode, setIsSocialMode] = useState(false);
+//   const [activeUsers, setActiveUsers] = useState<
+//     UserSocialProfileWithRelations[]
+//   >([]);
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+//   const [success, setSuccess] = useState<string | null>(null);
+//   const [currentLocation, setCurrentLocation] = useState<{
+//     lat: number;
+//     lng: number;
+//   } | null>(null);
+//   const [showProfileSetup, setShowProfileSetup] = useState(false);
+//   const [hasSocialProfile, setHasSocialProfile] = useState(false);
+//   const [userSocialProfile, setUserSocialProfile] =
+//     useState<UserSocialProfileWithRelations | null>(null);
+//   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
+//   const [selectedView, setSelectedView] = useState<"grid" | "map">("grid");
+//   const [selectedUser, setSelectedUser] =
+//     useState<UserSocialProfileWithRelations | null>(null);
+//   const [showHopInModal, setShowHopInModal] = useState(false);
+//   const [isSendingHopIn, setIsSendingHopIn] = useState(false);
+
+//   // Add new state for city detection
+//   const [currentCity, setCurrentCity] = useState<string>("");
+//   const [isDetectingCity, setIsDetectingCity] = useState(false);
+//   const [allUsers, setAllUsers] = useState<UserSocialProfileWithRelations[]>(
+//     []
+//   );
+//   const [filteredUsers, setFilteredUsers] = useState<
+//     UserSocialProfileWithRelations[]
+//   >([]);
+//   const [showLocationWarning, setShowLocationWarning] = useState(false);
+
+//   // Initialize isSocialMode from localStorage first, then update from API
+//   // const [isSocialMode, setIsSocialMode] = useState(() => {
+//   //   if (typeof window !== "undefined") {
+//   //     const saved = localStorage.getItem("socialMode");
+//   //     return saved ? JSON.parse(saved) : false;
+//   //   }
+//   //   return false;
+//   // });
+//   const [isSocialMode, setIsSocialMode] = useState(false);
+
+//   // Helper functions for user status display
+//   const getUserStatusDisplay = (
+//     user: UserSocialProfileWithRelations
+//   ): string => {
+//     // If user has a current bar, they're at a venue
+//     if (user.currentBar) {
+//       return "🍻 At a venue";
+//     }
+
+//     // If user has location but no bar, they're out exploring
+//     if (user.locationLat && user.locationLng) {
+//       return "📍 Out exploring";
+//     }
+
+//     // If user is in social mode but no specific location
+//     if (user.isSocialMode) {
+//       return "🔍 Looking for spots";
+//     }
+
+//     // Default fallback
+//     return "📍 Nearby";
+//   };
+
+//   const getUserDetailedStatus = (
+//     user: UserSocialProfileWithRelations
+//   ): string => {
+//     if (user.currentBar) {
+//       return `🍻 At a venue in ${currentCity} (${calculateDistance(user)})`;
+//     }
+
+//     if (user.locationLat && user.locationLng) {
+//       return `📍 Exploring ${currentCity} (${calculateDistance(user)})`;
+//     }
+
+//     if (user.isSocialMode) {
+//       return `🔍 Looking for places in ${currentCity}`;
+//     }
+
+//     return `📍 In ${currentCity}`;
+//   };
+
+//   // Add this useEffect to handle logout cleanup
+//   useEffect(() => {
+//     if (!session) {
+//       // User logged out - reset everything
+//       setIsSocialMode(false);
+//       setAllUsers([]);
+//       setFilteredUsers([]);
+//       setCurrentLocation(null);
+//       setCurrentCity("");
+//     }
+//   }, [session]);
+
+//   useEffect(() => {
+//     if (typeof window !== "undefined") {
+//       const urlParams = new URLSearchParams(window.location.search);
+//       const editMode = urlParams.get("edit");
+
+//       // If we came from UserProfile with ?edit=true, open edit mode
+//       if (editMode === "true" && userSocialProfile) {
+//         setShowProfileSetup(true);
+
+//         // Clean the URL so we don't get stuck in edit mode
+//         const newUrl = window.location.pathname;
+//         window.history.replaceState({}, "", newUrl);
+//       }
+//     }
+//   }, [userSocialProfile]);
+
+//   // NOTIFICATION SYSTEM: Socket connection and event listeners
+//   // In your Social component, update the socket useEffect to only handle accepts:
+//   // useEffect(() => {
+//   //   if (!socket || !session?.user?.id) return;
+
+//   //   // Join user's private room
+//   //   socket.emit("join_user_room", session.user.id);
+
+//   //   // Listen for new notifications
+//   //   socket.on("new_notification", (notification: NotificationData) => {
+//   //     console.log("📨 New notification received:", notification);
+//   //     addNotification(notification);
+//   //     setSuccess(`New notification: ${notification.message}`);
+//   //   });
+
+//   //   // Listen for hop request responses (when someone accepts YOUR request)
+//   //   socket.on("hop_request_accepted", (data) => {
+//   //     console.log("✅ Your hop request was accepted:", data);
+//   //     setSuccess(
+//   //       `${data.toUser?.name || "Someone"} accepted your hop in request! 🎉`
+//   //     );
+//   //   });
+
+//   //   // REMOVE decline notifications - silent declines
+//   //   // socket.on("hop_request_declined", (data) => {
+//   //   //   setSuccess(`${data.toUser?.name || 'Someone'} declined your hop in request`);
+//   //   // });
+
+//   //   // Listen for errors
+//   //   socket.on("error", (error) => {
+//   //     console.error("Socket error:", error);
+//   //     setError(error);
+//   //   });
+
+//   //   return () => {
+//   //     socket.off("new_notification");
+//   //     socket.off("hop_request_accepted");
+//   //     // socket.off("hop_request_declined"); // Remove this
+//   //     socket.off("error");
+//   //   };
+//   // }, [socket, session, addNotification]);
+
+//   useEffect(() => {
+//     if (!socket || !session?.user?.id) return;
+
+//     // Join user's private room
+//     socket.emit("join_user_room", session.user.id);
+
+//     // Listen for new notifications
+//     socket.on("new_notification", (notification: NotificationData) => {
+//       console.log("📨 New notification received:", notification);
+//       addNotification(notification);
+
+//       // 🆕 UPDATED: Show success but DON'T auto-navigate
+//       if (notification.type === "HOP_ACCEPTED") {
+//         setSuccess(
+//           `You have a new chat invitation! Check your notifications to start chatting.`
+//         );
+//       }
+//     });
+
+//     // Listen for hop request responses (when someone accepts YOUR request)
+//     socket.on("hop_request_accepted", (data) => {
+//       console.log("✅ Your hop request was accepted:", data);
+//       setSuccess(
+//         `${
+//           data.toUser?.name || "Someone"
+//         } accepted your hop in request! Check notifications to start chatting. 💬`
+//       );
+//     });
+
+//     // Listen for errors
+//     socket.on("error", (error) => {
+//       console.error("Socket error:", error);
+//       setError(error);
+//     });
+
+//     return () => {
+//       socket.off("new_notification");
+//       socket.off("hop_request_accepted");
+//       socket.off("error");
+//     };
+//   }, [socket, session, addNotification]);
+
+//   // NOTIFICATION SYSTEM: Fetch existing notifications on mount
+//   useEffect(() => {
+//     if (session?.user?.id) {
+//       fetchNotifications();
+//     }
+//   }, [session]);
+
+//   // NOTIFICATION SYSTEM: Fetch notifications from API
+//   const fetchNotifications = async () => {
+//     try {
+//       console.log("📡 Fetching notifications...");
+//       const response = await fetch("/api/notifications");
+//       console.log("📨 API Response status:", response.status);
+
+//       if (response.ok) {
+//         const data = await response.json();
+//         console.log(
+//           "✅ Notifications data received:",
+//           data.notifications?.length
+//         );
+
+//         // Clear existing notifications by fetching fresh data
+//         // The SocketContext will handle deduplication
+//         data.notifications?.forEach((notification: NotificationData) => {
+//           addNotification(notification);
+//         });
+//       } else {
+//         console.error("❌ API Error:", response.status);
+//       }
+//     } catch (error) {
+//       console.error("💥 Error fetching notifications:", error);
+//     }
+//   };
+
+//   // NOTIFICATION SYSTEM: Send wave to user
+//   const sendWave = async (user: UserSocialProfileWithRelations) => {
+//     if (!socket || !session?.user?.id) {
+//       setError("Not connected to server");
+//       return;
+//     }
+
+//     try {
+//       socket.emit("send_wave", {
+//         fromUserId: session.user.id,
+//         toUserId: user.userId,
+//       });
+
+//       setSuccess(`You waved at ${user.user.name || "user"}! 👋`);
+//     } catch (err) {
+//       setError("Failed to send wave");
+//     }
+//   };
+
+//   // Check if user has social profile on component mount
+//   useEffect(() => {
+//     checkSocialProfile();
+//   }, []);
+
+//   // Auto-clear success messages after 5 seconds
+//   useEffect(() => {
+//     if (success) {
+//       const timer = setTimeout(() => {
+//         setSuccess(null);
+//       }, 5000);
+//       return () => clearTimeout(timer);
+//     }
+//   }, [success]);
+
+//   // Fixed useEffect with proper null check for error
+//   useEffect(() => {
+//     if (error) {
+//       if (
+//         error.includes("Using Helsinki as default") ||
+//         error.includes("Geolocation not supported")
+//       ) {
+//         const timer = setTimeout(() => {
+//           setError(null);
+//           setShowLocationWarning(false);
+//         }, 8000);
+//         return () => clearTimeout(timer);
+//       } else {
+//         const timer = setTimeout(() => {
+//           setError(null);
+//         }, 8000);
+//         return () => clearTimeout(timer);
+//       }
+//     }
+//   }, [error]);
+
+//   const calculateDistance = (user: UserSocialProfileWithRelations): string => {
+//     if (!currentLocation || !user.locationLat || !user.locationLng) {
+//       return "Nearby";
+//     }
+
+//     const R = 6371;
+//     const dLat = ((user.locationLat - currentLocation.lat) * Math.PI) / 180;
+//     const dLon = ((user.locationLng - currentLocation.lng) * Math.PI) / 180;
+//     const a =
+//       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+//       Math.cos((currentLocation.lat * Math.PI) / 180) *
+//         Math.cos((user.locationLat * Math.PI) / 180) *
+//         Math.sin(dLon / 2) *
+//         Math.sin(dLon / 2);
+//     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+//     const distance = R * c;
+
+//     if (distance < 0.1) return "Very close";
+//     if (distance < 0.5) return `${Math.round(distance * 1000)}m`;
+//     if (distance < 1) return "<1km";
+//     return `${distance.toFixed(1)}km`;
+//   };
+
+//   const checkSocialProfile = async () => {
+//     try {
+//       console.log("🔍 Checking social profile...");
+//       const response = await fetch("/api/social/profile");
+//       console.log("📨 Profile check response status:", response.status);
+
+//       if (response.ok) {
+//         const data = await response.json();
+//         console.log("✅ Profile check data:", data);
+
+//         setHasSocialProfile(!!data.socialProfile);
+//         setUserSocialProfile(data.socialProfile);
+
+//         // Only update social mode if we have a fresh value from DB
+//         // Don't reset it to false if it's already true locally
+//         if (data.socialProfile?.isSocialMode) {
+//           console.log("🎯 Setting social mode to ACTIVE from database");
+//           setIsSocialMode(true);
+
+//           // If social mode is active, also set location and fetch users
+//           if (
+//             data.socialProfile.locationLat &&
+//             data.socialProfile.locationLng
+//           ) {
+//             const location = {
+//               lat: data.socialProfile.locationLat,
+//               lng: data.socialProfile.locationLng,
+//             };
+//             setCurrentLocation(location);
+//             await detectUserCity(location.lat, location.lng);
+//             await fetchNearbyUsers();
+//           }
+//         }
+//         // DON'T set to false automatically - preserve current state
+//         // This prevents resetting social mode when just updating profile
+//       }
+//     } catch (error) {
+//       console.error("💥 Error checking social profile:", error);
+//     }
+//   };
+
+//   // Enhanced city detection function
+//   const detectUserCity = async (lat: number, lng: number): Promise<void> => {
+//     setIsDetectingCity(true);
+//     setError(null);
+
+//     try {
+//       console.log("🌍 Detecting city for coordinates:", { lat, lng });
+
+//       const city = await getCityFromCoordinates(lat, lng);
+//       console.log("📍 Detected city:", city);
+
+//       setCurrentCity(city);
+
+//       setDebugInfo({
+//         type: "city_detected",
+//         city: city,
+//         coordinates: { lat, lng },
+//         timestamp: new Date().toISOString(),
+//       });
+
+//       // Show success message if in Finland
+//       if (city !== "Not in Finland" && city !== "Location not in Finland") {
+//         setSuccess(`Welcome to ${city}! Showing users in your city.`);
+//       } else {
+//         setError(
+//           "You appear to be outside Finland. Social mode may not work properly."
+//         );
+//       }
+//     } catch (error) {
+//       console.error("Error detecting city:", error);
+//       setCurrentCity("Unknown");
+//       setError("Could not detect your city. Showing all Finnish users.");
+//     } finally {
+//       setIsDetectingCity(false);
+//     }
+//   };
+
+//   // Update fetchNearbyUsers to filter by current city
+//   const fetchNearbyUsers = async () => {
+//     if (!isSocialMode) return;
+//     setIsLoadingUsers(true);
+//     try {
+//       // Use a larger radius to get users from wider area in Finland
+//       const url = currentLocation
+//         ? `/api/social/status?lat=${currentLocation.lat}&lng=${currentLocation.lng}&radius=100000` // 100km radius
+//         : "/api/social/status";
+
+//       const response = await fetch(url);
+//       if (!response.ok) throw new Error("Failed to fetch nearby users");
+
+//       const data: NearbyUsersData = await response.json();
+
+//       console.log("🌍 Fetched all users:", data.users.length);
+
+//       // Store all users
+//       setAllUsers(data.users);
+
+//       // Filter users by current city
+//       if (currentCity) {
+//         const usersInCity = filterUsersByCity(data.users, currentCity);
+//         setFilteredUsers(usersInCity);
+
+//         console.log(`📍 Filtered users in ${currentCity}:`, usersInCity.length);
+
+//         setDebugInfo({
+//           type: "users_filtered_by_city",
+//           totalUsers: data.users.length,
+//           filteredCount: usersInCity.length,
+//           city: currentCity,
+//           timestamp: new Date().toISOString(),
+//         });
+//       } else {
+//         // If no city detected, show all users (fallback)
+//         setFilteredUsers(data.users);
+//       }
+//     } catch (err) {
+//       setError(
+//         err instanceof Error ? err.message : "Failed to fetch nearby users"
+//       );
+//     } finally {
+//       setIsLoadingUsers(false);
+//     }
+//   };
+
+//   const toggleSocialMode = async (status: boolean) => {
+//     // Early return if no session
+//     if (!session?.user?.id) {
+//       console.log("🚫 No session - cannot toggle social mode");
+//       setIsSocialMode(false);
+//       return;
+//     }
+
+//     console.log("🔘 toggleSocialMode called:", { status });
+
+//     setIsLoading(true);
+//     setError(null);
+//     setSuccess(null);
+//     setShowLocationWarning(false);
+
+//     try {
+//       if (status && !hasSocialProfile && !userSocialProfile) {
+//         console.log("🚫 No profile found, showing setup");
+//         setShowProfileSetup(true);
+//         setIsLoading(false);
+//         return;
+//       }
+
+//       let locationData: LocationData = {};
+//       let usedFallbackLocation = false;
+
+//       if (status && navigator.geolocation) {
+//         try {
+//           const position = await new Promise<GeolocationPosition>(
+//             (resolve, reject) => {
+//               navigator.geolocation.getCurrentPosition(resolve, reject, {
+//                 enableHighAccuracy: true,
+//                 timeout: 10000,
+//                 maximumAge: 300000,
+//               });
+//             }
+//           );
+
+//           locationData = {
+//             locationLat: position.coords.latitude,
+//             locationLng: position.coords.longitude,
+//           };
+
+//           const newLocation = {
+//             lat: position.coords.latitude,
+//             lng: position.coords.longitude,
+//           };
+
+//           setCurrentLocation(newLocation);
+//           await detectUserCity(newLocation.lat, newLocation.lng);
+//         } catch (geoError) {
+//           console.error("Geolocation error:", geoError);
+//           const fallbackLocation = { lat: 60.1699, lng: 24.9384 };
+//           setCurrentLocation(fallbackLocation);
+//           setCurrentCity("Helsinki");
+//           usedFallbackLocation = true;
+//           setShowLocationWarning(true);
+//           setError(
+//             "Using Helsinki as default location. Enable location services for accurate city detection."
+//           );
+//         }
+//       } else if (status) {
+//         const fallbackLocation = { lat: 60.1699, lng: 24.9384 };
+//         setCurrentLocation(fallbackLocation);
+//         setCurrentCity("Helsinki");
+//         usedFallbackLocation = true;
+//         setShowLocationWarning(true);
+//         setError(
+//           "Geolocation not supported. Using Helsinki as default location."
+//         );
+//       }
+
+//       const response = await fetch("/api/social/status", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           isActive: status,
+//           ...locationData,
+//           vibe: userSocialProfile?.vibe,
+//           interests: userSocialProfile?.interests,
+//         }),
+//       });
+
+//       if (!response.ok) {
+//         const errorData = await response.json();
+//         throw new Error(errorData.error || "Failed to update social status");
+//       }
+
+//       const result = await response.json();
+//       setUserSocialProfile(result.socialProfile);
+//       setIsSocialMode(status);
+
+//       if (status) {
+//         if (
+//           currentCity &&
+//           currentCity !== "Not in Finland" &&
+//           currentCity !== "Location not in Finland"
+//         ) {
+//           if (usedFallbackLocation) {
+//             setSuccess(
+//               `Social mode activated in ${currentCity}! Finding users nearby...`
+//             );
+//           } else {
+//             setSuccess(
+//               `Social mode activated in ${currentCity}! Finding users nearby...`
+//             );
+//           }
+//         } else {
+//           setSuccess("Social mode activated! Finding users nearby...");
+//         }
+//         await fetchNearbyUsers();
+//       } else {
+//         setSuccess("Social mode deactivated");
+//         setAllUsers([]);
+//         setFilteredUsers([]);
+//       }
+//     } catch (err) {
+//       // If API call fails, revert localStorage
+//       setIsSocialMode(!status);
+//       setError(err instanceof Error ? err.message : "An error occurred");
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   // NOTIFICATION SYSTEM: Updated hop in function using Socket.io
+//   const handleHopIn = async (user: UserSocialProfileWithRelations) => {
+//     setSelectedUser(user);
+//     setShowHopInModal(true);
+//   };
+
+//   // NOTIFICATION SYSTEM: Updated send hop in request using Socket.io
+//   // const sendHopInRequest = async () => {
+//   //   if (!selectedUser || !socket || !session?.user?.id) return;
+
+//   //   setIsSendingHopIn(true);
+//   //   try {
+//   //     socket.emit("send_hop_request", {
+//   //       fromUserId: session.user.id,
+//   //       toUserId: selectedUser.userId,
+//   //       barId: selectedUser.currentBarId,
+//   //       message: `Hey ${
+//   //         selectedUser.user.name || "there"
+//   //       }! I'd like to join you.`,
+//   //     });
+
+//   //     setSuccess(`Hop in request sent to ${selectedUser.user.name || "user"}!`);
+//   //     setShowHopInModal(false);
+//   //     setSelectedUser(null);
+//   //   } catch (err) {
+//   //     setError("Failed to send hop in request");
+//   //   } finally {
+//   //     setIsSendingHopIn(false);
+//   //   }
+//   // };
+
+//   const sendHopInRequest = async () => {
+//     if (!selectedUser || !socket || !session?.user?.id) return;
+
+//     setIsSendingHopIn(true);
+//     try {
+//       socket.emit("send_hop_request", {
+//         fromUserId: session.user.id,
+//         toUserId: selectedUser.userId,
+//         barId: selectedUser.currentBarId,
+//         message: `Hey ${
+//           selectedUser.user.name || "there"
+//         }! I'd like to join you.`,
+//       });
+
+//       // 🆕 UPDATED SUCCESS MESSAGE
+//       setSuccess(
+//         `Hop in request sent to ${
+//           selectedUser.user.name || "user"
+//         }! You'll get a notification with a chat link if they accept.`
+//       );
+//       setShowHopInModal(false);
+//       setSelectedUser(null);
+//     } catch (err) {
+//       setError("Failed to send hop in request");
+//     } finally {
+//       setIsSendingHopIn(false);
+//     }
+//   };
+
+//   const handleProfileSetupComplete = async (profileData: {
+//     bio: string;
+//     vibe: SocialVibe;
+//     interests: string[];
+//   }) => {
+//     setIsLoading(true);
+//     setError(null);
+//     try {
+//       const response = await fetch("/api/social/profile", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify(profileData),
+//       });
+//       if (!response.ok) throw new Error("Failed to save profile");
+//       const result = await response.json();
+//       setUserSocialProfile(result.socialProfile);
+//       setHasSocialProfile(true);
+//       setShowProfileSetup(false);
+//       setSuccess("Profile created!");
+//       await checkSocialProfile();
+//       await toggleSocialMode(true);
+//     } catch (err) {
+//       setError(err instanceof Error ? err.message : "Failed to save profile");
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+//   const handleProfileUpdate = async (profileData: {
+//     bio: string;
+//     vibe: SocialVibe;
+//     interests: string[];
+//   }) => {
+//     setIsLoading(true);
+//     setError(null);
+
+//     try {
+//       const response = await fetch("/api/social/profile", {
+//         method: "PUT",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify(profileData),
+//       });
+
+//       if (!response.ok) throw new Error("Failed to update profile");
+
+//       const result = await response.json();
+
+//       // 1. CLOSE THE EDIT MODAL
+//       setShowProfileSetup(false);
+
+//       // 2. Update the profile data
+//       setUserSocialProfile(result.socialProfile);
+//       setSuccess("Profile updated successfully!");
+
+//       // 3. Refresh to make sure social mode is active
+//       await checkSocialProfile();
+//     } catch (err) {
+//       setError(err instanceof Error ? err.message : "Failed to update profile");
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   const handleEditProfile = () => {
+//     setShowProfileSetup(true);
+//   };
+
+//   const handleDeleteProfile = async () => {
+//     if (
+//       !confirm(
+//         "Are you sure you want to delete your social profile? This action cannot be undone."
+//       )
+//     ) {
+//       return;
+//     }
+
+//     setIsLoading(true);
+//     try {
+//       const response = await fetch("/api/social/profile", {
+//         method: "DELETE",
+//       });
+
+//       if (!response.ok) throw new Error("Failed to delete profile");
+
+//       setUserSocialProfile(null);
+//       setHasSocialProfile(false);
+//       setIsSocialMode(false);
+//       setSuccess("Social profile deleted successfully!");
+//       await checkSocialProfile();
+//     } catch (err) {
+//       setError(err instanceof Error ? err.message : "Failed to delete profile");
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   // NOTIFICATION SYSTEM: Notification handlers
+//   const handleMarkAsRead = async (notificationId: string) => {
+//     try {
+//       const response = await fetch("/api/notifications", {
+//         method: "PUT",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ notificationId, read: true }),
+//       });
+
+//       if (response.ok) {
+//         markAsRead(notificationId); // This will update the context state
+//       }
+//     } catch (error) {
+//       console.error("Error marking notification as read:", error);
+//     }
+//   };
+
+//   const handleNotificationClick = async (notification: NotificationData) => {
+//     try {
+//       console.log("🔔 Notification clicked:", notification);
+
+//       // Mark as read first
+//       if (!notification.read) {
+//         await markAsRead(notification.id);
+//       }
+
+//       let targetUrl = "";
+
+//       switch (notification.type) {
+//         case "HOP_ACCEPTED":
+//           // 🆕 OPEN PRIVATE CHAT WHEN HOP-IN IS ACCEPTED
+//           if (notification.chatroomId) {
+//             targetUrl = `/app/chat/private/${notification.chatroomId}`;
+//             console.log("💬 Opening private chat:", targetUrl);
+//           } else {
+//             console.warn("No chatroomId found in HOP_ACCEPTED notification");
+//           }
+//           break;
+
+//         case "MESSAGE":
+//           if (notification.crawlId) {
+//             targetUrl = `/app/chat/${notification.crawlId}`;
+//           } else if (notification.chatroomId) {
+//             // 🆕 HANDLE PRIVATE CHAT MESSAGES TOO
+//             targetUrl = `/app/chat/private/${notification.chatroomId}`;
+//           }
+//           break;
+
+//         case "HOP_REQUEST":
+//           // Stay on social page to see the request
+//           targetUrl = "/app/social";
+//           break;
+
+//         case "CRAWL_JOIN_REQUEST":
+//         case "CRAWL_JOIN_APPROVED":
+//           if (notification.crawlId) {
+//             targetUrl = `/app/crawls/${notification.crawlId}`;
+//           }
+//           break;
+
+//         default:
+//           console.log(
+//             "No specific action for notification type:",
+//             notification.type
+//           );
+//           return;
+//       }
+
+//       if (targetUrl) {
+//         console.log("🎯 Navigating to:", targetUrl);
+//         // Use window.location for reliable navigation
+//         window.location.href = targetUrl;
+//       }
+//     } catch (error) {
+//       console.error("💥 Error handling notification click:", error);
+//     }
+//   };
+
+//   // const handleAcceptHop = async (notification: NotificationData) => {
+//   //   if (!socket || !session?.user?.id) return;
+
+//   //   try {
+//   //     socket.emit("respond_hop_request", {
+//   //       hopInId: notification.hopInId,
+//   //       status: "ACCEPTED",
+//   //       userId: session.user.id,
+//   //     });
+
+//   //     handleMarkAsRead(notification.id);
+//   //     setSuccess(`You accepted the hop in request!`);
+//   //   } catch (err) {
+//   //     setError("Failed to accept hop request");
+//   //   }
+//   // };
+
+//   const handleAcceptHop = async (notification: NotificationData) => {
+//     if (
+//       !socket ||
+//       !isConnected ||
+//       !notification.hopInId ||
+//       !session?.user?.id
+//     ) {
+//       return;
+//     }
+
+//     try {
+//       console.log("✅ Accepting hop request:", notification.hopInId);
+
+//       socket.emit("respond_hop_request", {
+//         hopInId: notification.hopInId,
+//         status: "ACCEPTED",
+//         userId: session.user.id,
+//       });
+
+//       await markAsRead(notification.id);
+
+//       // 🆕 UPDATED SUCCESS MESSAGE
+//       setSuccess(
+//         `Hop request accepted! Check your notifications for the chat link when you're ready to talk.`
+//       );
+//     } catch (err) {
+//       console.error("Error accepting hop request:", err);
+//       setError("Failed to accept hop request");
+//     }
+//   };
+
+//   const handleDeclineHop = async (notification: NotificationData) => {
+//     if (!socket || !session?.user?.id) return;
+
+//     try {
+//       socket.emit("respond_hop_request", {
+//         hopInId: notification.hopInId,
+//         status: "DECLINED",
+//         userId: session.user.id,
+//       });
+
+//       handleMarkAsRead(notification.id);
+//       setSuccess(`You declined the hop in request`);
+//     } catch (err) {
+//       setError("Failed to decline hop request");
+//     }
+//   };
+
+//   // NOTIFICATION SYSTEM: Replace modal with page navigation
+//   const handleNotificationsClick = () => {
+//     router.push("/app/notifications");
+//   };
+
+//   // Update useEffect to use filteredUsers
+//   useEffect(() => {
+//     setActiveUsers(filteredUsers);
+//   }, [filteredUsers]);
+
+//   useEffect(() => {
+//     if (isSocialMode) {
+//       fetchNearbyUsers();
+//       const interval = setInterval(fetchNearbyUsers, 30000);
+//       return () => clearInterval(interval);
+//     }
+//   }, [isSocialMode, currentLocation, currentCity]);
+
+//   const activeUsersCount = filteredUsers.length;
+//   const nearbyBars = [
+//     ...new Set(
+//       filteredUsers.map((user) => user.currentBar?.name).filter(Boolean)
+//     ),
+//   ].length;
+//   const popularVibes = filteredUsers.reduce((acc, user) => {
+//     const vibe = user.vibe || "CASUAL";
+//     acc[vibe] = (acc[vibe] || 0) + 1;
+//     return acc;
+//   }, {} as Record<string, number>);
+//   const mostPopularVibe = Object.keys(popularVibes).reduce(
+//     (a, b) => (popularVibes[a] > popularVibes[b] ? a : b),
+//     "CHILL"
+//   );
+
+//   // Determine when to show "How it works" section
+//   const showHowItWorks = !isSocialMode;
+
+//   return (
+//     <SocialContainer>
+//       <SocialHeader>
+//         <Title>Social Mode</Title>
+//         <Subtitle>
+//           See who&apos;s out tonight and connect with people nearby
+//         </Subtitle>
+//         {/* NOTIFICATION SYSTEM: Header Actions - Only show notification bell on desktop */}
+//       </SocialHeader>
+
+//       {success && <SuccessState>{success}</SuccessState>}
+//       {error && showLocationWarning && <ErrorState>{error}</ErrorState>}
+//       {error && !showLocationWarning && <ErrorState>{error}</ErrorState>}
+
+//       {showProfileSetup && (
+//         <SetupSocialProfile
+//           onComplete={
+//             userSocialProfile ? handleProfileUpdate : handleProfileSetupComplete
+//           }
+//           onSkip={() => setShowProfileSetup(false)}
+//           isLoading={isLoading}
+//           existingProfile={userSocialProfile}
+//         />
+//       )}
+
+//       {!showProfileSetup && (
+//         <>
+//           {/* Social Toggle - Always at the top when not in profile setup */}
+//           <div
+//             style={{
+//               display: "flex",
+//               justifyContent: "center",
+//               margin: "1.5rem 0",
+//               background: "transparent ",
+//             }}
+//           >
+//             <SocialToggle
+//               isActive={isSocialMode}
+//               onToggle={toggleSocialMode}
+//               isLoading={isLoading}
+//             />
+//           </div>
+//           {/* City Detection Display - Only show when we have a detected city and social mode is active */}
+//           {isSocialMode && currentCity && !isDetectingCity && (
+//             <CityDetection>
+//               <CityBadge>
+//                 <span>📍</span>
+//                 <span>Currently in {currentCity}</span>
+//               </CityBadge>
+//             </CityDetection>
+//           )}
+
+//           {/* How it works section - Show below Social Toggle when relevant */}
+//           {showHowItWorks && (
+//             <HowItWorks>
+//               <HowItWorksTitle>How Social Mode Works</HowItWorksTitle>
+//               <StepsContainer>
+//                 <Step>
+//                   <StepIcon>👤</StepIcon>
+//                   <StepTitle>Create Your Profile</StepTitle>
+//                   <StepDescription>
+//                     Set up your social profile with your vibe, interests, and
+//                     bio to let others know what you&apos;re about.
+//                   </StepDescription>
+//                 </Step>
+//                 <Step>
+//                   <StepIcon>📍</StepIcon>
+//                   <StepTitle>Enable Social Mode</StepTitle>
+//                   <StepDescription>
+//                     Turn on social mode to appear on the map and see other users
+//                     nearby in your city.
+//                   </StepDescription>
+//                 </Step>
+//                 <Step>
+//                   <StepIcon>🤝</StepIcon>
+//                   <StepTitle>Connect & Hop In</StepTitle>
+//                   <StepDescription>
+//                     Browse nearby users, send hop-in requests, and meet up with
+//                     like-minded people.
+//                   </StepDescription>
+//                 </Step>
+//               </StepsContainer>
+//             </HowItWorks>
+//           )}
+
+//           {/* Social Mode Active Content */}
+//           {isSocialMode && (
+//             <>
+//               <StatsContainer>
+//                 <StatCard>
+//                   <StatNumber>{activeUsersCount}</StatNumber>
+//                   <StatLabel>Online in {currentCity || "your city"}</StatLabel>
+//                 </StatCard>
+//                 <StatCard>
+//                   <StatNumber>{nearbyBars}</StatNumber>
+//                   <StatLabel>Venues</StatLabel>
+//                 </StatCard>
+//                 <StatCard>
+//                   <StatNumber>{mostPopularVibe}</StatNumber>
+//                   <StatLabel>Vibe</StatLabel>
+//                 </StatCard>
+//               </StatsContainer>
+
+//               <ViewToggle>
+//                 <ViewButton
+//                   $active={selectedView === "grid"}
+//                   onClick={() => setSelectedView("grid")}
+//                 >
+//                   👥 Grid View
+//                 </ViewButton>
+//                 <ViewButton
+//                   $active={selectedView === "map"}
+//                   onClick={() => setSelectedView("map")}
+//                 >
+//                   🗺️ Map View
+//                 </ViewButton>
+//               </ViewToggle>
+
+//               <MapContainer $show={selectedView === "map"}>
+//                 <SocialMap
+//                   users={filteredUsers}
+//                   onUserClick={handleHopIn}
+//                   currentLocation={
+//                     currentLocation || { lat: 60.1699, lng: 24.9384 }
+//                   }
+//                 />
+//               </MapContainer>
+
+//               {selectedView === "grid" && (
+//                 <>
+//                   {isLoadingUsers && (
+//                     <LoadingState>
+//                       <p>
+//                         Finding people near you in {currentCity || "your area"}
+//                         ...
+//                       </p>
+//                     </LoadingState>
+//                   )}
+
+//                   {!isLoadingUsers && filteredUsers.length > 0 && (
+//                     <UsersGrid>
+//                       {filteredUsers.map((user) => (
+//                         <UserCard
+//                           key={user.id}
+//                           onClick={() => handleHopIn(user)}
+//                         >
+//                           <UserImageContainer>
+//                             <UserImage $imageUrl={user.user.image || undefined}>
+//                               {!user.user.image &&
+//                                 (user.user.name?.charAt(0).toUpperCase() ||
+//                                   "U")}
+//                             </UserImage>
+//                             <UserStatusBadge $status={user.socialStatus} />
+//                             <UserVibeBadge $vibe={user.vibe || "CASUAL"}>
+//                               {getVibeEmoji(user.vibe || "CASUAL")}
+//                             </UserVibeBadge>
+//                           </UserImageContainer>
+//                           <UserInfo>
+//                             <UserHeader>
+//                               <UserName>{user.user.name || "User"}</UserName>
+//                               <UserAge>{calculateAge(user)}</UserAge>
+//                             </UserHeader>
+//                             <UserDetails>
+//                               <DistanceBadge>
+//                                 📍 {calculateDistance(user)}
+//                               </DistanceBadge>
+//                               <LocationInfo>
+//                                 {getUserStatusDisplay(user)}
+//                               </LocationInfo>
+//                             </UserDetails>
+//                             <QuickActions>
+//                               <ActionButton
+//                                 $variant="primary"
+//                                 onClick={(e) => {
+//                                   e.stopPropagation();
+//                                   handleHopIn(user);
+//                                 }}
+//                               >
+//                                 Hop In
+//                               </ActionButton>
+//                               {/* NOTIFICATION SYSTEM: Updated wave button */}
+//                               <ActionButton
+//                                 $variant="secondary"
+//                                 onClick={(e) => {
+//                                   e.stopPropagation();
+//                                   sendWave(user);
+//                                 }}
+//                               >
+//                                 👋 Wave
+//                               </ActionButton>
+//                             </QuickActions>
+//                           </UserInfo>
+//                         </UserCard>
+//                       ))}
+//                     </UsersGrid>
+//                   )}
+
+//                   {!isLoadingUsers && filteredUsers.length === 0 && (
+//                     <EmptyUsersState>
+//                       <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>
+//                         👀
+//                       </div>
+//                       <h3 style={{ color: "#f8fafc", marginBottom: "0.5rem" }}>
+//                         No users nearby in {currentCity || "your area"}
+//                       </h3>
+//                       <p style={{ color: "#94a3b8" }}>
+//                         Be the first in {currentCity || "your city"} to activate
+//                         social mode!
+//                       </p>
+//                     </EmptyUsersState>
+//                   )}
+//                 </>
+//               )}
+//             </>
+//           )}
+//         </>
+//       )}
+
+//       {/* Hop In Modal */}
+//       {showHopInModal && selectedUser && (
+//         <ModalOverlay onClick={() => setShowHopInModal(false)}>
+//           <ModalContent onClick={(e) => e.stopPropagation()}>
+//             <ModalHeader>
+//               <ModalUserImage $imageUrl={selectedUser.user.image || undefined}>
+//                 {!selectedUser.user.image &&
+//                   (selectedUser.user.name?.charAt(0).toUpperCase() || "U")}
+//               </ModalUserImage>
+//               <ModalUserInfo>
+//                 <ModalUserName>
+//                   {selectedUser.user.name || "User"}
+//                 </ModalUserName>
+//                 <ModalUserVibe>
+//                   {getVibeEmoji(selectedUser.vibe || "CASUAL")}{" "}
+//                   {selectedUser.vibe || "CASUAL"} Vibe
+//                 </ModalUserVibe>
+//               </ModalUserInfo>
+//             </ModalHeader>
+
+//             {selectedUser.bio && (
+//               <ModalSection>
+//                 <ModalSectionTitle>About</ModalSectionTitle>
+//                 <ModalBio>{selectedUser.bio}</ModalBio>
+//               </ModalSection>
+//             )}
+
+//             {selectedUser.interests && selectedUser.interests.length > 0 && (
+//               <ModalSection>
+//                 <ModalSectionTitle>Interests</ModalSectionTitle>
+//                 <ModalInterests>
+//                   {selectedUser.interests.map((interest, index) => (
+//                     <ModalInterestTag key={index}>#{interest}</ModalInterestTag>
+//                   ))}
+//                 </ModalInterests>
+//               </ModalSection>
+//             )}
+
+//             <ModalSection>
+//               <ModalSectionTitle>Current Status</ModalSectionTitle>
+//               <p style={{ color: "#cbd5e1", margin: 0 }}>
+//                 {getUserDetailedStatus(selectedUser)}
+//               </p>
+//               <p
+//                 style={{
+//                   color: "#94a3b8",
+//                   fontSize: "0.8rem",
+//                   margin: "0.5rem 0 0 0",
+//                 }}
+//               >
+//                 {selectedUser.currentBar
+//                   ? "They're at a venue nearby"
+//                   : "They're exploring the area"}
+//               </p>
+//             </ModalSection>
+
+//             <ModalActions>
+//               <ModalButton
+//                 $variant="secondary"
+//                 onClick={() => setShowHopInModal(false)}
+//               >
+//                 Cancel
+//               </ModalButton>
+//               <ModalButton
+//                 $variant="primary"
+//                 onClick={sendHopInRequest}
+//                 disabled={isSendingHopIn}
+//               >
+//                 {isSendingHopIn ? "Sending..." : "Send Hop In Request"}
+//               </ModalButton>
+//             </ModalActions>
+//           </ModalContent>
+//         </ModalOverlay>
+//       )}
+//     </SocialContainer>
+//   );
+// };
+
+// export default Social;
 // "use client";
 // import { useState, useEffect } from "react";
 // import { useSession } from "next-auth/react";
