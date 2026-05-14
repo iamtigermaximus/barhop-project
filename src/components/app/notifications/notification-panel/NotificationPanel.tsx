@@ -365,17 +365,580 @@
 
 // export default NotificationsPanel;
 // components/notifications/NotificationPanel.tsx
+// "use client";
+// // import { NotificationData } from "@/types/socket";
+// import { useSocket } from "../../contexts/SocketContext";
+// import {
+//   ModalButton,
+//   ModalContent,
+//   ModalHeader,
+//   ModalOverlay,
+//   ModalUserImage,
+// } from "../../social/Social.styles";
+// import { useSession } from "next-auth/react";
+// export enum NotificationType {
+//   HOP_REQUEST = "HOP_REQUEST",
+//   HOP_ACCEPTED = "HOP_ACCEPTED",
+//   HOP_DECLINED = "HOP_DECLINED",
+//   WAVE = "WAVE",
+//   MESSAGE = "MESSAGE",
+//   SYSTEM = "SYSTEM",
+//   MEETUP_INVITE = "MEETUP_INVITE",
+//   CRAWL_JOIN_REQUEST = "CRAWL_JOIN_REQUEST",
+//   CRAWL_JOIN_APPROVED = "CRAWL_JOIN_APPROVED",
+//   CRAWL_JOIN_REJECTED = "CRAWL_JOIN_REJECTED",
+// }
+
+// export enum HopInStatus {
+//   PENDING = "PENDING",
+//   ACCEPTED = "ACCEPTED",
+//   DECLINED = "DECLINED",
+//   CANCELLED = "CANCELLED",
+//   EXPIRED = "EXPIRED",
+// }
+
+// export interface NotificationData {
+//   id: string;
+//   userId: string;
+//   type: NotificationType;
+//   fromUserId: string;
+//   message?: string;
+//   barId?: string;
+//   crawlId?: string;
+//   chatroomId?: string;
+//   read: boolean;
+//   readAt?: Date;
+//   createdAt: Date;
+//   hopInId?: string;
+//   meetupId?: string;
+//   fromUser?: {
+//     id: string;
+//     name: string | null;
+//     image: string | null;
+//   };
+//   hopIn?: {
+//     id: string;
+//     barId?: string;
+//     bar?: {
+//       id: string;
+//       name: string;
+//     };
+//     status: HopInStatus;
+//   };
+//   crawl?: {
+//     id: string;
+//     name: string;
+//   };
+// }
+// interface NotificationsPanelProps {
+//   isOpen: boolean;
+//   onClose: () => void;
+// }
+
+// const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps) => {
+//   const {
+//     notifications,
+//     unreadCount,
+//     markAsRead,
+//     socket,
+//     isConnected,
+//     markAllAsRead,
+//   } = useSocket();
+
+//   const { data: session } = useSession();
+
+//   if (!isOpen) return null;
+
+//   // ✅ REAL: Handle accepting hop requests
+//   const handleAcceptHop = async (notification: NotificationData) => {
+//     if (!socket || !isConnected || !notification.hopInId) {
+//       console.error(
+//         "❌ Cannot accept hop: socket not connected or missing hopInId"
+//       );
+//       return;
+//     }
+
+//     if (!session?.user?.id) {
+//       console.error("❌ Cannot accept hop: no user session");
+//       return;
+//     }
+
+//     try {
+//       console.log("✅ Accepting hop request:", notification.hopInId);
+
+//       // Emit socket event to accept the hop request
+//       socket.emit("respond_hop_request", {
+//         hopInId: notification.hopInId,
+//         status: "ACCEPTED",
+//         userId: session.user.id, // Current user accepting the request
+//       });
+
+//       // Mark the notification as read
+//       await markAsRead(notification.id);
+
+//       console.log("🎉 Hop request accepted successfully");
+//     } catch (err) {
+//       console.error("💥 Error accepting hop request:", err);
+//     }
+//   };
+
+//   // ✅ REAL: Handle declining hop requests (SILENT)
+//   const handleDeclineHop = async (notification: NotificationData) => {
+//     if (!socket || !isConnected || !notification.hopInId) {
+//       console.error(
+//         "❌ Cannot decline hop: socket not connected or missing hopInId"
+//       );
+//       return;
+//     }
+
+//     if (!session?.user?.id) {
+//       console.error("❌ Cannot decline hop: no user session");
+//       return;
+//     }
+
+//     try {
+//       console.log("❌ Declining hop request:", notification.hopInId);
+
+//       // Emit socket event to decline the hop request
+//       socket.emit("respond_hop_request", {
+//         hopInId: notification.hopInId,
+//         status: "DECLINED",
+//         userId: session.user.id, // Current user declining the request
+//       });
+
+//       // Just mark as read locally - no success message (SILENT DECLINE)
+//       await markAsRead(notification.id);
+
+//       console.log("🗑️ Hop request declined silently");
+//     } catch (err) {
+//       console.error("💥 Error declining hop request:", err);
+//     }
+//   };
+
+//   const formatTime = (date: Date) => {
+//     const now = new Date();
+//     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
+//     if (diffInHours < 1) {
+//       const diffInMinutes = Math.floor(diffInHours * 60);
+//       return `${diffInMinutes}m ago`;
+//     } else if (diffInHours < 24) {
+//       return `${Math.floor(diffInHours)}h ago`;
+//     } else {
+//       return date.toLocaleDateString();
+//     }
+//   };
+
+//   return (
+//     <ModalOverlay onClick={onClose}>
+//       <ModalContent
+//         onClick={(e) => e.stopPropagation()}
+//         style={{
+//           width: "95vw",
+//           maxWidth: "400px",
+//           maxHeight: "70vh",
+//           background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
+//           border: "1px solid rgba(139, 92, 246, 0.3)",
+//           boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)",
+//           borderRadius: "16px",
+//           margin: "20px auto",
+//         }}
+//       >
+//         {/* Header */}
+//         <ModalHeader
+//           style={{
+//             background: "rgba(30, 41, 59, 0.9)",
+//             borderBottom: "1px solid rgba(139, 92, 246, 0.2)",
+//             padding: "1rem 1.25rem",
+//             borderTopLeftRadius: "16px",
+//             borderTopRightRadius: "16px",
+//             position: "sticky",
+//             top: 0,
+//             zIndex: 10,
+//           }}
+//         >
+//           <div
+//             style={{
+//               display: "flex",
+//               alignItems: "center",
+//               justifyContent: "space-between",
+//               width: "100%",
+//             }}
+//           >
+//             <div
+//               style={{
+//                 display: "flex",
+//                 alignItems: "center",
+//                 gap: "0.75rem",
+//                 flex: 1,
+//               }}
+//             >
+//               <div
+//                 style={{
+//                   width: "28px",
+//                   height: "28px",
+//                   background: "linear-gradient(135deg, #8b5cf6, #ec4899)",
+//                   borderRadius: "8px",
+//                   display: "flex",
+//                   alignItems: "center",
+//                   justifyContent: "center",
+//                   fontSize: "14px",
+//                 }}
+//               >
+//                 🔔
+//               </div>
+//               <div style={{ flex: 1 }}>
+//                 <div
+//                   style={{
+//                     display: "flex",
+//                     alignItems: "center",
+//                     gap: "0.5rem",
+//                   }}
+//                 >
+//                   <h3
+//                     style={{
+//                       margin: 0,
+//                       color: "#f8fafc",
+//                       fontSize: "1.1rem",
+//                       fontWeight: "600",
+//                     }}
+//                   >
+//                     Notifications
+//                   </h3>
+//                   <div
+//                     style={{
+//                       padding: "0.25rem 0.5rem",
+//                       background: isConnected
+//                         ? "rgba(34, 197, 94, 0.1)"
+//                         : "rgba(239, 68, 68, 0.1)",
+//                       border: `1px solid ${
+//                         isConnected
+//                           ? "rgba(34, 197, 94, 0.3)"
+//                           : "rgba(239, 68, 68, 0.3)"
+//                       }`,
+//                       borderRadius: "6px",
+//                       fontSize: "0.7rem",
+//                       color: isConnected ? "#22c55e" : "#ef4444",
+//                       display: "flex",
+//                       alignItems: "center",
+//                       gap: "0.25rem",
+//                     }}
+//                   >
+//                     <div
+//                       style={{
+//                         width: "6px",
+//                         height: "6px",
+//                         borderRadius: "50%",
+//                         background: isConnected ? "#22c55e" : "#ef4444",
+//                         animation: isConnected ? "pulse 1s infinite" : "none",
+//                       }}
+//                     />
+//                     {isConnected ? "Live" : "Offline"}
+//                   </div>
+//                 </div>
+//                 <p
+//                   style={{
+//                     margin: "0.25rem 0 0 0",
+//                     color: "#94a3b8",
+//                     fontSize: "0.8rem",
+//                   }}
+//                 >
+//                   {unreadCount > 0 ? `${unreadCount} unread` : "All caught up!"}
+//                 </p>
+//               </div>
+//             </div>
+//             <ModalButton
+//               $variant="secondary"
+//               onClick={onClose}
+//               style={{
+//                 padding: "6px 10px",
+//                 background: "rgba(139, 92, 246, 0.1)",
+//                 border: "1px solid rgba(139, 92, 246, 0.3)",
+//                 fontSize: "12px",
+//                 minWidth: "auto",
+//               }}
+//             >
+//               ✕
+//             </ModalButton>
+//           </div>
+//         </ModalHeader>
+
+//         {/* Notifications List */}
+//         <div
+//           style={{
+//             overflowY: "auto",
+//             padding: "0.75rem",
+//             background: "rgba(15, 23, 42, 0.5)",
+//             maxHeight: "calc(70vh - 80px)",
+//           }}
+//         >
+//           {notifications.length === 0 ? (
+//             <div
+//               style={{
+//                 textAlign: "center",
+//                 color: "#94a3b8",
+//                 padding: "2rem 1rem",
+//                 background: "rgba(30, 41, 59, 0.3)",
+//                 borderRadius: "12px",
+//                 border: "1px dashed rgba(139, 92, 246, 0.2)",
+//                 margin: "1rem 0",
+//               }}
+//             >
+//               <div
+//                 style={{
+//                   fontSize: "2.5rem",
+//                   marginBottom: "0.75rem",
+//                   opacity: 0.5,
+//                 }}
+//               >
+//                 🔔
+//               </div>
+//               <h4
+//                 style={{
+//                   color: "#e2e8f0",
+//                   marginBottom: "0.5rem",
+//                   fontWeight: "500",
+//                   fontSize: "1rem",
+//                 }}
+//               >
+//                 No notifications yet
+//               </h4>
+//               <p style={{ margin: 0, fontSize: "0.8rem", lineHeight: "1.4" }}>
+//                 {!isConnected
+//                   ? "Connecting to notifications..."
+//                   : "Notifications will appear here when you receive waves or hop-in requests"}
+//               </p>
+//             </div>
+//           ) : (
+//             <div
+//               style={{
+//                 display: "flex",
+//                 flexDirection: "column",
+//                 gap: "0.5rem",
+//               }}
+//             >
+//               {notifications.map((notification) => (
+//                 <div
+//                   key={notification.id}
+//                   style={{
+//                     background: notification.read
+//                       ? "rgba(30, 41, 59, 0.6)"
+//                       : "linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.1) 100%)",
+//                     border: notification.read
+//                       ? "1px solid rgba(139, 92, 246, 0.1)"
+//                       : "1px solid rgba(139, 92, 246, 0.3)",
+//                     borderRadius: "12px",
+//                     padding: "1rem",
+//                     cursor: "pointer",
+//                     transition: "all 0.2s ease",
+//                     position: "relative",
+//                     overflow: "hidden",
+//                   }}
+//                   onClick={() =>
+//                     !notification.read && markAsRead(notification.id)
+//                   }
+//                 >
+//                   {/* Unread indicator */}
+//                   {!notification.read && (
+//                     <div
+//                       style={{
+//                         position: "absolute",
+//                         top: "10px",
+//                         right: "10px",
+//                         width: "6px",
+//                         height: "6px",
+//                         background: "#ec4899",
+//                         borderRadius: "50%",
+//                         animation: "pulse 2s infinite",
+//                       }}
+//                     />
+//                   )}
+
+//                   <div
+//                     style={{
+//                       display: "flex",
+//                       alignItems: "flex-start",
+//                       gap: "0.75rem",
+//                     }}
+//                   >
+//                     {/* User Avatar */}
+//                     <ModalUserImage
+//                       $imageUrl={notification.fromUser?.image || undefined}
+//                       style={{
+//                         width: "36px",
+//                         height: "36px",
+//                         fontSize: "14px",
+//                         border: notification.read
+//                           ? "2px solid rgba(139, 92, 246, 0.3)"
+//                           : "2px solid #8b5cf6",
+//                         flexShrink: 0,
+//                       }}
+//                     >
+//                       {!notification.fromUser?.image &&
+//                         (notification.fromUser?.name?.charAt(0).toUpperCase() ||
+//                           "U")}
+//                     </ModalUserImage>
+
+//                     {/* Notification Content */}
+//                     <div style={{ flex: 1, minWidth: 0 }}>
+//                       <p
+//                         style={{
+//                           margin: "0 0 0.5rem 0",
+//                           color: "#f8fafc",
+//                           fontWeight: notification.read ? "400" : "500",
+//                           fontSize: "0.85rem",
+//                           lineHeight: "1.3",
+//                           wordBreak: "break-word",
+//                         }}
+//                       >
+//                         {notification.message}
+//                       </p>
+
+//                       {/* Meta Info and Actions */}
+//                       <div
+//                         style={{
+//                           display: "flex",
+//                           justifyContent: "space-between",
+//                           alignItems: "center",
+//                           flexWrap: "wrap",
+//                           gap: "0.5rem",
+//                         }}
+//                       >
+//                         <small
+//                           style={{
+//                             color: notification.read ? "#64748b" : "#94a3b8",
+//                             fontSize: "0.7rem",
+//                             display: "flex",
+//                             alignItems: "center",
+//                             gap: "0.25rem",
+//                           }}
+//                         >
+//                           <span>🕒</span>
+//                           {formatTime(new Date(notification.createdAt))}
+//                         </small>
+
+//                         {/* Action Buttons - Only show for HOP_REQUEST with hopInId */}
+//                         {notification.type === "HOP_REQUEST" &&
+//                           notification.hopInId && (
+//                             <div
+//                               style={{
+//                                 display: "flex",
+//                                 gap: "0.4rem",
+//                                 flexShrink: 0,
+//                               }}
+//                             >
+//                               <ModalButton
+//                                 $variant="primary"
+//                                 onClick={(e) => {
+//                                   e.stopPropagation();
+//                                   handleAcceptHop(notification);
+//                                 }}
+//                                 style={{
+//                                   padding: "4px 8px",
+//                                   fontSize: "11px",
+//                                   background:
+//                                     "linear-gradient(135deg, #10b981, #059669)",
+//                                   border: "none",
+//                                   minWidth: "auto",
+//                                 }}
+//                               >
+//                                 ✅ Accept
+//                               </ModalButton>
+//                               <ModalButton
+//                                 $variant="secondary"
+//                                 onClick={(e) => {
+//                                   e.stopPropagation();
+//                                   handleDeclineHop(notification);
+//                                 }}
+//                                 style={{
+//                                   padding: "4px 8px",
+//                                   fontSize: "11px",
+//                                   background: "rgba(239, 68, 68, 0.1)",
+//                                   border: "1px solid rgba(239, 68, 68, 0.3)",
+//                                   color: "#ef4444",
+//                                   minWidth: "auto",
+//                                 }}
+//                               >
+//                                 ❌ Decline
+//                               </ModalButton>
+//                             </div>
+//                           )}
+
+//                         {/* Notification Type Badge */}
+//                         {notification.type === "WAVE" && (
+//                           <div
+//                             style={{
+//                               background: "rgba(34, 197, 94, 0.1)",
+//                               color: "#22c55e",
+//                               padding: "2px 6px",
+//                               borderRadius: "4px",
+//                               fontSize: "0.7rem",
+//                               border: "1px solid rgba(34, 197, 94, 0.2)",
+//                             }}
+//                           >
+//                             👋 Wave
+//                           </div>
+//                         )}
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+//           )}
+//         </div>
+
+//         {/* Clear All Button */}
+//         {notifications.length > 0 && unreadCount > 0 && (
+//           <div
+//             style={{
+//               padding: "0.75rem 1rem",
+//               borderTop: "1px solid rgba(139, 92, 246, 0.1)",
+//               background: "rgba(30, 41, 59, 0.5)",
+//             }}
+//           >
+//             <ModalButton
+//               $variant="secondary"
+//               onClick={markAllAsRead}
+//               style={{
+//                 width: "100%",
+//                 padding: "0.5rem",
+//                 fontSize: "0.8rem",
+//                 background: "rgba(139, 92, 246, 0.1)",
+//                 border: "1px solid rgba(139, 92, 246, 0.3)",
+//               }}
+//             >
+//               Mark all as read ({unreadCount})
+//             </ModalButton>
+//           </div>
+//         )}
+
+//         <style jsx>{`
+//           @keyframes pulse {
+//             0% {
+//               opacity: 1;
+//             }
+//             50% {
+//               opacity: 0.5;
+//             }
+//             100% {
+//               opacity: 1;
+//             }
+//           }
+//         `}</style>
+//       </ModalContent>
+//     </ModalOverlay>
+//   );
+// };
+
+// export default NotificationsPanel;
+// src/components/app/notifications/NotificationsPanel.tsx
 "use client";
-// import { NotificationData } from "@/types/socket";
-import { useSocket } from "../../contexts/SocketContext";
-import {
-  ModalButton,
-  ModalContent,
-  ModalHeader,
-  ModalOverlay,
-  ModalUserImage,
-} from "../../social/Social.styles";
+
 import { useSession } from "next-auth/react";
+import { useSocket } from "../../contexts/SocketContext";
+import styled, { keyframes } from "styled-components";
+
 export enum NotificationType {
   HOP_REQUEST = "HOP_REQUEST",
   HOP_ACCEPTED = "HOP_ACCEPTED",
@@ -430,10 +993,383 @@ export interface NotificationData {
     name: string;
   };
 }
+
 interface NotificationsPanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+// ============================================
+// ANIMATIONS
+// ============================================
+
+const pulse = keyframes`
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+`;
+
+// ============================================
+// STYLED COMPONENTS WITH THEME
+// ============================================
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+`;
+
+const ModalContent = styled.div`
+  width: 95vw;
+  max-width: 400px;
+  max-height: 70vh;
+  background: ${({ theme }) => theme.colors.secondaryBackground};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  border-radius: 16px;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`;
+
+const ModalHeader = styled.div`
+  background: ${({ theme }) => theme.colors.secondaryBackground};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  padding: 1rem 1.25rem;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+`;
+
+const HeaderContent = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+`;
+
+const HeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+`;
+
+const HeaderIcon = styled.div`
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+`;
+
+const HeaderInfo = styled.div`
+  flex: 1;
+`;
+
+const HeaderTitleRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const HeaderTitle = styled.h3`
+  margin: 0;
+  color: ${({ theme }) => theme.colors.textPrimary};
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-family: ${({ theme }) => theme.fonts.dm};
+`;
+
+const ConnectionBadge = styled.div<{ $isConnected: boolean }>`
+  padding: 0.25rem 0.5rem;
+  background: ${(props) =>
+    props.$isConnected ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)"};
+  border: 1px solid
+    ${(props) =>
+      props.$isConnected ? "rgba(34, 197, 94, 0.3)" : "rgba(239, 68, 68, 0.3)"};
+  border-radius: 6px;
+  font-size: 0.7rem;
+  color: ${(props) => (props.$isConnected ? "#22c55e" : "#ef4444")};
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: ${({ theme }) => theme.fonts.mono};
+`;
+
+const ConnectionDot = styled.div<{ $isConnected: boolean }>`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: ${(props) => (props.$isConnected ? "#22c55e" : "#ef4444")};
+  animation: ${(props) => (props.$isConnected ? pulse : "none")} 1s infinite;
+`;
+
+const HeaderSubtitle = styled.p`
+  margin: 0.25rem 0 0 0;
+  color: ${({ theme }) => theme.colors.textMuted};
+  font-size: 0.8rem;
+  font-family: ${({ theme }) => theme.fonts.dm};
+`;
+
+const CloseButton = styled.button`
+  padding: 6px 10px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 6px;
+  font-size: 12px;
+  color: ${({ theme }) => theme.colors.primaryAccent};
+  cursor: pointer;
+  min-width: auto;
+  font-family: ${({ theme }) => theme.fonts.dm};
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: ${({ theme }) => theme.colors.primaryAccent};
+  }
+`;
+
+const NotificationsList = styled.div`
+  overflow-y: auto;
+  padding: 0.75rem;
+  background: ${({ theme }) => theme.colors.tertiaryBackground};
+  max-height: calc(70vh - 80px);
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  color: ${({ theme }) => theme.colors.textMuted};
+  padding: 2rem 1rem;
+  background: ${({ theme }) => theme.colors.secondaryBackground};
+  border-radius: 12px;
+  border: 1px dashed ${({ theme }) => theme.colors.border};
+  margin: 1rem 0;
+`;
+
+const EmptyIcon = styled.div`
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  opacity: 0.5;
+`;
+
+const EmptyTitle = styled.h4`
+  color: ${({ theme }) => theme.colors.textSecondary};
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 1rem;
+  font-family: ${({ theme }) => theme.fonts.dm};
+`;
+
+const EmptyDescription = styled.p`
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  font-family: ${({ theme }) => theme.fonts.dm};
+`;
+
+const NotificationsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const NotificationItem = styled.div<{ $read: boolean }>`
+  background: ${(props) =>
+    props.$read
+      ? props.theme.colors.secondaryBackground
+      : `linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.1) 100%)`};
+  border: 1px solid
+    ${(props) =>
+      props.$read ? props.theme.colors.border : "rgba(139, 92, 246, 0.3)"};
+  border-radius: 12px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+`;
+
+const UnreadIndicator = styled.div`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 6px;
+  height: 6px;
+  background: #ec4899;
+  border-radius: 50%;
+  animation: ${pulse} 2s infinite;
+`;
+
+const NotificationContent = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+`;
+
+const UserAvatar = styled.div<{ $imageUrl?: string; $read: boolean }>`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: ${(props) =>
+    props.$imageUrl
+      ? `url(${props.$imageUrl}) center/cover`
+      : "linear-gradient(45deg, #8b5cf6, #0ea5e9)"};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: white;
+  font-weight: 600;
+  border: 2px solid
+    ${(props) =>
+      props.$read
+        ? "rgba(139, 92, 246, 0.3)"
+        : props.theme.colors.primaryAccent};
+  flex-shrink: 0;
+  font-family: ${({ theme }) => theme.fonts.dm};
+`;
+
+const MessageContent = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const Message = styled.p<{ $read: boolean }>`
+  margin: 0 0 0.5rem 0;
+  color: ${({ theme }) => theme.colors.textPrimary};
+  font-weight: ${(props) => (props.$read ? "400" : "500")};
+  font-size: 0.85rem;
+  line-height: 1.3;
+  word-break: break-word;
+  font-family: ${({ theme }) => theme.fonts.dm};
+`;
+
+const MetaContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`;
+
+const Time = styled.small<{ $read: boolean }>`
+  color: ${(props) =>
+    props.$read
+      ? props.theme.colors.textMuted
+      : props.theme.colors.textSecondary};
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: ${({ theme }) => theme.fonts.mono};
+`;
+
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+`;
+
+const AcceptButton = styled.button`
+  padding: 4px 8px;
+  font-size: 11px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  font-family: ${({ theme }) => theme.fonts.dm};
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+  }
+`;
+
+const DeclineButton = styled.button`
+  padding: 4px 8px;
+  font-size: 11px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  color: #ef4444;
+  cursor: pointer;
+  font-weight: 500;
+  font-family: ${({ theme }) => theme.fonts.dm};
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: translateY(-1px);
+  }
+`;
+
+const WaveBadge = styled.div`
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  font-family: ${({ theme }) => theme.fonts.mono};
+`;
+
+const Footer = styled.div`
+  padding: 0.75rem 1rem;
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  background: ${({ theme }) => theme.colors.secondaryBackground};
+`;
+
+const MarkAllButton = styled.button`
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 8px;
+  color: ${({ theme }) => theme.colors.primaryAccent};
+  cursor: pointer;
+  font-family: ${({ theme }) => theme.fonts.dm};
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: ${({ theme }) => theme.colors.primaryAccent};
+  }
+`;
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps) => {
   const {
@@ -449,31 +1385,29 @@ const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps) => {
 
   if (!isOpen) return null;
 
-  // ✅ REAL: Handle accepting hop requests
+  // Handle accepting hop requests
   const handleAcceptHop = async (notification: NotificationData) => {
-    if (!socket || !isConnected || !notification.hopInId) {
+    if (
+      !socket ||
+      !isConnected ||
+      !notification.hopInId ||
+      !session?.user?.id
+    ) {
       console.error(
-        "❌ Cannot accept hop: socket not connected or missing hopInId"
+        "❌ Cannot accept hop: socket not connected or missing hopInId",
       );
-      return;
-    }
-
-    if (!session?.user?.id) {
-      console.error("❌ Cannot accept hop: no user session");
       return;
     }
 
     try {
       console.log("✅ Accepting hop request:", notification.hopInId);
 
-      // Emit socket event to accept the hop request
       socket.emit("respond_hop_request", {
         hopInId: notification.hopInId,
         status: "ACCEPTED",
-        userId: session.user.id, // Current user accepting the request
+        userId: session.user.id,
       });
 
-      // Mark the notification as read
       await markAsRead(notification.id);
 
       console.log("🎉 Hop request accepted successfully");
@@ -482,31 +1416,29 @@ const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps) => {
     }
   };
 
-  // ✅ REAL: Handle declining hop requests (SILENT)
+  // Handle declining hop requests (SILENT)
   const handleDeclineHop = async (notification: NotificationData) => {
-    if (!socket || !isConnected || !notification.hopInId) {
+    if (
+      !socket ||
+      !isConnected ||
+      !notification.hopInId ||
+      !session?.user?.id
+    ) {
       console.error(
-        "❌ Cannot decline hop: socket not connected or missing hopInId"
+        "❌ Cannot decline hop: socket not connected or missing hopInId",
       );
-      return;
-    }
-
-    if (!session?.user?.id) {
-      console.error("❌ Cannot decline hop: no user session");
       return;
     }
 
     try {
       console.log("❌ Declining hop request:", notification.hopInId);
 
-      // Emit socket event to decline the hop request
       socket.emit("respond_hop_request", {
         hopInId: notification.hopInId,
         status: "DECLINED",
-        userId: session.user.id, // Current user declining the request
+        userId: session.user.id,
       });
 
-      // Just mark as read locally - no success message (SILENT DECLINE)
       await markAsRead(notification.id);
 
       console.log("🗑️ Hop request declined silently");
@@ -531,401 +1463,122 @@ const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps) => {
 
   return (
     <ModalOverlay onClick={onClose}>
-      <ModalContent
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "95vw",
-          maxWidth: "400px",
-          maxHeight: "70vh",
-          background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
-          border: "1px solid rgba(139, 92, 246, 0.3)",
-          boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)",
-          borderRadius: "16px",
-          margin: "20px auto",
-        }}
-      >
+      <ModalContent onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <ModalHeader
-          style={{
-            background: "rgba(30, 41, 59, 0.9)",
-            borderBottom: "1px solid rgba(139, 92, 246, 0.2)",
-            padding: "1rem 1.25rem",
-            borderTopLeftRadius: "16px",
-            borderTopRightRadius: "16px",
-            position: "sticky",
-            top: 0,
-            zIndex: 10,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              width: "100%",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-                flex: 1,
-              }}
-            >
-              <div
-                style={{
-                  width: "28px",
-                  height: "28px",
-                  background: "linear-gradient(135deg, #8b5cf6, #ec4899)",
-                  borderRadius: "8px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "14px",
-                }}
-              >
-                🔔
-              </div>
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}
-                >
-                  <h3
-                    style={{
-                      margin: 0,
-                      color: "#f8fafc",
-                      fontSize: "1.1rem",
-                      fontWeight: "600",
-                    }}
-                  >
-                    Notifications
-                  </h3>
-                  <div
-                    style={{
-                      padding: "0.25rem 0.5rem",
-                      background: isConnected
-                        ? "rgba(34, 197, 94, 0.1)"
-                        : "rgba(239, 68, 68, 0.1)",
-                      border: `1px solid ${
-                        isConnected
-                          ? "rgba(34, 197, 94, 0.3)"
-                          : "rgba(239, 68, 68, 0.3)"
-                      }`,
-                      borderRadius: "6px",
-                      fontSize: "0.7rem",
-                      color: isConnected ? "#22c55e" : "#ef4444",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.25rem",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "6px",
-                        height: "6px",
-                        borderRadius: "50%",
-                        background: isConnected ? "#22c55e" : "#ef4444",
-                        animation: isConnected ? "pulse 1s infinite" : "none",
-                      }}
-                    />
+        <ModalHeader>
+          <HeaderContent>
+            <HeaderLeft>
+              <HeaderIcon>🔔</HeaderIcon>
+              <HeaderInfo>
+                <HeaderTitleRow>
+                  <HeaderTitle>Notifications</HeaderTitle>
+                  <ConnectionBadge $isConnected={isConnected}>
+                    <ConnectionDot $isConnected={isConnected} />
                     {isConnected ? "Live" : "Offline"}
-                  </div>
-                </div>
-                <p
-                  style={{
-                    margin: "0.25rem 0 0 0",
-                    color: "#94a3b8",
-                    fontSize: "0.8rem",
-                  }}
-                >
+                  </ConnectionBadge>
+                </HeaderTitleRow>
+                <HeaderSubtitle>
                   {unreadCount > 0 ? `${unreadCount} unread` : "All caught up!"}
-                </p>
-              </div>
-            </div>
-            <ModalButton
-              $variant="secondary"
-              onClick={onClose}
-              style={{
-                padding: "6px 10px",
-                background: "rgba(139, 92, 246, 0.1)",
-                border: "1px solid rgba(139, 92, 246, 0.3)",
-                fontSize: "12px",
-                minWidth: "auto",
-              }}
-            >
-              ✕
-            </ModalButton>
-          </div>
+                </HeaderSubtitle>
+              </HeaderInfo>
+            </HeaderLeft>
+            <CloseButton onClick={onClose}>✕</CloseButton>
+          </HeaderContent>
         </ModalHeader>
 
         {/* Notifications List */}
-        <div
-          style={{
-            overflowY: "auto",
-            padding: "0.75rem",
-            background: "rgba(15, 23, 42, 0.5)",
-            maxHeight: "calc(70vh - 80px)",
-          }}
-        >
+        <NotificationsList>
           {notifications.length === 0 ? (
-            <div
-              style={{
-                textAlign: "center",
-                color: "#94a3b8",
-                padding: "2rem 1rem",
-                background: "rgba(30, 41, 59, 0.3)",
-                borderRadius: "12px",
-                border: "1px dashed rgba(139, 92, 246, 0.2)",
-                margin: "1rem 0",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "2.5rem",
-                  marginBottom: "0.75rem",
-                  opacity: 0.5,
-                }}
-              >
-                🔔
-              </div>
-              <h4
-                style={{
-                  color: "#e2e8f0",
-                  marginBottom: "0.5rem",
-                  fontWeight: "500",
-                  fontSize: "1rem",
-                }}
-              >
-                No notifications yet
-              </h4>
-              <p style={{ margin: 0, fontSize: "0.8rem", lineHeight: "1.4" }}>
+            <EmptyState>
+              <EmptyIcon>🔔</EmptyIcon>
+              <EmptyTitle>No notifications yet</EmptyTitle>
+              <EmptyDescription>
                 {!isConnected
                   ? "Connecting to notifications..."
                   : "Notifications will appear here when you receive waves or hop-in requests"}
-              </p>
-            </div>
+              </EmptyDescription>
+            </EmptyState>
           ) : (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.5rem",
-              }}
-            >
+            <NotificationsContainer>
               {notifications.map((notification) => (
-                <div
+                <NotificationItem
                   key={notification.id}
-                  style={{
-                    background: notification.read
-                      ? "rgba(30, 41, 59, 0.6)"
-                      : "linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.1) 100%)",
-                    border: notification.read
-                      ? "1px solid rgba(139, 92, 246, 0.1)"
-                      : "1px solid rgba(139, 92, 246, 0.3)",
-                    borderRadius: "12px",
-                    padding: "1rem",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    position: "relative",
-                    overflow: "hidden",
-                  }}
+                  $read={notification.read}
                   onClick={() =>
                     !notification.read && markAsRead(notification.id)
                   }
                 >
                   {/* Unread indicator */}
-                  {!notification.read && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "10px",
-                        right: "10px",
-                        width: "6px",
-                        height: "6px",
-                        background: "#ec4899",
-                        borderRadius: "50%",
-                        animation: "pulse 2s infinite",
-                      }}
-                    />
-                  )}
+                  {!notification.read && <UnreadIndicator />}
 
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: "0.75rem",
-                    }}
-                  >
+                  <NotificationContent>
                     {/* User Avatar */}
-                    <ModalUserImage
+                    <UserAvatar
                       $imageUrl={notification.fromUser?.image || undefined}
-                      style={{
-                        width: "36px",
-                        height: "36px",
-                        fontSize: "14px",
-                        border: notification.read
-                          ? "2px solid rgba(139, 92, 246, 0.3)"
-                          : "2px solid #8b5cf6",
-                        flexShrink: 0,
-                      }}
+                      $read={notification.read}
                     >
                       {!notification.fromUser?.image &&
                         (notification.fromUser?.name?.charAt(0).toUpperCase() ||
                           "U")}
-                    </ModalUserImage>
+                    </UserAvatar>
 
                     {/* Notification Content */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p
-                        style={{
-                          margin: "0 0 0.5rem 0",
-                          color: "#f8fafc",
-                          fontWeight: notification.read ? "400" : "500",
-                          fontSize: "0.85rem",
-                          lineHeight: "1.3",
-                          wordBreak: "break-word",
-                        }}
-                      >
+                    <MessageContent>
+                      <Message $read={notification.read}>
                         {notification.message}
-                      </p>
+                      </Message>
 
                       {/* Meta Info and Actions */}
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          flexWrap: "wrap",
-                          gap: "0.5rem",
-                        }}
-                      >
-                        <small
-                          style={{
-                            color: notification.read ? "#64748b" : "#94a3b8",
-                            fontSize: "0.7rem",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.25rem",
-                          }}
-                        >
+                      <MetaContainer>
+                        <Time $read={notification.read}>
                           <span>🕒</span>
                           {formatTime(new Date(notification.createdAt))}
-                        </small>
+                        </Time>
 
                         {/* Action Buttons - Only show for HOP_REQUEST with hopInId */}
                         {notification.type === "HOP_REQUEST" &&
                           notification.hopInId && (
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: "0.4rem",
-                                flexShrink: 0,
-                              }}
-                            >
-                              <ModalButton
-                                $variant="primary"
+                            <ActionButtons>
+                              <AcceptButton
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleAcceptHop(notification);
                                 }}
-                                style={{
-                                  padding: "4px 8px",
-                                  fontSize: "11px",
-                                  background:
-                                    "linear-gradient(135deg, #10b981, #059669)",
-                                  border: "none",
-                                  minWidth: "auto",
-                                }}
                               >
                                 ✅ Accept
-                              </ModalButton>
-                              <ModalButton
-                                $variant="secondary"
+                              </AcceptButton>
+                              <DeclineButton
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleDeclineHop(notification);
                                 }}
-                                style={{
-                                  padding: "4px 8px",
-                                  fontSize: "11px",
-                                  background: "rgba(239, 68, 68, 0.1)",
-                                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                                  color: "#ef4444",
-                                  minWidth: "auto",
-                                }}
                               >
                                 ❌ Decline
-                              </ModalButton>
-                            </div>
+                              </DeclineButton>
+                            </ActionButtons>
                           )}
 
                         {/* Notification Type Badge */}
                         {notification.type === "WAVE" && (
-                          <div
-                            style={{
-                              background: "rgba(34, 197, 94, 0.1)",
-                              color: "#22c55e",
-                              padding: "2px 6px",
-                              borderRadius: "4px",
-                              fontSize: "0.7rem",
-                              border: "1px solid rgba(34, 197, 94, 0.2)",
-                            }}
-                          >
-                            👋 Wave
-                          </div>
+                          <WaveBadge>👋 Wave</WaveBadge>
                         )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                      </MetaContainer>
+                    </MessageContent>
+                  </NotificationContent>
+                </NotificationItem>
               ))}
-            </div>
+            </NotificationsContainer>
           )}
-        </div>
+        </NotificationsList>
 
         {/* Clear All Button */}
         {notifications.length > 0 && unreadCount > 0 && (
-          <div
-            style={{
-              padding: "0.75rem 1rem",
-              borderTop: "1px solid rgba(139, 92, 246, 0.1)",
-              background: "rgba(30, 41, 59, 0.5)",
-            }}
-          >
-            <ModalButton
-              $variant="secondary"
-              onClick={markAllAsRead}
-              style={{
-                width: "100%",
-                padding: "0.5rem",
-                fontSize: "0.8rem",
-                background: "rgba(139, 92, 246, 0.1)",
-                border: "1px solid rgba(139, 92, 246, 0.3)",
-              }}
-            >
+          <Footer>
+            <MarkAllButton onClick={markAllAsRead}>
               Mark all as read ({unreadCount})
-            </ModalButton>
-          </div>
+            </MarkAllButton>
+          </Footer>
         )}
-
-        <style jsx>{`
-          @keyframes pulse {
-            0% {
-              opacity: 1;
-            }
-            50% {
-              opacity: 0.5;
-            }
-            100% {
-              opacity: 1;
-            }
-          }
-        `}</style>
       </ModalContent>
     </ModalOverlay>
   );
