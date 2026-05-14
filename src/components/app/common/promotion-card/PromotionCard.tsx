@@ -1,74 +1,38 @@
-// barhop/src/components/app/common/promotion-card/PromotionCard.tsx
-
 "use client";
 
 import styled from "styled-components";
 import { useRouter } from "next/navigation";
 
-const gradientShift = `
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-`;
-
-const Card = styled.div`
+const PromotionCardWrapper = styled.div`
   background: ${({ theme }) => theme.colors.secondaryBackground};
-  border-radius: 20px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
-  position: relative;
   height: 100%;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(
-      45deg,
-      #ff6b6b,
-      #f06595,
-      #cc5de8,
-      #5f3dc4,
-      #3b82f6,
-      #0ea5e9
-    );
-    background-size: 400% 400%;
-    border-radius: 22px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: -1;
-  }
-
-  &:hover::before {
-    opacity: 1;
-  }
+  display: flex;
+  flex-direction: column;
 
   &:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border-color: ${({ theme }) => theme.colors.primaryAccent};
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
   }
 `;
 
-const ImageContainer = styled.div`
+const PromotionImage = styled.div<{
+  $imageUrl?: string | null;
+  $accentColor?: string | null;
+}>`
+  height: 140px;
+  background: ${(props) =>
+    props.$imageUrl
+      ? `url(${props.$imageUrl})`
+      : `linear-gradient(135deg, ${props.$accentColor || "#8b5cf6"}, ${props.$accentColor || "#0ea5e9"})`};
+  background-size: cover;
+  background-position: center;
   position: relative;
-  height: 160px;
-  overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s ease;
-  }
-
-  ${Card}:hover & img {
-    transform: scale(1.05);
-  }
 `;
 
 const DiscountBadge = styled.div`
@@ -77,12 +41,11 @@ const DiscountBadge = styled.div`
   right: 12px;
   background: linear-gradient(135deg, #ff6b6b, #ee5a24);
   color: white;
-  padding: 6px 12px;
-  border-radius: 30px;
-  font-size: 1rem;
-  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
   font-family: ${({ theme }) => theme.fonts.mono};
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   z-index: 2;
 
   &::before {
@@ -101,29 +64,18 @@ const TypeTag = styled.div<{ $type: string }>`
         return "linear-gradient(135deg, #f59e0b, #d97706)";
       case "DRINK_SPECIAL":
         return "linear-gradient(135deg, #10b981, #059669)";
-      case "FOOD_SPECIAL":
-        return "linear-gradient(135deg, #ec4899, #be185d)";
-      case "LADIES_NIGHT":
-        return "linear-gradient(135deg, #8b5cf6, #6d28d9)";
       case "VIP_OFFER":
         return "linear-gradient(135deg, #0ea5e9, #0284c7)";
-      case "THEME_NIGHT":
-        return "linear-gradient(135deg, #f97316, #ea580c)";
-      case "COVER_DISCOUNT":
-        return "linear-gradient(135deg, #14b8a6, #0d9488)";
-      case "STUDENT_DISCOUNT":
-        return "linear-gradient(135deg, #06b6d4, #0891b2)";
       default:
-        return "linear-gradient(135deg, #6b7280, #4b5563)";
+        return "linear-gradient(135deg, #8b5cf6, #6d28d9)";
     }
   }};
   color: white;
   padding: 4px 10px;
-  border-radius: 30px;
-  font-size: 0.7rem;
+  border-radius: 20px;
+  font-size: 0.65rem;
   font-weight: 700;
   font-family: ${({ theme }) => theme.fonts.mono};
-  backdrop-filter: blur(4px);
   z-index: 2;
   display: flex;
   align-items: center;
@@ -131,48 +83,32 @@ const TypeTag = styled.div<{ $type: string }>`
 `;
 
 const Content = styled.div`
-  padding: 1.25rem;
+  padding: 1rem;
   flex: 1;
   display: flex;
   flex-direction: column;
-  position: relative;
-  z-index: 1;
 `;
 
 const Title = styled.h3`
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.textPrimary};
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.25rem 0;
   font-family: ${({ theme }) => theme.fonts.dm};
-  line-height: 1.3;
-`;
-
-const Description = styled.p`
-  font-size: 0.85rem;
-  color: ${({ theme }) => theme.colors.textSecondary};
-  margin-bottom: 1rem;
-  line-height: 1.5;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
+
+  @media (min-width: 768px) {
+    font-size: 1.1rem;
+  }
 `;
 
-const BenefitsRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-`;
-
-const BenefitChip = styled.span`
-  background: rgba(139, 92, 246, 0.15);
-  color: ${({ theme }) => theme.colors.primaryAccent};
-  padding: 4px 10px;
-  border-radius: 20px;
+const BarInfo = styled.div`
   font-size: 0.7rem;
-  font-weight: 600;
+  color: ${({ theme }) => theme.colors.textMuted};
+  margin-bottom: 0.5rem;
   font-family: ${({ theme }) => theme.fonts.mono};
   display: flex;
   align-items: center;
@@ -183,75 +119,66 @@ const PriceRow = styled.div`
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-top: auto;
-  margin-bottom: 0.75rem;
+  margin: 0.5rem 0;
   flex-wrap: wrap;
   gap: 0.5rem;
 `;
 
 const Price = styled.span`
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 800;
   color: ${({ theme }) => theme.colors.secondaryAccent};
   font-family: ${({ theme }) => theme.fonts.mono};
 
   &::before {
     content: "€";
-    font-size: 1rem;
+    font-size: 0.9rem;
+  }
+
+  @media (min-width: 768px) {
+    font-size: 1.3rem;
   }
 `;
 
 const OriginalPrice = styled.span`
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: ${({ theme }) => theme.colors.textMuted};
   text-decoration: line-through;
   margin-left: 0.5rem;
 `;
 
-const BarInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: ${({ theme }) => theme.colors.textMuted};
-  margin-bottom: 0.75rem;
-`;
-
 const ValidityBadge = styled.div`
   background: rgba(16, 185, 129, 0.1);
   color: #10b981;
-  padding: 4px 8px;
+  padding: 3px 8px;
   border-radius: 12px;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 4px;
 `;
 
-const CTAButton = styled.button<{ $accentColor?: string }>`
-  width: 100%;
-  padding: 0.875rem;
-  background: ${({ $accentColor }) =>
-    $accentColor || "linear-gradient(135deg, #8b5cf6, #0ea5e9)"};
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-weight: 700;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
+const CardButton = styled.div`
+  margin-top: auto;
+  padding-top: 0.75rem;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.primaryAccent};
+  font-size: 0.75rem;
+  font-weight: 600;
   font-family: ${({ theme }) => theme.fonts.dm};
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 0.5rem;
+  gap: 0.5rem;
 
-  &:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.05);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  &::after {
+    content: "→";
+    transition: transform 0.3s ease;
+  }
+
+  ${PromotionCardWrapper}:hover &::after {
+    transform: translateX(4px);
   }
 `;
 
@@ -274,23 +201,8 @@ interface Promotion {
   endDate: string;
 }
 
-interface PromotionCardProps {
-  promotion: Promotion;
-}
-
-export default function PromotionCard({ promotion }: PromotionCardProps) {
+export default function PromotionCard({ promotion }: { promotion: Promotion }) {
   const router = useRouter();
-  const isUpcoming = new Date(promotion.startDate) > new Date();
-  const isActive =
-    new Date(promotion.startDate) <= new Date() &&
-    new Date(promotion.endDate) >= new Date();
-
-  // Guard clause
-  if (!promotion || !promotion.id) {
-    return null;
-  }
-
-  const promotionType = promotion.type || "DRINK_SPECIAL";
 
   const getTypeIcon = (type: string): string => {
     switch (type) {
@@ -302,14 +214,8 @@ export default function PromotionCard({ promotion }: PromotionCardProps) {
         return "🍽️";
       case "LADIES_NIGHT":
         return "👩‍🎤";
-      case "THEME_NIGHT":
-        return "🎭";
       case "VIP_OFFER":
         return "👑";
-      case "COVER_DISCOUNT":
-        return "🎫";
-      case "STUDENT_DISCOUNT":
-        return "🎓";
       default:
         return "🎉";
     }
@@ -322,10 +228,6 @@ export default function PromotionCard({ promotion }: PromotionCardProps) {
       .replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  const handleClick = (): void => {
-    router.push(`/app/bars/${promotion.barId}?promotion=${promotion.id}`);
-  };
-
   const getExpiryText = (endDate: string): string => {
     try {
       const today = new Date();
@@ -335,103 +237,37 @@ export default function PromotionCard({ promotion }: PromotionCardProps) {
       );
 
       if (diffDays < 0) return "Ended";
-      if (diffDays === 0) return "Ends today! ⚡";
-      if (diffDays === 1) return "Ends tomorrow 🔥";
-      if (diffDays <= 3) return `${diffDays} days left 🏃`;
-      return `${diffDays} days left`;
+      if (diffDays === 0) return "Ends today";
+      if (diffDays === 1) return "Ends tomorrow";
+      return `${diffDays}d left`;
     } catch {
       return "Limited time";
     }
   };
 
-  const getBenefitIcons = (type: string): { icon: string; text: string }[] => {
-    const benefits = [];
-    if (type === "HAPPY_HOUR")
-      benefits.push({ icon: "⏰", text: "Limited Time" });
-    if (type === "VIP_OFFER") benefits.push({ icon: "🚀", text: "Skip Line" });
-    if (type === "COVER_DISCOUNT")
-      benefits.push({ icon: "🎫", text: "Cover Included" });
-    if (type === "FOOD_SPECIAL")
-      benefits.push({ icon: "🍽️", text: "Food Deal" });
-    if (type === "DRINK_SPECIAL")
-      benefits.push({ icon: "🍹", text: "Drink Deal" });
-    benefits.push({ icon: "⭐", text: getTypeLabel(type) });
-    return benefits.slice(0, 3);
+  const handleClick = () => {
+    router.push(`/app/promotions/${promotion.id}`);
   };
 
-  const benefits = getBenefitIcons(promotionType);
-  const barName = promotion.bar?.name || "Venue";
-  const barDistrict = promotion.bar?.district || "City Center";
-  const title = promotion.title || "Special Offer";
-  const description =
-    promotion.description || "Check out this great offer at the venue!";
-
   return (
-    <Card
-      onClick={handleClick}
-      //   $accentColor={promotion.accentColor || undefined}
-    >
-      {isUpcoming && (
-        <div
-          style={{
-            position: "absolute",
-            top: "12px",
-            right: "12px",
-            background: "#f59e0b",
-            color: "white",
-            padding: "4px 10px",
-            borderRadius: "20px",
-            fontSize: "0.7rem",
-            fontWeight: "600",
-            zIndex: 2,
-            fontFamily: "monospace",
-          }}
-        >
-          🔜 Coming Soon
-        </div>
-      )}
-      <ImageContainer>
-        {promotion.imageUrl ? (
-          <img src={promotion.imageUrl} alt={title} />
-        ) : (
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "3rem",
-              background:
-                promotion.accentColor ||
-                "linear-gradient(135deg, #667eea, #764ba2)",
-            }}
-          >
-            {getTypeIcon(promotionType)}
-          </div>
-        )}
+    <PromotionCardWrapper onClick={handleClick}>
+      <PromotionImage
+        $imageUrl={promotion.imageUrl}
+        $accentColor={promotion.accentColor}
+      >
         {promotion.discount && promotion.discount > 0 && (
           <DiscountBadge>{promotion.discount}% OFF</DiscountBadge>
         )}
-        <TypeTag $type={promotionType}>
-          {getTypeIcon(promotionType)} {getTypeLabel(promotionType)}
+        <TypeTag $type={promotion.type}>
+          {getTypeIcon(promotion.type)} {getTypeLabel(promotion.type)}
         </TypeTag>
-      </ImageContainer>
+      </PromotionImage>
 
       <Content>
-        <Title>{title}</Title>
-        <Description>{description}</Description>
-
-        <BenefitsRow>
-          {benefits.map((benefit, i) => (
-            <BenefitChip key={i}>
-              {benefit.icon} {benefit.text}
-            </BenefitChip>
-          ))}
-        </BenefitsRow>
-
+        <Title>{promotion.title}</Title>
         <BarInfo>
-          <span>📍</span> {barName} • {barDistrict}
+          <span>📍</span> {promotion.bar?.name || "Venue"} •{" "}
+          {promotion.bar?.district || "City Center"}
         </BarInfo>
 
         <PriceRow>
@@ -450,10 +286,8 @@ export default function PromotionCard({ promotion }: PromotionCardProps) {
           <ValidityBadge>⏱️ {getExpiryText(promotion.endDate)}</ValidityBadge>
         </PriceRow>
 
-        <CTAButton $accentColor={promotion.accentColor || undefined}>
-          {promotion.callToAction || "View Offer"} →
-        </CTAButton>
+        <CardButton>View Offer</CardButton>
       </Content>
-    </Card>
+    </PromotionCardWrapper>
   );
 }
